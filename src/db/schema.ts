@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 export * from "./auth-schema";
-import type { EventConfig } from "@/editor/shared/events/events";
+import type { EventConfig } from "@namarca/editor/events";
 
 export const preparationStatus = pgEnum("preparation_status", ["draft", "validated", "approved"]);
 export const publicationStatus = pgEnum("publication_status", ["unpublished", "pending", "published", "failed", "ended"]);

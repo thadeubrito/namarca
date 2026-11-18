@@ -4,6 +4,10 @@
 
 Next.js Node.js + Better Auth + Drizzle/PostgreSQL + S3 privado. V1 permite campanhas drafts e confirmação financeira síncrona pelo webhook, sem worker ou agendamento. **Checkout somente mock local; sem checkout live completo ou publicação real.** O estúdio de campanha e a prévia do editor estão descritos em campaign-editor.md. Pagar nunca marca campanha published. Sem organizations/multi-tenancy nesta base.
 
+## Editor compartilhado e frontend estático
+
+`packages/editor/src` reúne contrato do manifesto, UI/CSS, composição, gestos e exportação. `apps/event` tem duas entradas estáticas esbuild: pública (fetch do manifesto/PNGs no caminho do bucket) e prévia privada (bridge validado ou snapshot autenticado). O iframe não carrega layout/CSS Next. Build gerado em `public/event-runtime`, separado do build administrativo. O público original não foi alterado nem publicado; esta é a base local para migrá-lo sem SSR/Next. Detalhes e limites em [editor-runtime.md](editor-runtime.md).
+
 ## Modelo e exports
 
 `src/db/index.ts`: `db`, `pool`; `src/db/schema.ts` reexporta auth-schema e:

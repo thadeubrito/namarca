@@ -124,7 +124,8 @@ function EditorCanvas({ c, selected, select, selectionColor, blocked, start, pre
   </>
 }
 
-export function PhotoEditor({ event, assetBase, onInitialLoading }: { event: EventConfig; assetBase?: string; onInitialLoading?: (label: string | null) => void }) {
+export function PhotoEditor({ event, assetBase, preferredArtworkId, onInitialLoading }: { event: EventConfig; assetBase?: string; preferredArtworkId?: string; onInitialLoading?: (label: string | null) => void }) {
+  const previousPreference = useRef<string | undefined>(undefined);
   const [panel, setPanel] = useState<EditorTool>('')
   const photoInput = useRef<HTMLInputElement>(null)
   const editingTracked = useRef(false)
@@ -203,6 +204,21 @@ export function PhotoEditor({ event, assetBase, onInitialLoading }: { event: Eve
   useEffect(() => {
     let active = true
     const existing = current.current
+    const preferred = event.artworks.find(art => art.id === preferredArtworkId)
+    const selectionChanged = previousPreference.current !== preferredArtworkId
+    if (existing && preferred && selectionChanged && existing.present.art.id !== preferred.id && !baseline.current) {
+      const token = ++request.current
+      readArtwork(asset(preferred.file), preferred).then(loaded => {
+        if (!active || !current.current || request.current !== token) return
+        previousPreference.current = preferredArtworkId
+        const next = changeArt(current.current.present, preferred, loaded.image, loaded.bounds)
+        const updated = { past: [], present: next, future: [] }
+        current.current = updated; setHistory(updated); setSelected(null); setPanel(''); setArtError(null)
+        setExportRevision(revision => revision + 1)
+      }, () => { if (active && request.current === token) setArtError(preferred) })
+      return () => { active = false }
+    }
+    previousPreference.current = preferredArtworkId
     const activeArtwork = existing && event.artworks.find((art) => art.id === existing.present.art.id)
     if (existing && activeArtwork) {
       // A configuração DEV pode mudar enquanto a edição está aberta. Atualize os
@@ -235,7 +251,7 @@ export function PhotoEditor({ event, assetBase, onInitialLoading }: { event: Eve
       }
       return () => { active = false }
     }
-    const art = event.artworks[0]
+    const art = preferred ?? event.artworks[0]
     const token = ++request.current
     readArtwork(asset(art.file), art).then((loaded) => {
       if (!active || current.current || request.current !== token) return
@@ -244,7 +260,7 @@ export function PhotoEditor({ event, assetBase, onInitialLoading }: { event: Eve
     }, () => { if (active && request.current === token) setArtError(art) })
     const counter = request
     return () => { active = false; counter.current++ }
-  }, [event, asset])
+  }, [event, asset, preferredArtworkId])
   const selectPhoto = async (file?: File) => {
     if (!file || loading.current || baseline.current || !current.current) return
     loading.current = true; setBusy(true); setOperation('Lendo foto no dispositivo…'); setMessage('')

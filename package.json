@@ -6,7 +6,11 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "predev": "npm run build:event",
     "dev": "next dev --webpack --hostname 0.0.0.0",
+    "prebuild": "npm run build:event",
+    "build:event": "node scripts/build-event.mjs",
+    "dev:event": "node scripts/build-event.mjs --watch",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
@@ -48,6 +52,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "drizzle-kit": "^0.31.0",
+    "esbuild": "0.27.4",
     "eslint": "^10.15.0",
     "eslint-config-next": "^16.4.6",
     "tsx": "^4.21.0",

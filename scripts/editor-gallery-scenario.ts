@@ -93,8 +93,13 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   assert.deepEqual(await choices.evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))), ['Arte Arte 2 400 × 400 px', 'Arte Arte 3 400 × 400 px', 'Arte Arte 1 400 × 400 px']);
   await preview.getByRole('button', { name: 'Arte Arte 1 400 × 400 px', exact: true }).click();
   await expect(preview.getByRole('img', { name: 'Composição com a arte Arte 1, sem foto', exact: true })).toBeVisible();
-  // Preview selection is independent from the studio's reference selection.
+  // Trying another art inside the participant UI does not mutate the studio.
   await expect(studio.getByRole('heading', { name: 'Área da foto · Arte 2', exact: true })).toBeVisible();
+  // Selecting in the studio does synchronize the live participant preview.
+  await studio.getByRole('button', { name: 'Editar área da foto: Arte 3', exact: true }).click();
+  await expect(preview.getByRole('img', { name: 'Composição com a arte Arte 3, sem foto', exact: true })).toBeVisible();
+  await studio.getByRole('button', { name: 'Editar área da foto: Arte 2', exact: true }).click();
+  await expect(preview.getByRole('img', { name: 'Composição com a arte Arte 2, sem foto', exact: true })).toBeVisible();
   await positionPreview();
   await preview.getByRole('button', { name: 'Stickers', exact: true }).click();
   const stickerChoices = preview.getByRole('button', { name: /^Adicionar sticker Sticker \d$/ });

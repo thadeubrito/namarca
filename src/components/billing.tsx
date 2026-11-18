@@ -16,5 +16,5 @@ export function CopyCheckout({ path }: { path: string }) {
       setCopied(kind);
     } catch { setError(true); }
   };
-  return <div className="stack"><a href={path} target="_blank" rel="noreferrer">Abrir checkout</a><button type="button" className="button secondary" onClick={() => void copy('link')}>Copiar link</button><button type="button" className="button secondary" onClick={() => void copy('message')}>Copiar mensagem de cobrança</button>{copied && <p role="status">{copied === 'link' ? 'Link copiado.' : 'Mensagem copiada. Cole na conversa com o cliente.'}</p>}{error && <p role="alert">Não foi possível copiar. Abra o checkout e copie o endereço.</p>}</div>;
+  return <div className="stack"><a href={path} target="_blank" rel="noreferrer">Abrir checkout</a><button type="button" className="button secondary" onClick={() => void copy('link')}>Copiar link</button><button type="button" className="button secondary" onClick={() => void copy('message')}>Copiar mensagem</button>{copied && <p role="status">{copied === 'link' ? 'Link copiado.' : 'Mensagem copiada.'}</p>}{error && <p role="alert">Não foi possível copiar. Abra o checkout e copie o endereço.</p>}</div>;
 }

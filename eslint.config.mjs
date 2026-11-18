@@ -3,7 +3,7 @@ import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
 export default defineConfig([
   ...nextVitals, ...nextTypescript,
-  globalIgnores(['.next/**', 'node_modules/**', 'drizzle/**', 'test-results/**']),
+  globalIgnores(['.next/**', 'node_modules/**', 'drizzle/**', 'test-results/**', 'public/event-runtime/**']),
   { rules: {
     '@next/next/no-img-element': 'off',
     // Auth changes intentionally reload the document to discard prefetched session state.

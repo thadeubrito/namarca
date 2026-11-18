@@ -9,7 +9,7 @@ Escopo confirmado em 18/11/2026: administrativo local, serviços Docker e pagame
 - [x] Campanhas e cliente leve reutilizável, cadastro inline e observações; sem contratos ativos.
 - [x] Seção Clientes com listagem/busca, cadastro/edição e campanhas vinculadas; guards servidor e integração Chromium focal aprovada.
 - [x] Estúdio privado, referências independentes, cores, múltiplas artes/stickers, ordenação e remoção.
-- [x] Prévia real e exportação local, sem upload de foto/composição nem telemetria de participantes.
+- [x] Prévia estática isolada e exportação local, sem upload de foto/composição nem telemetria; editor/estilos únicos para público local e prévia em `packages/editor`. Paridade Chromium local validada; público antigo não migrado (ver `editor-runtime.md`).
 - [x] Proteção do rascunho em links, unload, dados base e aprovação visual.
 - [x] Aprovação visual com snapshot versionado e prévia histórica autenticada.
 - [x] Checkout mock com link opaco, nome/valor congelados e tentativas persistidas.
@@ -21,6 +21,8 @@ Escopo confirmado em 18/11/2026: administrativo local, serviços Docker e pagame
 - [x] Regressão integral Chromium: uploads, cobrança emitida na UI, cópia, financeiro, dirty, galerias, exportação, snapshots e clientes.
 
 ## Pendências locais de cobertura / confiabilidade
+
+- [ ] Conferir visualmente o admin mais compacto em desktop/celular; textos e densidade ajustados, validação automatizada aprovada, sem novo teste de navegador nesta revisão.
 
 - [ ] Cobrir por cliques reais os botões administrativos de consulta de pagamento e recuperação de criação incerta. A lógica tem integração mock; emissão e cópia já têm cobertura UI.
 - [ ] Investigar a intermitência do runner de referência/galeria: nesta sessão uma execução integral falhou e a seguinte passou. Não considerar repetição como correção.

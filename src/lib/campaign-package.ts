@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { EventConfig } from '@/editor/shared/events/events';
+import type { EventConfig } from '@namarca/editor/events';
 import { validateCampaignEvent, type CampaignIdentity, type EditorAsset } from './campaign-editor';
 
 export const packageApprovalInput = z.object({

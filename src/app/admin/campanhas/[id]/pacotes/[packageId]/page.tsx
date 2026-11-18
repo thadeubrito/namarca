@@ -12,5 +12,5 @@ export default async function PackagePreviewPage({ params }: { params: Promise<{
   if (!UUID.test(id) || !UUID.test(packageId)) notFound();
   const [snapshot] = await db.select().from(campaignPackages).where(and(eq(campaignPackages.id, packageId), eq(campaignPackages.campaignId, id)));
   if (!snapshot) notFound();
-  return <><div className="notice">Prévia privada · pacote aprovado v{snapshot.version}. Esta versão não é uma publicação pública.</div><CampaignPreview campaignId={id} initialEvent={snapshot.config} /></>;
+  return <><div className="notice">Prévia privada · pacote aprovado v{snapshot.version}. Esta versão não é uma publicação pública.</div><CampaignPreview campaignId={id} packageId={packageId} /></>;
 }

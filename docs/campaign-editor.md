@@ -1,6 +1,6 @@
 # Estúdio da campanha
 
-Disponível em `/admin/campanhas/<UUID>` para campanhas em rascunho e não publicadas. O modelo, a matemática da composição e o editor de foto foram reaproveitados do projeto anterior; não há dependência do Vite nem de diretórios de pacotes locais.
+Disponível em `/admin/campanhas/<UUID>` para campanhas em rascunho e não publicadas. O modelo e o editor completo foram extraídos para `packages/editor/src`, usados pelas entradas pública e privada de `apps/event`. A prévia carrega HTML estático compilado por esbuild, sem layout/CSS do Next. Ver [editor-runtime.md](editor-runtime.md). O público antigo ainda não foi migrado.
 
 ## Navegação por seção
 
@@ -32,7 +32,7 @@ O estúdio avisa antes de fechar/recarregar a página e ao seguir links na mesma
 - Arquivos servidos por ID e vínculo com a campanha; nenhuma chave S3 arbitrária é aceita do navegador.
 - Revisão otimista retorna 409 em salvamentos concorrentes; rascunho em memória não é descartado automaticamente.
 - Fotos e composições são exclusivamente locais ao navegador; prévia sem telemetria.
-- Prévia em iframe de mesma origem; embedding externo bloqueado por frame-ancestors self. Não é publicação de campanha.
+- Prévia em iframe estático de mesma origem; embedding externo bloqueado por frame-ancestors self. Seleção de arte no painel sincroniza a prévia. Ampliar/recolher preserva o iframe e a foto local. Não é publicação de campanha.
 
 ## Limites
 

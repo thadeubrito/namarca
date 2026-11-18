@@ -73,6 +73,10 @@ Nesta etapa: 43 testes, lint/typecheck, migrations descartáveis e build isolado
 
 `CAMPAIGN_SECTIONS_ONLY=1` verifica criação com campo obrigatório em painel oculto (revela a aba correta), exclusividade dos painéis principais, teclado com setas/Home/End, retenção de nome/observações e arte dirty ao navegar sem PUT/salvamento, banco inalterado e ausência de overflow a 390/1440px. Capturas exclusivamente sintéticas em `/tmp/namarca-sections-desktop.png` e `mobile.png`; o container precisa montar `/tmp` para inspecioná-las no host. Não combinar flags. Testes anteriores foram adaptados para clicar nas abas antes de interagir. Focal, dirty e integral aprovados nesta etapa; não elimina flakiness histórica nem comprova toque/celular físico.
 
+## Ampliação: runtime estático compartilhado
+
+O runner agora chama `scripts/editor-runtime-scenario.ts` após o export local. `EDITOR_RUNTIME_ONLY=1` encerra depois dele. Confere estilos dos controles público/prévia, ausência de Next no iframe, fotos/PNGs locais, mensagens não autorizadas rejeitadas, ampliar/recolher preservando composição, viewport 390px sem overflow e manifesto encerrado. Público usa interceptação de manifesto/assets sintéticos, não bucket publicado. Histórico aprovado foi adaptado ao iframe estático e inclui endpoint anônimo 403 e vínculo inválido 404. `EDITOR_RUNTIME_SHOTS=1` grava capturas sintéticas em `/tmp`; montar `/tmp` no container para vê-las no host. Prévia tem sticker, público não: não são capturas da mesma composição. Ver limites e detalhes em [editor-runtime.md](editor-runtime.md). Runner integral final aprovado, sem declarar resolvida a flakiness histórica.
+
 ## Encerramento
 
 ```sh

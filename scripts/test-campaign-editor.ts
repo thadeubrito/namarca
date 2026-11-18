@@ -7,6 +7,7 @@ import { Pool } from 'pg';
 import { PNG } from 'pngjs';
 import { S3Client, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { testEditorGallery } from './editor-gallery-scenario';
+import { testEditorRuntime } from './editor-runtime-scenario';
 
 const base = 'http://namarca-editor-test:3000';
 const email = 'editor-test@namarca.test';
@@ -446,6 +447,10 @@ async function main() {
     const campaign = (await pool.query('select preparation_status, publication_status from campaigns where id=$1', [campaignId])).rows[0];
     assert.equal(campaign.preparation_status, 'draft');
     assert.equal(campaign.publication_status, 'unpublished');
+    stage = 'static public runtime and preview parity';
+    await testEditorRuntime({ page, context, base, campaignId, event: saved.event, photo: png(600, 'photo') });
+    console.info('PASS static runtime: shared CSS, isolated preview, public fetch/PNG, rejected bridge messages and ended manifest.');
+    if (process.env.EDITOR_RUNTIME_ONLY === '1') return;
     stage = 'register visual approval v1 through UI';
     await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
     const approval = page.getByRole('region', { name: 'Aprovação visual', exact: true });
@@ -537,19 +542,23 @@ async function main() {
       const privateUrl = `${base}/admin/campanhas/${campaignId}/pacotes/${v1.id}`;
       const anonymous = await playwrightRequest.newContext();
       try {
+        const snapshotEndpoint = `${base}/api/campaigns/${campaignId}/packages/${v1.id}/preview`;
+        assert.equal((await anonymous.get(snapshotEndpoint)).status(), 403);
+        assert.equal((await context.request.get(`${base}/api/campaigns/${randomUUID()}/packages/${v1.id}/preview`)).status(), 404);
         const response = await anonymous.get(privateUrl, { maxRedirects: 0 });
         assert.ok([302, 303, 307, 308, 401, 403].includes(response.status()));
         assert.ok(!(await response.text()).includes('Moldura teste'), 'Anonymous response must not expose the approved configuration');
       } finally { await anonymous.dispose(); }
       await stalePage.goto(privateUrl);
       await stalePage.getByText('Prévia privada · pacote aprovado v1. Esta versão não é uma publicação pública.', { exact: true }).waitFor();
-      await expect(stalePage.getByRole('img', { name: 'Composição com a arte Moldura teste, sem foto', exact: true })).toBeVisible({ timeout: 30_000 });
-      await stalePage.locator('input[type=file]').setInputFiles({ name: 'snapshot-local.png', mimeType: 'image/png', buffer: png(600, 'photo') });
-      const snapshotImage = stalePage.getByRole('img', { name: /Composição com a arte Moldura teste e sua foto/ });
+      const snapshotFrame = stalePage.frameLocator('iframe[title="Prévia do pacote aprovado"]');
+      await expect(snapshotFrame.getByRole('img', { name: 'Composição com a arte Moldura teste, sem foto', exact: true })).toBeVisible({ timeout: 30_000 });
+      await snapshotFrame.locator('input[type=file]').setInputFiles({ name: 'snapshot-local.png', mimeType: 'image/png', buffer: png(600, 'photo') });
+      const snapshotImage = snapshotFrame.getByRole('img', { name: /Composição com a arte Moldura teste e sua foto/ });
       await expect(snapshotImage).toBeVisible({ timeout: 30_000 });
-      await stalePage.evaluate(({ campaignId, event }) => window.postMessage({ type: 'namarca:preview', campaignId, event }, window.location.origin), { campaignId, event: changed.event });
+      await stalePage.locator('iframe').evaluate((el, { campaignId, event }) => (el as HTMLIFrameElement).contentWindow!.postMessage({ type: 'namarca:preview', campaignId, event }, window.location.origin), { campaignId, event: changed.event });
       await expect(snapshotImage).toBeVisible();
-      assert.equal(await stalePage.getByRole('img', { name: /Composição com a arte Moldura revisada v2 e sua foto/ }).count(), 0, 'Snapshot preview must ignore the live draft bridge');
+      assert.equal(await snapshotFrame.getByRole('img', { name: /Composição com a arte Moldura revisada v2 e sua foto/ }).count(), 0, 'Snapshot preview must ignore the live draft bridge');
       assert.equal((await pool.query('select count(*)::int as n from publication_tasks where campaign_id=$1', [campaignId])).rows[0].n, 0);
       const unpublished = (await pool.query('select preparation_status,publication_status from campaigns where id=$1', [campaignId])).rows[0];
       assert.deepEqual(unpublished, { preparation_status: 'draft', publication_status: 'unpublished' });

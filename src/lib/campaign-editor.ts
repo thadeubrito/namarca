@@ -1,6 +1,6 @@
 import { PNG } from "pngjs";
 import { z } from "zod";
-import { parseEvent, type EventConfig } from "@/editor/shared/events/events";
+import { parseEvent, type EventConfig } from "@namarca/editor/events";
 
 export class CampaignEditorError extends Error {
   constructor(readonly status: number, message: string) { super(message); }

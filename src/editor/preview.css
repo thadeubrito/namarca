@@ -1,5 +1,0 @@
-/* Loaded exclusively inside the authenticated preview iframe. */
-body { margin: 0; padding: 0; }
-body > .topbar { display: none; }
-body > main.shell.content { width: 100%; max-width: none; margin: 0; padding: 0; }
-.editor-page { min-height: 100dvh; }

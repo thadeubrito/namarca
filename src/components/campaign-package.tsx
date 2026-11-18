@@ -8,7 +8,7 @@ export function PackageApprovalForm({ campaignId, revision, identity }: { campai
     <div className="grid"><label>Responsável pela aprovação<input name="approvedBy" maxLength={200} required /></label><label>Canal da aprovação<select name="channel" required><option value="whatsapp">WhatsApp</option><option value="email">E-mail</option><option value="presencial">Presencial</option><option value="outro">Outro</option></select></label></div>
     <label>Data da aprovação<input name="approvedAt" type="date" required max={new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })} /></label>
     <label className="approval-consent"><input name="rights" type="checkbox" required /><span>Confirmo a autorização de uso dos materiais e a aprovação desta versão.</span></label>
-    <p className="muted">Registre somente após revisar a prévia e receber a aprovação. Isso preserva a configuração salva; não é aprovação comercial nem publicação.</p>
+    <p className="muted">Registre após revisar a prévia e receber a aprovação. A versão salva será preservada; isso não aprova condições comerciais nem publica a campanha.</p>
     <button disabled={pending}>{pending ? 'Registrando…' : 'Registrar aprovação do pacote'}</button>
     {state.error && <p className="error" role="alert">{state.error}</p>}{state.success && <p className="notice" role="status">{state.success}</p>}
   </form>;
