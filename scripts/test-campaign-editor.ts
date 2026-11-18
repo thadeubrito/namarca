@@ -141,6 +141,91 @@ async function main() {
     const campaign = (await pool.query('select preparation_status, publication_status from campaigns where id=$1', [campaignId])).rows[0];
     assert.equal(campaign.preparation_status, 'draft');
     assert.equal(campaign.publication_status, 'unpublished');
+    stage = 'register visual approval v1 through UI';
+    const approval = page.getByRole('region', { name: 'Aprovação visual', exact: true });
+    const approvalDate = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+    const fillApproval = async (target: typeof page) => {
+      const region = target.getByRole('region', { name: 'Aprovação visual', exact: true });
+      await region.getByLabel('Responsável pela aprovação', { exact: true }).fill('Aprovador sintético');
+      await region.locator('select[name=channel]').selectOption('whatsapp');
+      await region.getByLabel('Data da aprovação', { exact: true }).fill(approvalDate);
+      await region.getByRole('checkbox', { name: 'Confirmo a autorização de uso dos materiais e a aprovação desta versão.', exact: true }).check();
+    };
+    const packages = async () => (await pool.query('select * from campaign_packages where campaign_id=$1 order by version', [campaignId])).rows;
+    await expect(approval.locator('input[name=revision]')).toHaveValue(String(saved.revision));
+    const identity = await approval.locator('input[name=identity]').inputValue();
+    assert.ok(identity.length > 0);
+    const stalePage = await context.newPage();
+    await stalePage.goto(`${base}/admin/campanhas/${campaignId}`);
+    await fillApproval(stalePage);
+    await fillApproval(page);
+    await approval.getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
+    await expect.poll(async () => {
+      const error = approval.getByRole('alert');
+      if (await error.count()) throw new Error(await error.innerText());
+      return (await packages()).length;
+    }, { timeout: 30_000 }).toBe(1);
+    const v1 = (await packages())[0];
+    assert.ok(v1); assert.equal((await packages()).length, 1);
+    assert.equal(v1.version, 1); assert.equal(v1.editor_revision, saved.revision);
+    assert.equal(v1.approved_by, 'Aprovador sintético'); assert.equal(v1.channel, 'whatsapp');
+    assert.equal(v1.recorded_by, id);
+    assert.equal(new Date(v1.approved_at).toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }), approvalDate);
+    assert.deepEqual(v1.config, saved.event);
+    const snapshotV1 = structuredClone(v1);
+    stage = 'duplicate visual approval is rejected';
+    await stalePage.getByRole('region', { name: 'Aprovação visual', exact: true }).getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
+    await stalePage.getByText('Este pacote já tem aprovação registrada.', { exact: true }).waitFor();
+    assert.equal((await packages()).length, 1);
+    try {
+      stage = 'editor save preserves approved snapshot';
+      await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura revisada v2');
+      await page.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
+      await page.getByText('Configuração salva. A campanha não foi publicada.', { exact: true }).waitFor();
+      const changed = await (await context.request.get(endpoint)).json();
+      assert.ok(changed.revision > saved.revision);
+      assert.equal(changed.event.artworks[0].name, 'Moldura revisada v2');
+      assert.deepEqual(await packages(), [snapshotV1], 'Saving the draft must not mutate or create approval snapshots');
+      stage = 'stale visual approval revision is rejected';
+      // React resets uncontrolled fields after the previous server action.
+      // Refill the approval details without reloading the obsolete revision.
+      await fillApproval(stalePage);
+      await stalePage.getByRole('region', { name: 'Aprovação visual', exact: true }).getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
+      await stalePage.getByText('O pacote mudou. Recarregue a página e revise antes de aprovar.', { exact: true }).waitFor();
+      assert.deepEqual(await packages(), [snapshotV1]);
+      stage = 'register revised visual approval v2';
+      await page.reload();
+      await expect(approval.locator('input[name=revision]')).toHaveValue(String(changed.revision));
+      await expect(approval.locator('input[name=identity]')).toHaveValue(identity);
+      await fillApproval(page);
+      await approval.getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
+      await expect.poll(async () => (await packages()).length).toBe(2);
+      const versions = await packages();
+      assert.equal(versions.length, 2); assert.deepEqual(versions[0], snapshotV1);
+      assert.equal(versions[1].version, 2); assert.equal(versions[1].editor_revision, changed.revision);
+      assert.deepEqual(versions[1].config, changed.event);
+      assert.equal(versions[0].config.artworks[0].name, 'Moldura teste');
+      stage = 'approved snapshot remains private and unpublished';
+      const privateUrl = `${base}/admin/campanhas/${campaignId}/pacotes/${v1.id}`;
+      const anonymous = await playwrightRequest.newContext();
+      try {
+        const response = await anonymous.get(privateUrl, { maxRedirects: 0 });
+        assert.ok([302, 303, 307, 308, 401, 403].includes(response.status()));
+        assert.ok(!(await response.text()).includes('Moldura teste'), 'Anonymous response must not expose the approved configuration');
+      } finally { await anonymous.dispose(); }
+      await stalePage.goto(privateUrl);
+      await stalePage.getByText('Prévia privada · pacote aprovado v1. Esta versão não é uma publicação pública.', { exact: true }).waitFor();
+      await expect(stalePage.getByRole('img', { name: 'Composição com a arte Moldura teste, sem foto', exact: true })).toBeVisible({ timeout: 30_000 });
+      await stalePage.locator('input[type=file]').setInputFiles({ name: 'snapshot-local.png', mimeType: 'image/png', buffer: png(600, 'photo') });
+      const snapshotImage = stalePage.getByRole('img', { name: /Composição com a arte Moldura teste e sua foto/ });
+      await expect(snapshotImage).toBeVisible({ timeout: 30_000 });
+      await stalePage.evaluate(({ campaignId, event }) => window.postMessage({ type: 'namarca:preview', campaignId, event }, window.location.origin), { campaignId, event: changed.event });
+      await expect(snapshotImage).toBeVisible();
+      assert.equal(await stalePage.getByRole('img', { name: /Composição com a arte Moldura revisada v2 e sua foto/ }).count(), 0, 'Snapshot preview must ignore the live draft bridge');
+      assert.equal((await pool.query('select count(*)::int as n from publication_tasks where campaign_id=$1', [campaignId])).rows[0].n, 0);
+      const unpublished = (await pool.query('select preparation_status,publication_status from campaigns where id=$1', [campaignId])).rows[0];
+      assert.deepEqual(unpublished, { preparation_status: 'draft', publication_status: 'unpublished' });
+    } finally { await stalePage.close(); }
     stage = 'inline client registration and campaign link';
     assert.equal(await page.getByRole('heading', { name: 'Contratação', exact: true }).count(), 0);
     assert.equal(await page.locator('input[name=price]').count(), 1);
@@ -179,13 +264,14 @@ async function main() {
     const afterEdit = (await pool.query('select client_id,price_cents,preparation_status,publication_status from campaigns where id=$1', [campaignId])).rows[0];
     assert.equal(afterEdit.client_id, null); assert.equal(afterEdit.price_cents, 39500);
     assert.equal(afterEdit.preparation_status, 'draft'); assert.equal(afterEdit.publication_status, 'unpublished');
-    console.info('PASS editor + clients: real password/TOTP; editor regression/export; inline client creation, reload, reuse on second campaign, unlink without deleting client; single price and draft/unpublished.');
+    console.info('PASS editor + visual approval + clients: real password/TOTP; editor regression/local export; approval v1, duplicate and stale revision rejected, editor save preserves v1, explicit v2, private snapshot and no publication tasks; client creation/reload/reuse/unlink; draft/unpublished.');
   } finally {
     await context.close(); await browser.close();
     if (campaignId) {
       const assets = await pool.query('select key from campaign_assets where campaign_id=$1', [campaignId]);
       privateKeys.push(...assets.rows.map((row: { key: string }) => row.key));
       if (privateKeys.length) await s3.send(new DeleteObjectsCommand({ Bucket: process.env.S3_BUCKET!, Delete: { Objects: privateKeys.map(Key => ({ Key })) } }));
+      await pool.query('delete from campaign_packages where campaign_id=$1', [campaignId]);
       await pool.query('delete from campaigns where id=$1', [campaignId]);
     }
     if (secondCampaignId) await pool.query('delete from campaigns where id=$1', [secondCampaignId]);

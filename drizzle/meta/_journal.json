@@ -50,6 +50,13 @@
       "when": 1795023510354,
       "tag": "0006_careful_bruce_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795025102486,
+      "tag": "0007_nervous_korath",
+      "breakpoints": true
     }
   ]
 }

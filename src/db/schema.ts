@@ -41,6 +41,20 @@ export const campaignEditor = pgTable("campaign_editor", {
   updatedAt: updatedAt(),
 });
 
+// Immutable visual approval snapshots; administrative records stay private.
+export const campaignPackages = pgTable("campaign_packages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "restrict" }),
+  version: integer("version").notNull(),
+  editorRevision: integer("editor_revision").notNull(),
+  config: jsonb("config").$type<EventConfig>().notNull(),
+  approvedBy: text("approved_by").notNull(),
+  channel: text("channel").notNull(),
+  approvedAt: timestamp("approved_at", { withTimezone: true }).notNull(),
+  recordedBy: text("recorded_by").notNull(),
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex("campaign_package_version_unique").on(t.campaignId, t.version), check("campaign_package_positive", sql`${t.version} > 0 AND ${t.editorRevision} > 0`)]);
+
 export const campaignAssets = pgTable("campaign_assets", {
   id: uuid("id").defaultRandom().primaryKey(),
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),

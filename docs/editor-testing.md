@@ -43,6 +43,12 @@ O timeout de export inicialmente observado era um defeito no enquadramento do te
 
 O runner cria campanha sem cliente obrigatório e exige um campo de preço e ausência da seção Contratação. Cadastra cliente inline com nome/contato, salva e recarrega; cria segunda campanha selecionando o mesmo cliente e confere via SQL a reutilização. Desvincula da primeira sem apagar cliente nem vínculo da segunda. Confere preço e estado draft/unpublished. Execução aprovada em 18/11/2026. O antigo cenário de contratação versionada foi retirado junto com a funcionalidade, por decisão do fundador. Ver `docs/contracts.md`.
 
+## Ampliação: aprovação visual versionada
+
+Runner registra v1 pela UI, rejeita duplicata a partir de aba previamente aberta, modifica/salva arte e confere que v1 permanece intacta, rejeita revisão obsoleta e registra explicitamente v2. Confere responsável/canal/data/registrador e snapshots por SQL. Prévia histórica v1 bloqueia anônimo, carrega material original e ignora postMessage de configuração v2. Foto sintética continua local. Campanha permanece draft/unpublished sem tarefas. Cleanup remove packages antes de campaign pela FK restrita.
+
+Execução completa aprovada após corrigir extração dos campos de formulário (metadados React não entram no schema strict) e sincronização do runner. Houve tentativas anteriores com timeout no trecho referência/salvamento; não generalizar estabilidade. 37 testes unitários/contratos, typecheck/lint, migrations e build aprovados. Nenhuma conta/sessão real alterada. Ver `docs/campaign-packages.md`.
+
 ## Encerramento
 
 ```sh

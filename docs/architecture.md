@@ -19,7 +19,11 @@ Banco já existente precisa migração para adicionar refunded ao enum payment_s
 
 ## Dados comerciais simples
 
-`clients` guarda nome e contato opcional; `campaigns.clientId` é FK opcional restrita, permitindo reutilizar cliente em várias campanhas. Cadastro inline e salvamento da campanha são transacionais; cliente existente é verificado no servidor. `campaigns.notes` segue na campanha, assim como o único valor operacional `campaigns.priceCents`; editar campanha não altera `payments.amountCents`. Migration `0005_sloppy_silk_fever.sql` migra os antigos organizer/contact para clientes (apenas pares exatos compartilhados), preservando campos legados e preço. Por decisão do fundador, a contratação versionada foi retirada da UI e suas actions removidas. Tabelas `campaign_contracts`/`contract_approvals` e migration 0003 permanecem somente para preservar registros, sem uso no fluxo ativo ou checkout. Aprovação visual/publicação ainda pendentes. Detalhes em [contracts.md](contracts.md).
+`clients` guarda nome e contato opcional; `campaigns.clientId` é FK opcional restrita, permitindo reutilizar cliente em várias campanhas. Cadastro inline e salvamento da campanha são transacionais; cliente existente é verificado no servidor. `campaigns.notes` segue na campanha, assim como o único valor operacional `campaigns.priceCents`; editar campanha não altera `payments.amountCents`. Migration `0005_sloppy_silk_fever.sql` migra os antigos organizer/contact para clientes (apenas pares exatos compartilhados), preservando campos legados e preço. Por decisão do fundador, a contratação versionada foi retirada da UI e suas actions removidas. Tabelas `campaign_contracts`/`contract_approvals` e migration 0003 permanecem somente para preservar registros, sem uso no fluxo ativo ou checkout. Aprovação visual tem snapshots privados versionados (ver seção de pacotes); publicação ainda pendente. Detalhes em [contracts.md](contracts.md).
+
+## Pacotes visuais aprovados
+
+`campaign_packages` guarda snapshots privados versionados da configuração validada e a declaração externa de aprovação (responsável/canal/dia e registrador admin). Rascunho continua editável e não herda aprovação; preparationStatus não representa aprovação do rascunho mutável. Actions usam requireAdmin, lock, revisão/identidade esperadas e inspeção dos objetos PNG privados. Prévia histórica usa somente snapshot, sem bridge de atualização. Ver [campaign-packages.md](campaign-packages.md). Sem publicação ou liberação financeira automática.
 
 ## Checkout mock — fatia inicial
 
