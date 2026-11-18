@@ -6,6 +6,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { Pool } from 'pg';
 import { PNG } from 'pngjs';
 import { S3Client, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import { testEditorGallery } from './editor-gallery-scenario';
 
 const base = 'http://namarca-editor-test:3000';
 const email = 'editor-test@namarca.test';
@@ -55,12 +56,23 @@ async function main() {
     stage = 'provision isolated account';
     await pool.query('insert into auth_user (id,name,email,email_verified,created_at,updated_at) values ($1,$2,$3,true,now(),now())', [id, 'Editor integration', email]);
     await pool.query('insert into auth_account (id,account_id,provider_id,user_id,password,created_at,updated_at) values ($1,$2,$3,$2,$4,now(),now())', [randomUUID(), id, 'credential', await hashPassword(password)]);
+    stage = 'client directory rejects anonymous access';
+    for (const path of ['/admin/clientes', '/admin/clientes/novo', `/admin/clientes/${randomUUID()}`]) {
+      const response = await context.request.get(`${base}${path}`, { maxRedirects: 0 });
+      assert.ok([302, 303, 307, 308, 401, 403].includes(response.status()));
+    }
     stage = 'browser password login';
     await page.goto(`${base}/login`);
     await page.getByLabel('E-mail', { exact: true }).fill(email);
     await page.getByLabel('Senha', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Entrar no administrativo' }).click();
     await page.waitForURL('**/seguranca');
+    stage = 'financial report rejects enrollment-only session';
+    assert.equal((await context.request.get(`${base}/api/campaigns/${randomUUID()}/financial-report`)).status(), 403);
+    assert.equal((await context.request.get(`${base}/api/campaigns/invalid/financial-report`)).status(), 403);
+    stage = 'client directory rejects enrollment-only session';
+    const enrollmentClients = await context.request.get(`${base}/admin/clientes`, { maxRedirects: 0 });
+    assert.ok([302, 303, 307, 308, 401, 403].includes(enrollmentClients.status()));
     stage = 'browser TOTP enrollment';
     await page.getByLabel('Confirme sua senha').fill(password);
     await page.getByRole('button', { name: 'Configurar autenticador' }).click();
@@ -70,23 +82,316 @@ async function main() {
     await page.getByLabel('Código de seis dígitos').fill(totp(uri));
     await page.getByRole('button', { name: 'Verificar código' }).click();
     await page.waitForURL('**/admin');
+    stage = 'client directory create, search, edit and reload';
+    await page.getByRole('link', { name: 'Clientes', exact: true }).click();
+    await expect(page.getByText('Nenhum cliente cadastrado.', { exact: false })).toBeVisible();
+    await page.getByRole('link', { name: 'Novo cliente', exact: true }).click();
+    await page.getByLabel('Nome do cliente', { exact: true }).fill('Cliente diretório sintético');
+    await page.getByLabel('Contato', { exact: false }).fill('diretorio@example.test');
+    await page.getByRole('button', { name: 'Cadastrar cliente', exact: true }).click();
+    await page.waitForURL(/\/admin\/clientes\/[0-9a-f-]+\?salvo=1$/);
+    const directoryId = new URL(page.url()).pathname.split('/').pop()!;
+    clientIds.push(directoryId);
+    await expect(page.getByRole('status')).toHaveText('Cliente salvo.');
+    await page.getByRole('link', { name: 'Clientes', exact: true }).click();
+    await page.getByLabel('Buscar por nome ou contato').fill('diretorio@example.test');
+    await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+    await page.getByRole('link', { name: 'Cliente diretório sintético', exact: true }).click();
+    await page.getByLabel('Nome do cliente', { exact: true }).fill('Cliente diretório atualizado');
+    await page.getByLabel('Contato', { exact: false }).fill('');
+    await page.getByRole('button', { name: 'Salvar cliente', exact: true }).click();
+    await expect.poll(async () => (await pool.query('select name,contact from clients where id=$1', [directoryId])).rows[0]).toEqual({ name: 'Cliente diretório atualizado', contact: '' });
+    await page.reload();
+    await expect(page.getByLabel('Nome do cliente', { exact: true })).toHaveValue('Cliente diretório atualizado');
+    await page.getByRole('link', { name: 'Clientes', exact: true }).click();
+    await page.getByLabel('Buscar por nome ou contato').fill('diretório atualizado');
+    await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+    await expect(page.getByRole('link', { name: 'Cliente diretório atualizado', exact: true })).toBeVisible();
+    await page.getByLabel('Buscar por nome ou contato').fill('sem-resultado-sintetico');
+    await page.getByRole('button', { name: 'Buscar', exact: true }).click();
+    await expect(page.getByText('Nenhum cliente encontrado.', { exact: false })).toBeVisible();
     stage = 'create campaign through UI';
     await page.goto(`${base}/admin/campanhas/nova`);
+    if (process.env.CAMPAIGN_SECTIONS_ONLY === '1') {
+      await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
+      await page.getByRole('button', { name: 'Salvar rascunho', exact: true }).click();
+      await expect(page.getByRole('tab', { name: 'Evento e valor', exact: true })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByLabel('Nome do evento')).toBeFocused();
+      assert.equal(new URL(page.url()).pathname, '/admin/campanhas/nova');
+    }
+    await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
     await page.getByLabel('Nome do evento').fill('Integração editor isolada');
     await page.getByLabel('Endereço da campanha').fill(`editor-test-${randomBytes(5).toString('hex')}`);
     await page.getByLabel('Data de encerramento').fill('2099-12-31');
     await page.getByRole('button', { name: 'Salvar rascunho' }).click();
     await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
     campaignId = new URL(page.url()).pathname.split('/').pop()!;
+    stage = 'client directory linked campaigns and inherited options';
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
+    await page.getByLabel('Cliente', { exact: true }).selectOption(directoryId);
+    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await expect.poll(async () => (await pool.query('select client_id from campaigns where id=$1', [campaignId])).rows[0].client_id).toBe(directoryId);
+    await page.goto(`${base}/admin/clientes/${directoryId}`);
+    await expect(page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link', { name: 'Integração editor isolada' })).toHaveAttribute('href', `/admin/campanhas/${campaignId}`);
+    await page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link').click();
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
+    await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue(directoryId);
+    await page.goto(`${base}/admin/clientes/${directoryId}`);
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Client details must fit mobile viewport');
+    await page.getByRole('link', { name: 'Clientes', exact: true }).click();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Client directory must fit mobile viewport');
+    await page.setViewportSize({ width: 1440, height: 1400 });
+    await page.goto(`${base}/admin/campanhas/${campaignId}`);
+    console.info('PASS client directory: anonymous/enrollment blocked, create/edit/reload, search name/contact and empty result, linked campaign, mobile overflow checks.');
+    if (process.env.CAMPAIGN_SECTIONS_ONLY === '1') {
+      stage = 'campaign sections visibility, keyboard and draft retention';
+      const labels = ['Estúdio', 'Dados da campanha', 'Aprovação visual', 'Cobrança'];
+      // Resolve hidden panels through aria-controls: hidden nodes have no accessible name.
+      const topTabs = labels.map(name => page.getByRole('tab', { name, exact: true }));
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 1400 });
+        for (const tab of topTabs) {
+          await tab.click();
+          for (const other of topTabs) {
+            const panel = page.locator(`[id="${await other.getAttribute('aria-controls')}"]`);
+            if (other === tab) await expect(panel).toBeVisible(); else await expect(panel).toBeHidden();
+          }
+          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Campaign sections must fit viewport');
+        }
+      }
+      await topTabs[0].click();
+      await topTabs[0].press('ArrowRight');
+      await expect(topTabs[1]).toBeFocused();
+      await expect(topTabs[1]).toHaveAttribute('aria-selected', 'true');
+      await topTabs[1].press('End');
+      await expect(topTabs[3]).toBeFocused();
+      await expect(topTabs[3]).toHaveAttribute('aria-selected', 'true');
+      await topTabs[3].press('Home');
+      await expect(topTabs[0]).toBeFocused();
+      await expect(topTabs[0]).toHaveAttribute('aria-selected', 'true');
+      await topTabs[1].click();
+      await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
+      await page.getByLabel('Nome do evento', { exact: true }).fill('Nome local retido');
+      await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
+      await page.locator('textarea[name=notes]').fill('Observação local retida');
+      await topTabs[2].click();
+      await topTabs[1].click();
+      await expect(page.locator('textarea[name=notes]')).toHaveValue('Observação local retida');
+      await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
+      await expect(page.getByLabel('Nome do evento', { exact: true })).toHaveValue('Nome local retido');
+      await topTabs[0].click();
+      const sectionStudio = page.getByRole('region', { name: 'Estúdio da campanha' });
+      await sectionStudio.getByLabel('Adicionar arte PNG').setInputFiles({ name: 'sections.png', mimeType: 'image/png', buffer: png(400, 'artwork') });
+      const artName = sectionStudio.getByLabel('Nome da arte 1', { exact: true });
+      await artName.fill('Arte local retida');
+      const puts: string[] = [];
+      const trackPut = (req: import('@playwright/test').Request) => { if (req.method() === 'PUT') puts.push(req.url()); };
+      page.on('request', trackPut);
+      try {
+        for (const tab of topTabs.slice(1)) await tab.click();
+        await topTabs[0].click();
+        await expect(artName).toHaveValue('Arte local retida');
+        await expect(sectionStudio.getByRole('status')).toContainText('Alterações não salvas');
+        // Only isolated synthetic campaign/artwork data is visible; no credentials or payment data.
+        for (const [width, height, suffix] of [[1440, 1400, 'desktop'], [390, 844, 'mobile']] as const) {
+          await page.setViewportSize({ width, height });
+          await page.evaluate(() => window.scrollTo(0, 0));
+          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Dirty studio must fit viewport');
+          await page.screenshot({ path: `/tmp/namarca-sections-${suffix}.png`, fullPage: true });
+        }
+        assert.deepEqual(puts, [], 'Switching sections must not save the studio');
+        assert.equal((await (await context.request.get(`${base}/api/campaigns/${campaignId}/editor`)).json()).revision, 0);
+        assert.equal((await pool.query('select name,notes from campaigns where id=$1', [campaignId])).rows[0].name, 'Integração editor isolada');
+        assert.equal((await pool.query('select notes from campaigns where id=$1', [campaignId])).rows[0].notes, '');
+      } finally { page.off('request', trackPut); }
+      console.info('PASS campaign sections: hidden required field revealed; exclusive top panels, keyboard, 390/1440 overflow and local form/studio retention without PUT.');
+      return;
+    }
+    if (process.env.CLIENT_DIRECTORY_ONLY === '1') return;
+    stage = 'upload validation feedback preserves empty draft';
+    const uploadStudio = page.getByRole('region', { name: 'Estúdio da campanha' });
+    await expect(uploadStudio.getByLabel('Adicionar arte PNG')).toBeEnabled();
+    await uploadStudio.getByLabel('Adicionar arte PNG').setInputFiles({ name: 'opaque-synthetic.png', mimeType: 'image/png', buffer: png(80, 'photo') });
+    await expect(uploadStudio.getByRole('status')).toContainText('totalmente transparente e um totalmente opaco', { timeout: 60_000 });
+    await uploadStudio.getByLabel('Adicionar arte PNG').setInputFiles({ name: 'invalid-synthetic.png', mimeType: 'image/png', buffer: Buffer.from('synthetic invalid PNG') });
+    await expect(uploadStudio.getByRole('status')).toContainText('Exporte novamente como PNG', { timeout: 60_000 });
+    assert.equal((await pool.query('select count(*)::int as n from campaign_assets where campaign_id=$1', [campaignId])).rows[0].n, 0);
+    if (process.env.UPLOAD_FEEDBACK_ONLY === '1') return;
+    stage = 'dirty studio blocks cancelled base-data submit and permits confirmed submit';
+    await page.getByRole('tab', { name: 'Cores', exact: true }).click();
+    const studio = page.getByRole('region', { name: 'Estúdio da campanha' });
+    const color = studio.getByLabel('Cor da campanha', { exact: true });
+    await expect(color).toBeVisible();
+    const original = (await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0];
+    const originalEditor = await (await context.request.get(`${base}/api/campaigns/${campaignId}/editor`)).json();
+    assert.equal(originalEditor.event.artworks.length, 0);
+    const dirtyColor = (await color.inputValue()) === '#123456' ? '#654321' : '#123456';
+    // Playwright fill on color inputs triggers React's real change path.
+    await color.fill(dirtyColor);
+    await expect(studio.getByRole('status')).toHaveText('Alterações não salvas. A prévia mostra o rascunho atual.');
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
+    await page.getByLabel('Nome do evento', { exact: true }).fill('Dados base confirmados');
+    await page.locator('input[name=price]').fill('123,45');
+    const submitBase = async (accept: boolean) => {
+      const dialogHandled = page.waitForEvent('dialog').then(async dialog => {
+        assert.equal(dialog.type(), 'confirm');
+        assert.match(dialog.message(), /Salvar os dados da campanha pode descartá-las/);
+        if (accept) await dialog.accept(); else await dialog.dismiss();
+      });
+      await Promise.all([dialogHandled, page.getByRole('button', { name: 'Salvar alterações', exact: true }).click()]);
+    };
+    const baseMutations: string[] = [];
+    const trackBaseMutation = (req: import('@playwright/test').Request) => {
+      if (['POST', 'PUT', 'PATCH'].includes(req.method())) baseMutations.push(req.url());
+    };
+    page.on('request', trackBaseMutation);
+    try {
+      await submitBase(false);
+      await page.getByRole('tab', { name: 'Estúdio', exact: true }).click();
+      await expect(color).toHaveValue(dirtyColor);
+      await expect(studio.getByRole('status')).toContainText('Alterações não salvas');
+      assert.deepEqual((await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0], original);
+      assert.equal(baseMutations.length, 0, 'Dismiss must prevent the real form mutation');
+      await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+      await submitBase(true);
+      await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
+      await expect.poll(async () => (await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0]).toEqual({ name: 'Dados base confirmados', price_cents: 12345 });
+      assert.ok(baseMutations.length > 0, 'Accept must allow the real form mutation');
+      await page.reload();
+      await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+      await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
+      await expect(page.getByLabel('Nome do evento', { exact: true })).toHaveValue('Dados base confirmados');
+      await expect(page.locator('input[name=price]')).toHaveValue('123,45');
+      const unchangedEditor = await (await context.request.get(`${base}/api/campaigns/${campaignId}/editor`)).json();
+      assert.equal(unchangedEditor.revision, originalEditor.revision);
+      assert.equal(unchangedEditor.event.color, originalEditor.event.color, 'Base-data submit must not save the dirty studio');
+    } finally { page.off('request', trackBaseMutation); }
+    console.info('PASS dirty guard: real base-data submit dismissed with no mutation, DB name/price intact and dirty color preserved; second submit confirmed, DB and reload verified; studio not saved.');
+    if (process.env.DIRTY_GUARD_ONLY === '1') {
+      assert.equal(await page.locator('form[data-campaign-approval=true]').count(), 0);
+      console.info('LIMITATION: empty-draft focused run has no approval form; dirty approval alert not exercised.');
+      return;
+    }
+    stage = 'admin issues checkout by real submit and copies link/message';
+    await page.getByRole('tab', { name: 'Cobrança', exact: true }).click();
+    await page.getByRole('button', { name: 'Emitir link de cobrança', exact: true }).click();
+    await expect(page.getByRole('link', { name: 'Abrir checkout', exact: true })).toBeVisible({ timeout: 60_000 });
+    const issued = (await pool.query('select token,amount_cents,campaign_name from checkout_links where campaign_id=$1', [campaignId])).rows[0];
+    assert.equal(issued.amount_cents, 12345);
+    assert.equal(issued.campaign_name, 'Dados base confirmados');
+    // HTTP container origin has no OS clipboard: capture the browser API boundary explicitly.
+    await page.evaluate("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { document.documentElement.dataset.testClipboard = text; } } })");
+    await page.getByRole('button', { name: 'Copiar link', exact: true }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Link copiado.' })).toBeVisible();
+    assert.equal(await page.locator('html').getAttribute('data-test-clipboard'), `${base}/checkout/${issued.token}`);
+    await page.getByRole('button', { name: 'Copiar mensagem de cobrança', exact: true }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Mensagem copiada.' })).toBeVisible();
+    assert.match((await page.locator('html').getAttribute('data-test-clipboard'))!, /Confira o nome, o valor e as orientações/);
+    assert.ok((await page.locator('html').getAttribute('data-test-clipboard'))!.endsWith(`${base}/checkout/${issued.token}`));
+    await page.evaluate("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Synthetic permission denial'); } } })");
+    await page.getByRole('button', { name: 'Copiar link', exact: true }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Não foi possível copiar.' })).toHaveText('Não foi possível copiar. Abra o checkout e copie o endereço.');
+    await expect(page.getByRole('status').filter({ hasText: /Link copiado|Mensagem copiada/ })).toHaveCount(0);
+    // No payment was created. Remove only this isolated link before financial fixtures.
+    await pool.query('delete from checkout_links where campaign_id=$1', [campaignId]);
+    if (process.env.BILLING_UI_ONLY === '1') return;
+    stage = 'financial report guards, empty summary and synthetic payments';
+    const reportEndpoint = `${base}/api/campaigns/${campaignId}/financial-report`;
+    const reportUrl = `${base}/admin/campanhas/${campaignId}/financeiro`;
+    const anonymousReport = await playwrightRequest.newContext();
+    try {
+      for (const key of [campaignId, 'invalid']) {
+        assert.equal((await anonymousReport.get(`${base}/api/campaigns/${key}/financial-report`)).status(), 403, 'Auth must precede UUID validation');
+      }
+      const deniedPage = await anonymousReport.get(reportUrl, { maxRedirects: 0 });
+      assert.ok([302, 303, 307, 308, 401, 403].includes(deniedPage.status()));
+      assert.ok(!(await deniedPage.text()).includes('Tentativas registradas'));
+    } finally { await anonymousReport.dispose(); }
+    assert.equal((await context.request.get(`${base}/api/campaigns/invalid/financial-report`)).status(), 404);
+    assert.equal((await context.request.get(`${base}/api/campaigns/${randomUUID()}/financial-report`)).status(), 404);
+    await page.goto(reportUrl);
+    await expect(page.getByText('Nenhuma tentativa registrada.', { exact: false })).toBeVisible();
+    for (const label of ['Pendente', 'Pago', 'Expirado', 'Cancelado', 'Reembolsado']) {
+      const region = page.getByRole('region', { name: label, exact: true });
+      await expect(region.getByRole('heading')).toHaveText(/R\$\s*0,00/);
+      await expect(region.getByText('0 tentativas', { exact: true })).toBeVisible();
+    }
+    await expect(page.getByRole('link', { name: 'Baixar CSV financeiro' })).toHaveCount(0);
+    const csvHeader = '\uFEFF"Referência";"Situação";"Valor (BRL)";"Criada em (UTC)";"Confirmação registrada em (UTC)";"Atualizada em (UTC)"\r\n';
+    assert.equal(await (await context.request.get(reportEndpoint)).text(), csvHeader);
+    // Direct DB fixtures: no payer, no remote API or real gateway is involved.
+    const token = randomBytes(32).toString('hex');
+    const checkoutId = randomUUID();
+    await pool.query('insert into checkout_links (id,campaign_id,token,campaign_name,amount_cents) values ($1,$2,$3,$4,4321)', [checkoutId, campaignId, token, 'Snapshot sintético']);
+    const records = [
+      { reference: '=synthetic-formula', status: 'pending', label: 'Pendente', cents: 1234, amount: '12,34', paid: null },
+      { reference: `paid-${randomUUID()}`, status: 'paid', label: 'Pago', cents: 5678, amount: '56,78', paid: '2026-01-02T12:00:00.000Z' },
+      { reference: `refunded-${randomUUID()}`, status: 'refunded', label: 'Reembolsado', cents: 9000, amount: '90,00', paid: '2026-01-02T12:00:00.000Z' },
+    ];
+    const gatewayIds: string[] = [];
+    for (const row of records) {
+      const gatewayId = `synthetic-private-${randomUUID()}`; gatewayIds.push(gatewayId);
+      await pool.query('insert into payments (campaign_id,checkout_id,external_id,payment_id,qr_code,amount_cents,status,paid_at,created_at,updated_at) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [campaignId, checkoutId, row.reference, gatewayId, 'synthetic-private-qr', row.cents, row.status, row.paid, '2026-01-01T12:00:00.000Z', '2026-01-03T12:00:00.000Z']);
+    }
+    await page.reload();
+    for (const row of records) {
+      const region = page.getByRole('region', { name: row.label, exact: true });
+      await expect(region.getByRole('heading')).toHaveText(new RegExp(`R\\$\\s*${row.amount}`));
+      await expect(region.getByText('1 tentativa', { exact: true })).toBeVisible();
+      const tableRow = page.getByRole('row').filter({ hasText: row.reference });
+      await expect(tableRow).toContainText(row.label);
+      await expect(tableRow).toContainText(row.amount);
+    }
+    const csvResponse = await context.request.get(reportEndpoint);
+    assert.equal(csvResponse.status(), 200);
+    assert.equal(csvResponse.headers()['content-type'], 'text/csv; charset=utf-8');
+    assert.equal(csvResponse.headers()['content-disposition'], `attachment; filename="financeiro-${campaignId}.csv"`);
+    assert.equal(csvResponse.headers()['cache-control'], 'private, no-store');
+    assert.equal(csvResponse.headers()['x-content-type-options'], 'nosniff');
+    const csv = await csvResponse.text();
+    assert.ok(csv.startsWith(csvHeader));
+    assert.equal(csv.split('\r\n').filter(Boolean).length, 4);
+    for (const row of records) {
+      const safeReference = row.reference.startsWith('=') ? `'${row.reference}` : row.reference;
+      assert.ok(csv.includes(`"${safeReference}";"${row.label}";"${row.amount}";"2026-01-01T12:00:00.000Z";"${row.paid ?? ''}";"2026-01-03T12:00:00.000Z"\r\n`));
+    }
+    const [csvDownload] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('link', { name: 'Baixar CSV financeiro', exact: true }).click(),
+    ]);
+    assert.equal(csvDownload.suggestedFilename(), `financeiro-${campaignId}.csv`);
+    const csvStream = await csvDownload.createReadStream(); assert.ok(csvStream);
+    const csvChunks: Buffer[] = []; for await (const chunk of csvStream) csvChunks.push(Buffer.from(chunk));
+    assert.equal(Buffer.concat(csvChunks).toString('utf8'), csv);
+    const reportHtml = await page.content();
+    for (const output of [csv, reportHtml]) {
+      for (const secret of [token, 'synthetic-private-qr', ...gatewayIds]) assert.ok(!output.includes(secret), 'Private checkout/gateway data must not leak');
+      assert.ok(!/cpf|receiver_cpf|payerCpf/i.test(output), 'Report must not include payer identity fields');
+    }
+    await pool.query('delete from payments where campaign_id=$1', [campaignId]);
+    await pool.query('delete from checkout_links where campaign_id=$1', [campaignId]);
+    console.info('PASS financial report: anonymous and enrollment-only 403/auth-first; admin empty and pending/paid/refunded summaries; CSV download/content/headers/formula protection; no token/CPF/gateway fields. Synthetic DB only.');
+    // Focused financial run still exercises real password/TOTP and the shared finally cleanup.
+    if (process.env.FINANCIAL_REPORT_ONLY === '1') return;
+    await page.goto(`${base}/admin/campanhas/${campaignId}`);
     const endpoint = `${base}/api/campaigns/${campaignId}/editor`;
     const editor = page.getByRole('region', { name: 'Estúdio da campanha' });
+    await testEditorGallery(page, endpoint, png, value => { stage = value; });
+    if (process.env.GALLERY_ONLY === '1') return;
     stage = 'upload artwork and sticker through UI';
+    await page.getByRole('tab', { name: 'Artes e área da foto', exact: true }).click();
     await editor.locator('input[type=file]').nth(0).setInputFiles({ name: 'frame.png', mimeType: 'image/png', buffer: png(400, 'artwork') });
     await page.getByLabel('Nome da arte 1', { exact: true }).waitFor();
+    await page.getByRole('tab', { name: 'Stickers', exact: true }).click();
     await expect(editor.locator('input[type=file]').nth(1)).toBeEnabled();
     await editor.locator('input[type=file]').nth(1).setInputFiles({ name: 'sticker.png', mimeType: 'image/png', buffer: png(128, 'sticker') });
     await page.getByLabel('Nome do sticker 1', { exact: true }).waitFor();
     stage = 'reference width after uploads';
+    await page.getByRole('tab', { name: 'Artes e área da foto', exact: true }).click();
     await editor.getByLabel('Largura', { exact: true }).fill('320');
     await editor.getByLabel('Altura', { exact: true }).fill('320');
     await editor.getByLabel('X', { exact: true }).fill('40');
@@ -142,9 +447,11 @@ async function main() {
     assert.equal(campaign.preparation_status, 'draft');
     assert.equal(campaign.publication_status, 'unpublished');
     stage = 'register visual approval v1 through UI';
+    await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
     const approval = page.getByRole('region', { name: 'Aprovação visual', exact: true });
     const approvalDate = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
     const fillApproval = async (target: typeof page) => {
+      await target.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
       const region = target.getByRole('region', { name: 'Aprovação visual', exact: true });
       await region.getByLabel('Responsável pela aprovação', { exact: true }).fill('Aprovador sintético');
       await region.locator('select[name=channel]').selectOption('whatsapp');
@@ -159,6 +466,25 @@ async function main() {
     await stalePage.goto(`${base}/admin/campanhas/${campaignId}`);
     await fillApproval(stalePage);
     await fillApproval(page);
+    stage = 'dirty studio blocks approval of previously saved package';
+    await page.getByRole('tab', { name: 'Estúdio', exact: true }).click();
+    await page.getByLabel('Nome da arte 1', { exact: true }).fill('Rascunho não aprovado');
+    await expect(editor.getByRole('status')).toContainText('Alterações não salvas');
+    const approvalAlert = page.waitForEvent('dialog').then(async dialog => {
+      assert.equal(dialog.type(), 'alert');
+      assert.match(dialog.message(), /Salve as alterações do estúdio e recarregue/);
+      await dialog.dismiss();
+    });
+    await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
+    await Promise.all([approvalAlert, approval.getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click()]);
+    assert.equal((await packages()).length, 0, 'Dirty preview must not approve the older saved package');
+    await page.getByRole('tab', { name: 'Estúdio', exact: true }).click();
+    await expect(page.getByLabel('Nome da arte 1', { exact: true })).toHaveValue('Rascunho não aprovado');
+    await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura teste');
+    await expect(editor.getByRole('status')).toHaveText(`Configuração salva · revisão ${saved.revision}`);
+    console.info('PASS dirty approval guard: real submit raises alert, no package created and dirty artwork preserved.');
+    stage = 'register visual approval v1 through UI';
+    await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
     await approval.getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
     await expect.poll(async () => {
       const error = approval.getByRole('alert');
@@ -179,6 +505,7 @@ async function main() {
     assert.equal((await packages()).length, 1);
     try {
       stage = 'editor save preserves approved snapshot';
+      await page.getByRole('tab', { name: 'Estúdio', exact: true }).click();
       await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura revisada v2');
       await page.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
       await page.getByText('Configuração salva. A campanha não foi publicada.', { exact: true }).waitFor();
@@ -195,6 +522,7 @@ async function main() {
       assert.deepEqual(await packages(), [snapshotV1]);
       stage = 'register revised visual approval v2';
       await page.reload();
+      await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
       await expect(approval.locator('input[name=revision]')).toHaveValue(String(changed.revision));
       await expect(approval.locator('input[name=identity]')).toHaveValue(identity);
       await fillApproval(page);
@@ -227,26 +555,33 @@ async function main() {
       assert.deepEqual(unpublished, { preparation_status: 'draft', publication_status: 'unpublished' });
     } finally { await stalePage.close(); }
     stage = 'inline client registration and campaign link';
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     assert.equal(await page.getByRole('heading', { name: 'Contratação', exact: true }).count(), 0);
     assert.equal(await page.locator('input[name=price]').count(), 1);
     await page.getByLabel('Cliente', { exact: true }).selectOption('new');
     await page.locator('input[name=clientName]').fill('Organizador teste');
     await page.locator('input[name=clientContact]').fill('contato@example.test');
     await page.locator('textarea[name=notes]').fill('Uma rodada extra combinada.');
+    await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
     await page.locator('input[name=price]').fill('395,00');
     await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
     await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
     const linked = (await pool.query('select client_id from campaigns where id=$1', [campaignId])).rows[0].client_id;
     assert.ok(linked); clientIds.push(linked);
     await page.reload();
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue(linked);
     await expect(page.locator('textarea[name=notes]')).toHaveValue('Uma rodada extra combinada.');
+    await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
     await expect(page.locator('input[name=price]')).toHaveValue('395,00');
     stage = 'reuse client in another campaign';
     await page.goto(`${base}/admin/campanhas/nova`);
     await page.getByLabel('Nome do evento').fill('Segunda campanha mesmo cliente');
     await page.getByLabel('Endereço da campanha').fill(`client-test-${randomBytes(5).toString('hex')}`);
     await page.getByLabel('Data de encerramento').fill('2099-12-31');
+    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await page.getByLabel('Cliente', { exact: true }).selectOption(linked);
     await page.getByRole('button', { name: 'Salvar rascunho' }).click();
     await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
@@ -255,28 +590,39 @@ async function main() {
     assert.equal((await pool.query('select count(*)::int as n from clients where id=$1', [linked])).rows[0].n, 1);
     stage = 'unlink client without deleting reusable record';
     await page.goto(`${base}/admin/campanhas/${campaignId}`);
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await page.getByLabel('Cliente', { exact: true }).selectOption('');
     await page.locator('textarea[name=notes]').fill('');
     await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
     await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
     await page.reload();
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue('');
     const afterEdit = (await pool.query('select client_id,price_cents,preparation_status,publication_status from campaigns where id=$1', [campaignId])).rows[0];
     assert.equal(afterEdit.client_id, null); assert.equal(afterEdit.price_cents, 39500);
     assert.equal(afterEdit.preparation_status, 'draft'); assert.equal(afterEdit.publication_status, 'unpublished');
     console.info('PASS editor + visual approval + clients: real password/TOTP; editor regression/local export; approval v1, duplicate and stale revision rejected, editor save preserves v1, explicit v2, private snapshot and no publication tasks; client creation/reload/reuse/unlink; draft/unpublished.');
   } finally {
-    await context.close(); await browser.close();
+    // Browser shutdown failures must not skip isolated DB/S3 fixture cleanup.
+    await context.close().catch(() => {}); await browser.close().catch(() => {});
     if (campaignId) {
       const assets = await pool.query('select key from campaign_assets where campaign_id=$1', [campaignId]);
       privateKeys.push(...assets.rows.map((row: { key: string }) => row.key));
       if (privateKeys.length) await s3.send(new DeleteObjectsCommand({ Bucket: process.env.S3_BUCKET!, Delete: { Objects: privateKeys.map(Key => ({ Key })) } }));
+      await pool.query('delete from payments where campaign_id=$1', [campaignId]);
+      await pool.query('delete from checkout_links where campaign_id=$1', [campaignId]);
       await pool.query('delete from campaign_packages where campaign_id=$1', [campaignId]);
       await pool.query('delete from campaigns where id=$1', [campaignId]);
     }
     if (secondCampaignId) await pool.query('delete from campaigns where id=$1', [secondCampaignId]);
     for (const clientId of clientIds) await pool.query('delete from clients where id=$1', [clientId]);
     await pool.query('delete from auth_user where id=$1', [id]);
+    for (const table of ['auth_user', 'campaigns', 'payments', 'checkout_links', 'campaign_assets', 'campaign_packages']) {
+      assert.equal((await pool.query(`select count(*)::int as n from ${table}`)).rows[0].n, 0, 'Disposable fixtures must be removed');
+    }
+    console.info('CLEANUP: disposable accounts, campaigns, payments, checkout links, assets and packages verified empty.');
   }
 }
 main().catch((error: unknown) => {

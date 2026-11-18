@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { themeDefaults, type Artwork, type EventConfig, type Material } from '@/editor/shared/events/events';
 import { clampReference, ReferenceCanvas } from '@/editor/reference-canvas';
+import { CampaignSections } from '@/components/campaign-sections';
+import { uploadFailureMessage } from '@/lib/upload-feedback';
 import './campaign-editor.css';
 
 type Snapshot = { event: EventConfig; revision: number };
@@ -41,9 +43,22 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
       if (!link || link.target === '_blank' || link.hasAttribute('download') || link.href === window.location.href || link.getAttribute('href')?.startsWith('#')) return;
       if (!window.confirm('Você tem alterações não salvas no estúdio. Sair e descartá-las?')) { e.preventDefault(); e.stopPropagation(); }
     };
+    const submit = (e: SubmitEvent) => {
+      if (e.defaultPrevented || !(e.target instanceof HTMLFormElement)) return;
+      if (e.target.dataset.campaignApproval === 'true') {
+        e.preventDefault(); e.stopPropagation();
+        window.alert('Salve as alterações do estúdio e recarregue a página antes de registrar a aprovação. A prévia atual ainda não está salva.');
+        return;
+      }
+      if (e.target.dataset.campaignNavigation !== 'true') return;
+      if (!window.confirm('Você tem alterações não salvas no estúdio. Salvar os dados da campanha pode descartá-las. Continuar sem salvar o estúdio?')) {
+        e.preventDefault(); e.stopPropagation();
+      }
+    };
     window.addEventListener('beforeunload', warn);
     document.addEventListener('click', navigate, true);
-    return () => { window.removeEventListener('beforeunload', warn); document.removeEventListener('click', navigate, true); };
+    document.addEventListener('submit', submit, true);
+    return () => { window.removeEventListener('beforeunload', warn); document.removeEventListener('click', navigate, true); document.removeEventListener('submit', submit, true); };
   }, [dirty]);
   const sendPreview = useCallback(() => {
     if (event) frame.current?.contentWindow?.postMessage({ type: 'namarca:preview', campaignId, event }, window.location.origin);
@@ -72,10 +87,11 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
   const upload = async (file: File | undefined, kind: Kind) => {
     if (!file || !event) return;
     if (file.type !== 'image/png') { setMessage('Selecione um arquivo PNG.'); return; }
+    if (file.size > 25 * 1024 * 1024) { setMessage('O PNG excede o limite de 25 MiB. Reduza o arquivo e tente novamente.'); return; }
     setBusy(true); setMessage('Enviando material PNG…');
     try {
       const response = await fetch(`/api/campaigns/${campaignId}/assets?kind=${kind}`, { method: 'POST', headers: { 'Content-Type': 'image/png', 'X-Asset-Name': encodeURIComponent(file.name.replace(/\.png$/i, '')) }, body: file });
-      if (!response.ok) throw new Error('Não foi possível enviar o PNG. Verifique o formato e o tamanho.');
+      if (!response.ok) throw new Error(await uploadFailureMessage(response));
       const { material } = await response.json() as { material: Artwork };
       if (kind === 'artwork') { setEvent(current => current && ({ ...current, artworks: [...current.artworks, material] })); setSelected(material.id); }
       else setEvent(current => current && ({ ...current, stickers: [...current.stickers, { id: material.id, name: material.name, file: material.file }] }));
@@ -107,9 +123,13 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
     <header className="ce-heading"><div><span className="ce-eyebrow">Estúdio / rascunho</span><h2>Materiais e experiência</h2><p>Configure o visual e experimente com uma foto local. Fotos e composições nunca são enviadas ao servidor.</p></div><button type="button" disabled={busy || !dirty || conflict} onClick={() => void save()}>{busy ? 'Aguarde…' : 'Salvar configuração'}</button></header>
     <div className="ce-feedback" role="status">{message || (dirty ? 'Alterações não salvas. A prévia mostra o rascunho atual.' : `Configuração salva · revisão ${snapshot?.revision}`)}</div>
     {conflict && <button type="button" disabled={busy} onClick={() => { if (window.confirm('Descartar suas alterações e carregar a configuração salva?')) void load(); }}>Recarregar versão salva</button>}
-    <div className="ce-grid"><div className="ce-controls"><fieldset disabled={busy} className="ce-fieldset">{gallery('artwork', event.artworks)}{gallery('sticker', event.stickers)}
+    <div className="ce-grid"><div className="ce-controls"><fieldset disabled={busy} className="ce-fieldset"><CampaignSections label="Configuração do estúdio" items={[
+      { id: 'artes', label: 'Artes e área da foto', content: <>{gallery('artwork', event.artworks)}
       {artwork && <section className="ce-section"><h3>Área da foto · {artwork.name}</h3><p className="ce-muted">Desenhe fora da seleção para criar uma área, arraste para mover ou use as alças para redimensionar.</p><ReferenceCanvas key={artwork.id} artwork={artwork} assetURL={assetURL(artwork.file)} onChange={updateReference} /><div className="ce-numbers">{(['x', 'y', 'width', 'height'] as const).map(key => <label key={key}>{({ x: 'X', y: 'Y', width: 'Largura', height: 'Altura' })[key]}<input type="number" step="1" min={key === 'x' || key === 'y' ? 0 : 1} max={key === 'x' || key === 'width' ? artwork.width : artwork.height} value={artwork.reference[key]} onChange={e => { if (Number.isFinite(e.currentTarget.valueAsNumber)) updateReference({ ...artwork.reference, [key]: e.currentTarget.valueAsNumber }); }} /></label>)}</div></section>}
-      <section className="ce-section"><h3>Cores da experiência</h3><div className="ce-colors">{(Object.keys(themeDefaults) as Array<keyof typeof themeDefaults>).map(key => <label key={key}><input type="color" value={event.theme?.[key] ?? themeDefaults[key]} onChange={e => change({ ...event, theme: { ...event.theme, [key]: e.target.value } })} />{labels[key]}</label>)}<label><input type="color" value={event.color} onChange={e => change({ ...event, color: e.target.value })} />Cor da campanha</label></div></section>
+      </> },
+      { id: 'stickers', label: 'Stickers', content: gallery('sticker', event.stickers) },
+      { id: 'cores', label: 'Cores', content: <section className="ce-section"><h3>Cores da experiência</h3><div className="ce-colors">{(Object.keys(themeDefaults) as Array<keyof typeof themeDefaults>).map(key => <label key={key}><input type="color" value={event.theme?.[key] ?? themeDefaults[key]} onChange={e => change({ ...event, theme: { ...event.theme, [key]: e.target.value } })} />{labels[key]}</label>)}<label><input type="color" value={event.color} onChange={e => change({ ...event, color: e.target.value })} />Cor da campanha</label></div></section> },
+    ]} />
     </fieldset></div><aside className="ce-preview"><header><h3>Prévia interativa</h3><span>Rascunho atual</span></header><p className="ce-muted">Envie uma foto neste editor, ajuste, adicione stickers e exporte um PNG no seu dispositivo.</p><iframe ref={frame} src={`/admin/campanhas/${campaignId}/previa`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></aside></div>
   </section>;
 }

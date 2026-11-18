@@ -51,16 +51,21 @@ Migrations em `drizzle/` são versionadas. `db:push` existe somente para explora
 - Login administrativo com senha, TOTP, códigos de recuperação e cadastro público bloqueado.
 - Cadastro, listagem, detalhes e edição de campanhas em rascunho, com preço e encerramento; consulta de cobranças já registradas.
 - Estúdio: upload privado de artes/stickers PNG, nomes e ordenação, retângulo visual da foto, cores e prévia real com composição/exportação no navegador.
-- Cliente leve reutilizável entre campanhas, seleção/cadastro inline com nome e contato opcional; valor único e observações na campanha, sem contratos.
+- Cliente leve reutilizável entre campanhas, seleção/cadastro inline com nome e contato opcional; seção Clientes com busca, cadastro, edição e campanhas vinculadas. Valor único e observações na campanha, sem contratos.
 - Aprovação visual versionada: snapshot de configuração, responsável/canal/data e prévia histórica privada. O rascunho continua separado/editável; aprovação não publica. [Pacotes](docs/campaign-packages.md).
 - Cobrança exclusivamente mock: link opaco com nome/valor congelados, checkout sem conta, QR simulado, recuperação de tentativa incerta e consulta manual no painel. [Limites do checkout](docs/checkout.md).
+- Resumo financeiro por campanha com totais por situação e CSV administrativo protegido, sem dados de pagador ou tokens. [Relatório financeiro](docs/financial-report.md).
 - Banco transacional, S3 privado, adapter PixGo e recebimento de webhooks.
 - Confirmação financeira e registro idempotente do evento na própria requisição do webhook, sem worker ou cron.
 - Infra reproduzível e testes.
 
 **Ainda não é o SaaS comercial completo.** O estúdio e a prévia foram integrados, há aprovação visual versionada e checkout local, mas não há checkout real homologado nem publicação pública. Uma confirmação de pagamento nunca transforma um pacote inexistente em campanha publicada. Registro de data não implementa sozinho o encerramento do editor antigo.
 
-## Produção
+## Lista vigente e limites
+
+Veja [docs/TODO.md](docs/TODO.md) para concluídos, pendências locais e decisões externas. Deploy/implantação em produção está fora do escopo ativo por pedido do fundador; o histórico abaixo não é uma lista de tarefas autorizadas.
+
+## Produção (referência futura, fora do escopo)
 
 Direção aprovada: Next.js na Vercel, PostgreSQL gerenciado, R2 e PixGo real. A autenticação é biblioteca Better Auth, não SaaS. O webhook atualiza o pagamento diretamente, sem agendamento. Notificações perdidas não possuem recuperação automática nesta base. Nenhum recurso remoto foi provisionado. Migração futura para Coolify é possível, com revisão operacional, backups e secrets.
 

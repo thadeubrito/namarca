@@ -9,5 +9,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const enrollment = await getEnrollmentSession();
     redirect(enrollment ? '/seguranca' : '/login');
   }
-  return <><header className="topbar"><div className="shell"><Link href="/admin" className="wordmark" aria-label="Namarca, campanhas">namarca</Link><nav className="nav" aria-label="Principal"><Link href="/admin">Campanhas</Link><small>Administrativo</small><SignOut /></nav></div></header><main id="conteudo" className="shell content">{children}</main></>;
+  return <><header className="topbar"><div className="shell"><Link href="/admin" className="wordmark" aria-label="Namarca, campanhas">namarca</Link><nav className="nav" aria-label="Principal"><Link href="/admin">Campanhas</Link><Link href="/admin/clientes">Clientes</Link><small>Administrativo</small><SignOut /></nav></div></header><main id="conteudo" className="shell content">{children}</main></>;
 }

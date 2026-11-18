@@ -49,6 +49,30 @@ Runner registra v1 pela UI, rejeita duplicata a partir de aba previamente aberta
 
 Execução completa aprovada após corrigir extração dos campos de formulário (metadados React não entram no schema strict) e sincronização do runner. Houve tentativas anteriores com timeout no trecho referência/salvamento; não generalizar estabilidade. 37 testes unitários/contratos, typecheck/lint, migrations e build aprovados. Nenhuma conta/sessão real alterada. Ver `docs/campaign-packages.md`.
 
+## Ampliação: financeiro e proteção de rascunho
+
+`FINANCIAL_REPORT_ONLY=1` executa somente relatório protegido com dados sintéticos, guards e CSV. `DIRTY_GUARD_ONLY=1` executa confirmação de submit de dados base com estúdio dirty: cancelar bloqueia requisição e mantém DB/rascunho; aceitar salva dados base sem salvar configuração. Runner integral também verifica bloquear aprovação visual dirty (alert, sem pacote criado), além dos fluxos anteriores. Execução focal e integral aprovadas nesta etapa; não elimina flakiness histórica do editor. Não usar ambos os modos focais ao mesmo tempo. Cleanup remove payments/checkout links/packages antes de campaigns.
+
+## Ampliação: múltiplos materiais na galeria
+
+`scripts/editor-gallery-scenario.ts`, chamado pelo runner integral, usa três artes e três stickers sintéticos. Exercita uploads/nomes, referências independentes por arte, seleção, movimentos para cima/baixo e limites das listas, ordem na API e após reload, troca de arte na prévia e catálogo de stickers. Remove a arte selecionada e verifica fallback da área da foto; confirma persistência dos itens restantes e que PNGs retirados continuam acessíveis ao admin. Por fim remove todos, salva/recarrega o rascunho vazio e verifica a mensagem na prévia. O fluxo integral continua depois com novos uploads, exportação local, aprovações e clientes.
+
+`GALLERY_ONLY=1` encerra após essa fatia (ainda executa login/TOTP e os cenários anteriores de dirty/financeiro). Não combinar com outros modos focais. Execução focal e integral aprovadas em Chromium desktop em 18/11/2026. A primeira tentativa falhou apenas no assert de texto dos botões de arte, que também inclui dimensões; corrigido para conferir o nome acessível completo. Nenhuma mudança no editor de produção foi necessária. Não cobre materiais reais, proporções variadas, toque/mobile físico ou substituição de arquivo in-place (não existe essa ação). Não resolve o 422 reportado.
+
+## Ampliação: feedback de upload e cobrança administrativa
+
+`UPLOAD_FEEDBACK_ONLY=1` encerra após escolher dois PNGs sintéticos inválidos na UI: um opaco e outro com bytes inválidos, verificando mensagens úteis e zero assets persistidos. Não diagnostica materiais reais. `BILLING_UI_ONLY=1` inclui isso e dirty, emite cobrança com submit real, confere snapshot SQL e testa copiar link/mensagem, além de falha de permissão sem manter sucesso antigo. Clipboard é simulado no limite da API do browser porque o origin HTTP interno não oferece clipboard do SO; não declarar validação de cópia nativa. Os dois cenários também integram o runner completo. Não combinar modos focais.
+
+Nesta etapa: 43 testes, lint/typecheck, migrations descartáveis e build isolado aprovados. Execuções focais e integral final passaram. Uma execução integral anterior falhou em fill da galeria, sem reproduzir na seguinte; flakiness permanece. Consulta/recuperação administrativas ainda não foram clicadas neste cenário.
+
+## Ampliação: seção Clientes
+
+`CLIENT_DIRECTORY_ONLY=1` executa guard de acesso anônimo e sessão sem TOTP, cadastro independente com nome/contato, busca por contato, edição e reload, busca por nome e vazio, vinculação na campanha via submit e link da campanha na página de cliente. Verifica overflow a 390px e encerra após retornar à campanha. Conta/dados isolados removidos pelo finally. Integra o runner principal; não combinar flags focais. Execução focal aprovada, 45 testes/typecheck/lint/migrations/build aprovados. Regressão integral desta sessão bloqueada na galeria preexistente (não declarar PASS integral).
+
+## Ampliação: navegação por abas da campanha
+
+`CAMPAIGN_SECTIONS_ONLY=1` verifica criação com campo obrigatório em painel oculto (revela a aba correta), exclusividade dos painéis principais, teclado com setas/Home/End, retenção de nome/observações e arte dirty ao navegar sem PUT/salvamento, banco inalterado e ausência de overflow a 390/1440px. Capturas exclusivamente sintéticas em `/tmp/namarca-sections-desktop.png` e `mobile.png`; o container precisa montar `/tmp` para inspecioná-las no host. Não combinar flags. Testes anteriores foram adaptados para clicar nas abas antes de interagir. Focal, dirty e integral aprovados nesta etapa; não elimina flakiness histórica nem comprova toque/celular físico.
+
 ## Encerramento
 
 ```sh

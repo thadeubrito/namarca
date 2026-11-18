@@ -2,6 +2,10 @@
 
 Disponível em `/admin/campanhas/<UUID>` para campanhas em rascunho e não publicadas. O modelo, a matemática da composição e o editor de foto foram reaproveitados do projeto anterior; não há dependência do Vite nem de diretórios de pacotes locais.
 
+## Navegação por seção
+
+Os detalhes exibem uma seção por vez: Estúdio, Dados da campanha, Aprovação visual e Cobrança. O estúdio separa Artes e área da foto, Stickers e Cores; a prévia continua ao lado (abaixo em telas estreitas). Criação/dados separam Evento e valor de Cliente e observações. Trocar de aba não salva nem desmonta os painéis, preservando campos e rascunho local; sair/recarregar ainda depende do salvamento e dos guards existentes. Setas, Home e End navegam pelas abas. Ao submeter um formulário com campo obrigatório inválido em outra aba, essa aba é revelada para correção.
+
 ## Operação
 
 1. Abra a campanha pelo nome na listagem.
@@ -13,6 +17,12 @@ Disponível em `/admin/campanhas/<UUID>` para campanhas em rascunho e não publi
 7. Salve a configuração. Upload concluído não equivale a configuração salva; o painel informa alterações pendentes.
 
 A referência limita e recorta a foto. Alpha da arte e retângulo têm responsabilidades distintas; não é inferência automática de área transparente. Logos podem ser cobertos por stickers conforme o comportamento do editor original.
+
+## Alterações não salvas
+
+O estúdio avisa antes de fechar/recarregar a página e ao seguir links na mesma aba. Ao enviar os dados base da campanha, pede confirmação se há alterações não salvas no estúdio; cancelar impede o envio e mantém o rascunho local. Aprovação visual com estúdio alterado é bloqueada: salvar a configuração e recarregar detalhes antes de registrar a aprovação. Formulários financeiros não salvam nem aprovam o estúdio.
+
+É uma proteção UX no navegador, não persistência automática. Não cobre encerramento abrupto, falha do dispositivo, todos os caminhos de navegação programática/voltar do navegador ou perda de processo. Não prometer recuperação de rascunho após fechar a aba.
 
 ## Dados e segurança
 
@@ -28,6 +38,6 @@ A referência limita e recorta a foto. Alpha da arte e retângulo têm responsab
 
 PNG até 25 MiB e 40 milhões de pixels no ambiente Node local, validado no servidor (assinatura, CRC, dimensões, pixels transparentes e opacos). A Vercel impõe limites próprios ao corpo da requisição: uploads grandes precisarão de envio direto assinado ao R2 antes de produção. Não prometer suporte a 25 MiB na Vercel com o proxy atual.
 
-Não há publicação, aprovação comercial, criação de cobrança, biblioteca de modelos nem importação automática de materiais do projeto antigo. O editor de composição foi migrado, mas a ferramenta não promete edição acessível por teclado equivalente aos gestos do original. Rascunho sem arte pode ser salvo, mas não abre a composição.
+Não há publicação, aprovação comercial, biblioteca de modelos nem importação automática de materiais do projeto antigo. Cobrança local e aprovação visual versionada existem separadamente nos detalhes da campanha. O editor de composição foi migrado, mas a ferramenta não promete edição acessível por teclado equivalente aos gestos do original. Rascunho sem arte pode ser salvo, mas não abre a composição.
 
 Arquivos retirados da galeria e uploads que não entraram numa configuração podem permanecer privados. Coleta de lixo/backups precisam de política operacional; não apagar materiais automaticamente enquanto houver referências.
