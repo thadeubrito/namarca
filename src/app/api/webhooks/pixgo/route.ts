@@ -1,8 +1,10 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../../../db";
-import { payments, webhookReceipts } from "../../../../db/schema";
+import { payments, webhookReceipts, checkoutAttempts } from "../../../../db/schema";
 import { getEnv } from "../../../../lib/env";
 import { createPixgoClient, nextPaymentStatus, verifyKnownPayment, verifyWebhookSignature, webhookSchema } from "../../../../lib/pixgo";
+
+import { registerCheckoutPayment, requireMockCheckout } from '@/lib/checkout';
 
 export const runtime = "nodejs";
 const MAX_BODY = 16_384;
@@ -32,9 +34,17 @@ export async function POST(request: Request) {
     catch { return Response.json({ error: "invalid_event" }, { status: 400 }); }
     const headerEvent = request.headers.get("x-webhook-event");
     if (headerEvent && headerEvent !== payload.event) return Response.json({ error: "invalid_event" }, { status: 400 });
-    const [known] = await db.select().from(payments).where(eq(payments.paymentId, payload.payment.id)).limit(1);
-    if (!known) return Response.json({ error: "unknown_payment" }, { status: 422 });
+    let [known] = await db.select().from(payments).where(eq(payments.paymentId, payload.payment.id)).limit(1);
+    const [attempt] = !known ? await db.select().from(checkoutAttempts).where(eq(checkoutAttempts.externalId, payload.payment.externalId)) : [];
+    if (!known && !attempt) return Response.json({ error: 'unknown_payment' }, { status: 422 });
     const remote = await createPixgoClient().getPayment(payload.payment.id);
+    if (!known && attempt) {
+      requireMockCheckout();
+      // A signed callback may arrive before createPayment returns. Confirm against the gateway first.
+      if (remote.id !== payload.payment.id || remote.externalId !== payload.payment.externalId || remote.amount !== payload.payment.amount) return Response.json({ error: 'payment_mismatch' }, { status: 422 });
+      await registerCheckoutPayment(attempt.id, remote);
+      [known] = await db.select().from(payments).where(eq(payments.paymentId, remote.id)).limit(1);
+    }
     try { verifyKnownPayment(known, payload.payment); verifyKnownPayment(known, remote); }
     catch { return Response.json({ error: "payment_mismatch" }, { status: 422 }); }
     const result = await db.transaction(async (tx) => {

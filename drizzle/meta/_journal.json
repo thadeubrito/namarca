@@ -43,6 +43,13 @@
       "when": 1795022534232,
       "tag": "0005_sloppy_silk_fever",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795023510354,
+      "tag": "0006_careful_bruce_banner",
+      "breakpoints": true
     }
   ]
 }

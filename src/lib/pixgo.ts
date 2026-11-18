@@ -121,6 +121,13 @@ export function createPixgoClient() {
       verifyKnownPayment({ paymentId: payment.id, externalId: data.externalId, amountCents: data.amountCents }, payment);
       return payment;
     },
+    findMockPayment: async (externalId: string): Promise<GatewayPayment> => {
+      if (env.PIXGO_MODE !== 'mock' || new URL(env.PIXGO_BASE_URL).hostname !== 'pixgo-mock') throw new Error('Mock only');
+      const response = await fetch(`${env.PIXGO_BASE_URL.replace(/\/$/, '')}/payment/list?external_id=${encodeURIComponent(identifier.parse(externalId))}`, { headers: { 'X-API-Key': env.PIXGO_API_KEY }, signal: AbortSignal.timeout(4000), cache: 'no-store', redirect: 'error' });
+      const parsed = z.object({ success: z.literal(true), data: z.array(remoteDataSchema) }).safeParse(await response.json());
+      if (!response.ok || !parsed.success || parsed.data.data.length !== 1) throw new Error('No unique payment found');
+      return normalizePayment(parsed.data.data[0]);
+    },
     getPayment: (id: string) => request(`/payment/${encodeURIComponent(identifier.parse(id))}/status`),
   };
 }

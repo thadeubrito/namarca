@@ -2,7 +2,7 @@
 
 ## Escopo
 
-Next.js Node.js + Better Auth + Drizzle/PostgreSQL + S3 privado. V1 permite campanhas drafts e confirmação financeira síncrona pelo webhook, sem worker ou agendamento. **Sem checkout completo ou publicação real.** O estúdio de campanha e a prévia do editor estão descritos em campaign-editor.md. Pagar nunca marca campanha published. Sem organizations/multi-tenancy nesta base.
+Next.js Node.js + Better Auth + Drizzle/PostgreSQL + S3 privado. V1 permite campanhas drafts e confirmação financeira síncrona pelo webhook, sem worker ou agendamento. **Checkout somente mock local; sem checkout live completo ou publicação real.** O estúdio de campanha e a prévia do editor estão descritos em campaign-editor.md. Pagar nunca marca campanha published. Sem organizations/multi-tenancy nesta base.
 
 ## Modelo e exports
 
@@ -20,6 +20,10 @@ Banco já existente precisa migração para adicionar refunded ao enum payment_s
 ## Dados comerciais simples
 
 `clients` guarda nome e contato opcional; `campaigns.clientId` é FK opcional restrita, permitindo reutilizar cliente em várias campanhas. Cadastro inline e salvamento da campanha são transacionais; cliente existente é verificado no servidor. `campaigns.notes` segue na campanha, assim como o único valor operacional `campaigns.priceCents`; editar campanha não altera `payments.amountCents`. Migration `0005_sloppy_silk_fever.sql` migra os antigos organizer/contact para clientes (apenas pares exatos compartilhados), preservando campos legados e preço. Por decisão do fundador, a contratação versionada foi retirada da UI e suas actions removidas. Tabelas `campaign_contracts`/`contract_approvals` e migration 0003 permanecem somente para preservar registros, sem uso no fluxo ativo ou checkout. Aprovação visual/publicação ainda pendentes. Detalhes em [contracts.md](contracts.md).
+
+## Checkout mock — fatia inicial
+
+`checkout_links` congela nome/valor por campanha com token opaco. `checkout_attempts` registra criação antes do gateway e bloqueia duplicação em resultado incerto; `payments.checkoutId`, `qrCode`, `expiresAt` ligam resposta confirmada. `src/lib/checkout.ts` contém transações, reconciliação e guard estrito mock local. Callback antecipado pode registrar uma tentativa conhecida após consulta e comparação de IDs/valor. Painel agora oferece consulta manual e recuperação via listagem **somente no mock**. Não há checkout live ou publicação. Contratos e limites em [checkout.md](checkout.md); esta seção substitui afirmações históricas abaixo de ausência de consulta manual.
 
 ## Configuração
 
@@ -54,7 +58,7 @@ Não há delivery ID nas docs: dedupe SHA256(payment_id + ':' + event), independ
 5. Inserir dispatchedAt junto com a receipt e efetivar a atualização financeira na mesma transação. Receipts legadas ainda não processadas podem ser concluídas ao receber novamente o evento.
 6. Retornar 200 somente após commit. Não cria tarefas nem publica campanhas.
 
-Falha antes do commit retorna 503; o provedor pode re-tentar, mas não presumir política garantida de reenvio. Duplicatas são idempotentes. Não há recuperação automática de notificações perdidas nem consulta manual no painel implementada. A futura integração comercial deve oferecer reconciliação sob demanda se necessário.
+Falha antes do commit retorna 503; o provedor pode re-tentar, mas não presumir política garantida de reenvio. Duplicatas são idempotentes. Não há recuperação automática de notificações perdidas. Consulta manual no painel existe exclusivamente para o mock (ver checkout.md); recuperação live segue pendente.
 
 Respostas: 200 aceita/duplicada, 400 payload, 401 assinatura, 413 tamanho, 422 pagamento desconhecido/divergente, 409 conflito, 503 dependência. Nenhuma inclui stack traces/segredos. A consulta gateway tem timeout 4s; requisições lentas podem ultrapassar os 5s do provedor. Reenvio não duplica efeitos. Não iniciar trabalho não rastreado após responder.
 

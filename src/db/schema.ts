@@ -82,12 +82,33 @@ export const contractApprovals = pgTable("contract_approvals", {
   createdAt: createdAt(),
 });
 
+export const checkoutLinks = pgTable("checkout_links", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "restrict" }),
+  token: text("token").notNull().unique(),
+  campaignName: text("campaign_name").notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  createdAt: createdAt(),
+}, (t) => [check("checkout_amount_range", sql`${t.amountCents} BETWEEN 1000 AND 600000`)]);
+
+// Persisted before contacting the gateway. Unknown outcomes must never trigger an automatic POST retry.
+export const checkoutAttempts = pgTable("checkout_attempts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  checkoutId: uuid("checkout_id").notNull().references(() => checkoutLinks.id, { onDelete: "restrict" }),
+  externalId: text("external_id").notNull().unique(),
+  state: text("state", { enum: ["creating", "unknown", "registered"] }).notNull(),
+  createdAt: createdAt(),
+}, (t) => [index("checkout_attempt_link_idx").on(t.checkoutId), check("checkout_attempt_state", sql`${t.state} IN ('creating', 'unknown', 'registered')`)]);
+
 // One row per payment attempt. No payer identity or raw gateway payload is stored.
 export const payments = pgTable("payments", {
   id: uuid("id").defaultRandom().primaryKey(),
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "restrict" }),
+  checkoutId: uuid("checkout_id").references(() => checkoutLinks.id, { onDelete: "restrict" }),
   externalId: text("external_id").notNull().unique(),
   paymentId: text("payment_id").notNull().unique(),
+  qrCode: text("qr_code"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
   amountCents: integer("amount_cents").notNull(),
   status: paymentStatus("status").default("pending").notNull(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
