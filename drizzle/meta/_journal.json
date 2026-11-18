@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795014524003,
+      "tag": "0000_eager_naoko",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795015038941,
+      "tag": "0001_plain_pride",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795017632446,
+      "tag": "0002_chief_doctor_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795019548320,
+      "tag": "0003_yellow_agent_zero",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795021513304,
+      "tag": "0004_broken_shaman",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795022534232,
+      "tag": "0005_sloppy_silk_fever",
+      "breakpoints": true
+    }
+  ]
+}

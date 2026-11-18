@@ -1,0 +1,55 @@
+{
+  "name": "namarca",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "next dev --webpack --hostname 0.0.0.0",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts services/pixgo-mock/server.test.mjs",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "admin:create": "tsx scripts/create-admin.ts",
+    "admin:reset": "tsx scripts/reset-admin.ts",
+    "dev:env": "node scripts/dev-env.mjs",
+    "lint": "eslint .",
+    "test:e2e": "playwright test",
+    "test:auth": "tsx scripts/test-auth.ts",
+    "test:webhook": "tsx scripts/test-webhook.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1000.0",
+    "@tabler/icons-react": "^3.52.0",
+    "better-auth": "1.7.25",
+    "drizzle-orm": "^0.45.0",
+    "konva": "^10.9.1",
+    "motion": "^14.14.0",
+    "next": "16.4.6",
+    "pg": "^8.16.0",
+    "pngjs": "^7.0.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-konva": "^19.3.2",
+    "zod": "^4.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.0",
+    "@types/pngjs": "^6.0.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "drizzle-kit": "^0.31.0",
+    "eslint": "^10.15.0",
+    "eslint-config-next": "^16.4.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.0"
+  }
+}
