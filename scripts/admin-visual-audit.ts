@@ -35,7 +35,7 @@ export async function auditAdminVisuals(page: Page, base: string, campaignId: st
         { name: 'campaigns', url: `${base}/admin` },
         { name: 'clients', url: `${base}/admin/clientes` },
         { name: 'studio', url: `${base}/admin/campanhas/${campaignId}`, tab: undefined },
-        { name: 'data', url: `${base}/admin/campanhas/${campaignId}`, tab: 'Dados da campanha' },
+        { name: 'data', url: `${base}/admin/campanhas/${campaignId}`, tab: 'Detalhes' },
         { name: 'billing', url: `${base}/admin/campanhas/${campaignId}`, tab: 'Cobrança' },
       ];
       for (const view of views) {

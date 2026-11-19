@@ -180,11 +180,11 @@ export async function testEditorRuntime({ page, context, base, campaignId, event
     // Both the campaign form and the lazy studio stay mounted across section changes.
     const originalDraftName = await draftName.inputValue();
     await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await campaignSections(page).getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await draftName.fill(`${originalDraftName} local`);
     await openStudio(page);
     await openStudio(page);
-    await expect(campaignSections(page).getByRole('tab', { name: 'Estúdio', exact: true })).toBeFocused();
+    await expect(campaignSections(page).getByRole('tab', { name: 'Artes', exact: true })).toBeFocused();
     await expectStudioLayout(page);
     await expect(composition).toHaveAttribute('aria-label', initialLabel!);
     const retainedFrame = async () => {
@@ -200,7 +200,7 @@ export async function testEditorRuntime({ page, context, base, campaignId, event
       await expect(iframe).toBeHidden();
       await expectCollapsedStudioPreview(page);
       await retainedFrame();
-      for (const name of ['Dados da campanha', 'Cobrança']) {
+      for (const name of ['Detalhes', 'Cobrança']) {
         await campaignSections(page).getByRole('tab', { name, exact: true }).click();
         await expect(page.getByRole('region', { name: 'Estúdio da campanha', includeHidden: true })).toBeHidden();
         await retainedFrame();

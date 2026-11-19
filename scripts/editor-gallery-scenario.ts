@@ -1,5 +1,5 @@
 import { saveStudioSection, studioTabName } from './editor-section-save-helper';
-import { openStudio } from './studio-navigation';
+import { campaignSections, openStudio } from './studio-navigation';
 import assert from 'node:assert/strict';
 import { expect, type Page } from '@playwright/test';
 import { expectEditorReference, setEditorReference } from './editor-reference-helper';
@@ -16,7 +16,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   const save = async () => {
     for (const label of ['artes', 'figurinhas'] as const) await saveStudioSection(studio, label);
   };
-  const section = async (kind: 'arte' | 'sticker') => { await studio.getByRole('tab', { name: studioTabName(kind === 'arte' ? 'Artes' : 'Figurinhas') }).click(); };
+  const section = async (kind: 'arte' | 'sticker') => { await campaignSections(page).getByRole('tab', { name: studioTabName(kind === 'arte' ? 'Artes' : 'Figurinhas') }).click(); };
   const names = async (kind: 'arte' | 'sticker') => {
     await section(kind);
     return studio.getByRole('textbox', { name: new RegExp(`^Nome ${kind === 'arte' ? 'da arte' : 'do sticker'} \\d+$`) }).evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value));

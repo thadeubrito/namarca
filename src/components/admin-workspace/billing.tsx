@@ -4,6 +4,9 @@ import { useActionState, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { billingAction, type BillingState } from '@/app/admin/campanhas/[id]/billing-actions';
 import { Action, ActionLink, Field, TextInput, Notice } from './primitives';
+import { useFormDraft } from './form-draft';
+
+const billingDraftFields = ['amount'] as const;
 
 // PaceUI references consulted via container fetch:
 // https://paceui.com/r/motion-alert.json and https://paceui.com/r/motion-spring-button.json.
@@ -30,14 +33,21 @@ export function PaymentAction({ id, operation, children }: { id: string; operati
   </form>;
 }
 
-export function BillingIssueForm({ id, defaultAmount }: { id: string; defaultAmount: string }) {
+export function BillingIssueForm({ id, defaultAmount, draftKey }: { id: string; defaultAmount: string; draftKey?: string }) {
   const [state, action, pending] = useActionState<BillingState, FormData>(billingAction.bind(null, id), {});
-  return <form action={action} aria-busy={pending} className="max-w-md space-y-4">
+  const { formRef, feedback, saveLocal, dirty } = useFormDraft({ draftKey, section: 'cobranca', fields: billingDraftFields, submitting: pending });
+  return <form ref={formRef} action={action} aria-busy={pending} className="max-w-md space-y-4">
     <input type="hidden" name="operation" value="issue" />
     <Field label="Valor da cobrança (R$)" hint="De R$ 10,00 a R$ 6.000,00. O valor fica fixo após emitir o link.">
       <TextInput name="amount" type="text" inputMode="decimal" required maxLength={7} placeholder="395,00" defaultValue={defaultAmount} disabled={pending} />
     </Field>
-    <Action type="submit" disabled={pending}>{pending ? 'Emitindo…' : 'Emitir link de cobrança'}</Action>
+    <p className="text-xs text-muted-foreground">Rascunho neste navegador. Salvar o rascunho não salva no servidor nem emite cobrança.</p>
+    {feedback}
+    <p className="text-xs text-muted-foreground" role="status">{dirty ? 'Cobrança com alterações locais. Nenhum link emitido por estas alterações.' : 'Cobrança sem alterações pendentes.'}</p>
+    <div className="flex flex-wrap gap-2">
+      <Action type="button" variant="secondary" disabled={pending || !draftKey} onClick={saveLocal}>Salvar rascunho da cobrança</Action>
+      <Action type="submit" disabled={pending}>{pending ? 'Emitindo…' : 'Emitir link de cobrança'}</Action>
+    </div>
     <Feedback error={state.error} success={state.success} />
   </form>;
 }

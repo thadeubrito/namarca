@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { expect, type Page, type Request } from '@playwright/test';
 import type { Pool } from 'pg';
-import { openStudio } from './studio-navigation';
+import { campaignSections, openStudio } from './studio-navigation';
 import { saveStudioSection, studioTabName } from './editor-section-save-helper';
 import type { StudioDraft } from '../src/lib/studio-draft';
 
@@ -19,7 +19,7 @@ export async function testEditorSectionSave(page: Page, endpoint: string, pool: 
     const db = await new Promise<IDBDatabase>((resolve, reject) => { const r = indexedDB.open('namarca-studio-drafts', 1); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
     try { return await new Promise<StudioDraft[]>((resolve, reject) => { const r = db.transaction('drafts').objectStore('drafts').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); }); } finally { db.close(); }
   });
-  const tab = (label: string) => studio.getByRole('tab', { name: studioTabName(label) });
+  const tab = (label: string) => campaignSections(page).getByRole('tab', { name: studioTabName(label) });
   const pending = async (label: string, value: boolean) => {
     if (value) await expect(tab(label)).toHaveAccessibleDescription('Alterações não salvas');
     else await expect(tab(label)).not.toHaveAccessibleDescription('Alterações não salvas');
@@ -56,6 +56,28 @@ export async function testEditorSectionSave(page: Page, endpoint: string, pool: 
     assert.equal(posts.length, 0); assert.equal(puts.length, 0); assert.deepEqual(await server(), initial);
     await shots('pending');
 
+    stage('section save: details save preserves every visual draft without confirmation');
+    const iframe = page.locator('iframe[title="Prévia real do editor da campanha"]');
+    const frameIdentity = await iframe.elementHandle();
+    const dialogs: string[] = [];
+    const rejectDialog = (dialog: import('@playwright/test').Dialog) => { dialogs.push(dialog.type()); void dialog.dismiss(); };
+    page.on('dialog', rejectDialog);
+    try {
+      await tab('Detalhes').click();
+      await page.getByLabel('Nome do evento', { exact: true }).fill('Detalhes preservam materiais locais');
+      await page.getByRole('button', { name: 'Salvar detalhes', exact: true }).click();
+      await expect(page.getByText('Detalhes sem alterações pendentes.', { exact: true })).toBeVisible();
+      assert.equal((await pool.query('select name from campaigns where id=$1', [campaign])).rows[0].name, 'Detalhes preservam materiais locais');
+      assert.deepEqual(dialogs, [], 'Saving details never asks to discard other sections');
+      await expect(page.getByRole('alertdialog')).toHaveCount(0);
+      assert.ok(await frameIdentity!.evaluate(el => el === document.querySelector('iframe[title="Prévia real do editor da campanha"]')));
+      await tab('Figurinhas').click();
+      await expect(studio.getByLabel('Nome do sticker 1', { exact: true })).toHaveValue('Figurinha parcial');
+      await expect.poll(async () => (await local())[0]?.materials.length).toBe(2);
+      for (const label of ['Artes', 'Figurinhas', 'Cores']) await pending(label, true);
+      assert.equal(posts.length, 0); assert.equal(puts.length, 0);
+    } finally { page.off('dialog', rejectDialog); }
+
     stage('section save: colors persist alone, both material drafts remain');
     await saveStudioSection(studio, 'cores');
     const colors = await server();
@@ -82,10 +104,11 @@ export async function testEditorSectionSave(page: Page, endpoint: string, pool: 
 
     stage('section save: refresh recovers sticker on new revision without conflict');
     page.once('dialog', d => { void d.accept(); });
-    await page.reload(); await openStudio(page);
+    await page.reload();
     const recovery = page.getByRole('alertdialog');
     await expect(recovery).toBeVisible();
     await recovery.getByRole('button', { name: 'Recuperar rascunho', exact: true }).click();
+    await openStudio(page);
     await expect(studio.getByRole('button', { name: 'Recarregar versão salva', exact: true })).toHaveCount(0);
     await tab('Figurinhas').click();
     await expect(studio.getByLabel('Nome do sticker 1', { exact: true })).toHaveValue('Figurinha parcial');

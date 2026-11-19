@@ -1,3 +1,4 @@
+import { testUnifiedTabs } from './unified-tabs-scenario';
 import { saveStudioSection, studioTabName } from './editor-section-save-helper';
 import { testEditorSectionSave } from './editor-section-save-scenario';
 import { openStudio, closeStudio, campaignSections, expectStudioLayout } from './studio-navigation';
@@ -150,6 +151,10 @@ async function main() {
     await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
     campaignId = new URL(page.url()).pathname.split('/').pop()!;
     assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, null, 'Creation without billing must leave price unset');
+    if (process.env.UNIFIED_TABS_ONLY === '1') {
+      await testUnifiedTabs(page, campaignId, pool);
+      return;
+    }
     if (process.env.SECTION_SAVE_ONLY === '1') {
       await testEditorSectionSave(page, `${base}/api/campaigns/${campaignId}/editor`, pool, png, value => { stage = value; });
       return;
@@ -169,15 +174,15 @@ async function main() {
     }
     stage = 'client directory linked campaigns and inherited options';
     await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await page.getByLabel('Cliente', { exact: true }).selectOption(directoryId);
-    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await page.getByRole('button', { name: 'Salvar detalhes', exact: true }).click();
     await expect.poll(async () => (await pool.query('select client_id,price_cents from campaigns where id=$1', [campaignId])).rows[0]).toEqual({ client_id: directoryId, price_cents: null });
     await page.goto(`${base}/admin/clientes/${directoryId}`);
     await expect(page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link', { name: 'Integração editor isolada' })).toHaveAttribute('href', `/admin/campanhas/${campaignId}`);
     await page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link').click();
     await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue(directoryId);
     await page.goto(`${base}/admin/clientes/${directoryId}`);
     await page.setViewportSize({ width: 390, height: 844 });
@@ -190,7 +195,7 @@ async function main() {
     if (process.env.CAMPAIGN_SECTIONS_ONLY === '1') {
       stage = 'campaign sections visibility, keyboard and draft retention';
       const sections = campaignSections(page);
-      await expect(sections.getByRole('tab', { name: 'Dados da campanha', exact: true })).toHaveAttribute('aria-selected', 'true');
+      await expect(sections.getByRole('tab', { name: 'Detalhes', exact: true })).toHaveAttribute('aria-selected', 'true');
       await expect(page.locator('.ws-studio-root')).toHaveCount(0);
       await expect(page.locator('iframe')).toHaveCount(0);
       const localName = page.getByLabel('Nome do evento', { exact: true });
@@ -212,10 +217,11 @@ async function main() {
         const color = page.getByLabel('Destaque', { exact: true });
         await page.getByRole('tab', { name: studioTabName('Cores') }).click();
         await color.fill('#123456');
-        for (const name of ['Dados da campanha', 'Cobrança']) {
+        for (const name of ['Detalhes', 'Cobrança']) {
           await sections.getByRole('tab', { name, exact: true }).click();
           await expect(page.locator('.ws-studio-root')).toBeHidden();
           await openStudio(page);
+          await sections.getByRole('tab', { name: 'Cores', exact: true }).click();
           expect(await root!.evaluate(el => el === document.querySelector('.ws-studio-root'))).toBe(true);
           await expect(color).toHaveValue('#123456');
           await expect(localName).toHaveValue('Nome local retido entre seções');
@@ -223,11 +229,11 @@ async function main() {
           await expect(page.getByRole('region', { name: 'Estúdio da campanha' }).getByRole('status')).toContainText('Alterações não salvas');
         }
         await expect.poll(() => editorReads.length).toBe(1);
-        await sections.getByRole('tab', { name: 'Dados da campanha', exact: true }).focus();
+        await sections.getByRole('tab', { name: 'Detalhes', exact: true }).focus();
         await page.keyboard.press('Home');
-        await expect(sections.getByRole('tab', { name: 'Estúdio', exact: true })).toBeFocused();
+        await expect(sections.getByRole('tab', { name: 'Detalhes', exact: true })).toBeFocused();
         await page.keyboard.press('ArrowRight');
-        await expect(sections.getByRole('tab', { name: 'Dados da campanha', exact: true })).toHaveAttribute('aria-selected', 'true');
+        await expect(sections.getByRole('tab', { name: 'Artes', exact: true })).toHaveAttribute('aria-selected', 'true');
         await page.keyboard.press('End');
         await expect(sections.getByRole('tab', { name: 'Cobrança', exact: true })).toHaveAttribute('aria-selected', 'true');
         for (const width of [1440, 390]) {
@@ -240,11 +246,12 @@ async function main() {
       return;
     }
     if (process.env.CLIENT_DIRECTORY_ONLY === '1') return;
-    stage = 'studio loads only on demand';
-    await expect(campaignSections(page).getByRole('tab', { name: 'Dados da campanha', exact: true })).toHaveAttribute('aria-selected', 'true');
-    await expect(campaignSections(page).getByRole('tab', { name: 'Estúdio', exact: true })).toBeVisible();
-    await expect(page.locator('iframe[title="Prévia real do editor da campanha"]')).toHaveCount(0);
-    await expect(page.locator('.ws-studio-root')).toHaveCount(0);
+    stage = 'studio checks recovery on campaign load while remaining hidden';
+    await expect(campaignSections(page).getByRole('tab', { name: 'Detalhes', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await expect(campaignSections(page).getByRole('tab', { name: 'Artes', exact: true })).toBeVisible();
+    await expect(page.locator('.ws-studio-controls .ws-studio-library-panel')).toBeAttached({ timeout: 30_000 });
+    await expect(page.locator('.ws-studio-root')).toBeHidden();
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
     stage = 'upload validation feedback preserves empty draft';
     await openStudio(page);
     const uploadStudio = page.getByRole('region', { name: 'Estúdio da campanha' });
@@ -277,7 +284,7 @@ async function main() {
     await color.fill(dirtyColor);
     await expect(studio.getByRole('status')).toHaveText('Alterações não salvas.');
     await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await page.getByLabel('Nome do evento', { exact: true }).fill('Dados base confirmados');
     await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
     const submitBase = async (accept: boolean) => {
@@ -286,7 +293,7 @@ async function main() {
         assert.match(dialog.message(), /Salvar os dados da campanha pode descartá-las/);
         if (accept) await dialog.accept(); else await dialog.dismiss();
       });
-      await Promise.all([dialogHandled, page.getByRole('button', { name: 'Salvar alterações', exact: true }).click()]);
+      await Promise.all([dialogHandled, page.getByRole('button', { name: 'Salvar detalhes', exact: true }).click()]);
     };
     const baseMutations: string[] = [];
     const trackBaseMutation = (req: import('@playwright/test').Request) => {
@@ -301,14 +308,19 @@ async function main() {
       assert.deepEqual((await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0], original);
       assert.equal(baseMutations.length, 0, 'Dismiss must prevent the real form mutation');
       await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
       await submitBase(true);
-      await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
+      await expect(page.getByText('Dados da campanha salvos.', { exact: true })).toHaveCount(0);
       await expect.poll(async () => (await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0]).toEqual({ name: 'Dados base confirmados', price_cents: original.price_cents });
       assert.ok(baseMutations.length > 0, 'Accept must allow the real form mutation');
       await page.reload();
+      const campaignRecovery = page.getByRole('alertdialog');
+      await expect(campaignRecovery).toBeVisible();
+      await campaignRecovery.getByRole('button', { name: 'Descartar', exact: true }).click();
+      await campaignRecovery.getByRole('button', { name: 'Descartar rascunho', exact: true }).click();
+      await expect(campaignRecovery).toHaveCount(0);
       await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
       await expect(page.getByLabel('Nome do evento', { exact: true })).toHaveValue('Dados base confirmados');
       await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
       assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, original.price_cents, 'Confirmed data update must preserve the original price after reload');
@@ -368,13 +380,13 @@ async function main() {
     // Reload clears the intentionally dirty studio fixture before editing data again.
     await page.reload();
     stage = 'billing snapshot preserved after base-data edit';
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await page.getByLabel('Nome do evento', { exact: true }).fill('Dados editados após cobrança');
     const acceptDirtySubmit = (dialog: import('@playwright/test').Dialog) => dialog.accept();
     page.on('dialog', acceptDirtySubmit);
-    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await page.getByRole('button', { name: 'Salvar detalhes', exact: true }).click();
     page.off('dialog', acceptDirtySubmit);
-    await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
+    await expect.poll(async () => (await pool.query('select name from campaigns where id=$1', [campaignId])).rows[0].name).toBe('Dados editados após cobrança');
     assert.deepEqual((await pool.query('select token,amount_cents,campaign_name from checkout_links where campaign_id=$1', [campaignId])).rows[0], issued);
     assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, 12345);
     await page.getByRole('tab', { name: 'Cobrança', exact: true }).click();
@@ -538,10 +550,11 @@ async function main() {
     await testEditorRuntime({ page, context, base, campaignId, event: saved.event, photo: png(600, 'photo') });
     console.info('PASS static runtime: shared CSS, isolated preview, public fetch/PNG, rejected bridge messages and ended manifest.');
     if (process.env.EDITOR_RUNTIME_ONLY === '1') return;
-    stage = 'inline client registration and campaign link';
+    stage = 'inline client registration: return to campaign';
     await page.goto(`${base}/admin/campanhas/${campaignId}`);
+    stage = 'inline client registration: reveal details';
     await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     assert.equal(await page.getByRole('heading', { name: 'Contratação', exact: true }).count(), 0);
     await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
     const priceBeforeClientEdit = (await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents;
@@ -549,13 +562,17 @@ async function main() {
     await page.locator('input[name=clientName]').fill('Organizador teste');
     await page.locator('input[name=clientContact]').fill('contato@example.test');
     await page.locator('textarea[name=notes]').fill('Uma rodada extra combinada.');
-    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
-    await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
+    stage = 'inline client registration: save details';
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Salvar detalhes', exact: true }).click();
+    await expect.poll(async () => (await pool.query('select clients.name from campaigns join clients on clients.id=campaigns.client_id where campaigns.id=$1', [campaignId])).rows[0]?.name).toBe('Organizador teste');
     const linked = (await pool.query('select client_id from campaigns where id=$1', [campaignId])).rows[0].client_id;
     assert.ok(linked); clientIds.push(linked);
+    await expect(page.getByRole('button', { name: 'Salvar detalhes', exact: true })).toBeEnabled();
+    stage = 'inline client registration: reload saved details';
     await page.reload();
     await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue(linked);
     await expect(page.locator('textarea[name=notes]')).toHaveValue('Uma rodada extra combinada.');
     await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
@@ -574,14 +591,15 @@ async function main() {
     stage = 'unlink client without deleting reusable record';
     await page.goto(`${base}/admin/campanhas/${campaignId}`);
     await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await page.getByLabel('Cliente', { exact: true }).selectOption('');
     await page.locator('textarea[name=notes]').fill('');
-    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
-    await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Salvar detalhes', exact: true }).click();
+    await expect.poll(async () => (await pool.query('select client_id from campaigns where id=$1', [campaignId])).rows[0].client_id, { timeout: 30_000 }).toBeNull();
     await page.reload();
     await closeStudio(page);
-    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue('');
     const afterEdit = (await pool.query('select client_id,price_cents,preparation_status,publication_status from campaigns where id=$1', [campaignId])).rows[0];
     assert.equal(afterEdit.client_id, null); assert.equal(afterEdit.price_cents, priceBeforeClientEdit);

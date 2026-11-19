@@ -9,6 +9,6 @@ const LazyWorkspace = dynamic(() => import('./studio-workspace').then(module => 
   loading: () => <StudioSkeleton />,
 });
 
-export function CampaignStudio({ campaignId }: { campaignId: string }) {
-  return <LazyWorkspace campaignId={campaignId} />;
+export function CampaignStudio(props: { campaignId: string; activeSection?: string; onPendingChange?: (section: string, pending: boolean) => void }) {
+  return <LazyWorkspace {...props} />;
 }

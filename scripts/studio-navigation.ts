@@ -1,21 +1,21 @@
 import { expect, type Page } from '@playwright/test';
 
-export function campaignSections(page: Page) {
-  return page.getByRole('tablist', { name: 'Seções da campanha', exact: true });
+export function campaignSections(page: Page, includeHidden = false) {
+  return page.getByRole('tablist', { name: 'Seções da campanha', exact: true, includeHidden });
 }
 
 export async function openStudio(page: Page) {
-  const tab = page.getByRole('tablist', { name: 'Seções da campanha', exact: true, includeHidden: true }).getByRole('tab', { name: 'Estúdio', exact: true, includeHidden: true });
+  const tab = campaignSections(page, true).getByRole('tab', { name: 'Artes', exact: true, includeHidden: true });
   if (await tab.getAttribute('aria-selected') !== 'true') await tab.click();
   await expect(tab).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('region', { name: 'Estúdio da campanha', exact: true, includeHidden: true })).toBeVisible();
-  // Recovery is portaled and correctly hides the workspace from the accessibility tree.
-  await expect(page.locator('.ws-studio-root').getByRole('tablist', { name: 'Configuração do estúdio', exact: true, includeHidden: true })).toBeVisible();
+  // The dynamic bundle and authenticated configuration can compile on the first visit.
+  await expect(page.locator('.ws-studio-controls .ws-studio-library-panel')).toBeVisible({ timeout: 30_000 });
 }
 
-// Compatibility helper for domain scenarios: leave the studio by selecting Dados.
+// Compatibility helper for domain scenarios: leave the visual sections via Detalhes.
 export async function closeStudio(page: Page) {
-  await campaignSections(page).getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+  await campaignSections(page).getByRole('tab', { name: 'Detalhes', exact: true }).click();
 }
 
 export async function expectCollapsedStudioPreview(page: Page) {

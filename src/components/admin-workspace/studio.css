@@ -6,7 +6,7 @@
 .ws-studio-footer { display:grid;gap:12px;margin-top:auto;padding-top:20px;border-top:1px solid var(--line); }
 .ws-studio-library-panel { display:flex;flex:1;min-height:0;padding-bottom:0; }
 .ws-studio-library-panel>.ws-studio-fields,.ws-studio-library-panel .ws-tabs { display:flex;flex:1;flex-direction:column;min-width:0; }
-.ws-studio-library-panel .ws-tabs>[role=tabpanel]:not([hidden]) { display:flex;flex:1;flex-direction:column;min-width:0; }
+.ws-studio-library-panel .ws-studio-section,.ws-studio-library-panel .ws-studio-section>div:not([hidden]),.ws-studio-library-panel .ws-tabs>[role=tabpanel]:not([hidden]) { display:flex;flex:1;flex-direction:column;min-width:0; }
 .ws-studio-section-footer { margin-top:auto;padding-top:20px; }
 .ws-studio-library-panel .ws-studio-library,.ws-studio-library-panel .ws-studio-palette { margin-bottom:20px; }
 .ws-studio-section-status { margin-right:auto;font-size:.7rem;color:var(--muted); }

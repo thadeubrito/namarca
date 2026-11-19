@@ -8,9 +8,23 @@ test('UI salva escopo explícito e mantém pendências das outras seções', asy
   assert.match(source, /const merged = \{ \.\.\.event, \[scope\]: value.event\[scope\] \}/);
   assert.match(source, /revision: value.revision, materials: remaining/);
   assert.match(source, /scope === 'theme' \? \[\] : event\[scope\].map/);
-  assert.match(source, /pending: sectionDirty\('artworks'\)/);
-  assert.match(source, /pending: sectionDirty\('stickers'\)/);
-  assert.match(source, /pending: sectionDirty\('theme'\)/);
+  const sections = await readFile('src/components/admin-workspace/campaign-sections.tsx', 'utf8');
+  assert.match(sections, /export function CampaignSections/);
+  assert.match(sections, /label="Seções da campanha" initialId="dados" activeId=\{active\}/);
+  assert.match(sections, /<CampaignStudio[^>]*activeSection=\{active\}[^>]*onPendingChange=\{report\}/);
+  for (const [id, label, scope, dirty] of [
+    ['artes', 'Artes', 'artworks', 'artworksDirty'],
+    ['stickers', 'Figurinhas', 'stickers', 'stickersDirty'],
+    ['cores', 'Cores', 'theme', 'themeDirty'],
+  ]) {
+    assert.match(sections, new RegExp(`id: '${id}', label: '${label}', panelKey: 'visual', lazy: ${id === 'artes' ? 'false' : 'true'}, pending: pending\\.${id}`));
+    assert.ok(source.includes(`onPendingChange?.('${id}', ${dirty})`));
+    assert.ok(source.includes(`const ${dirty} = sectionDirty('${scope}')`));
+    assert.ok(source.includes(`hidden={activeSection !== '${id}'}`));
+  }
+  assert.match(sections, /id: 'dados', label: 'Detalhes'/);
+  assert.match(sections, /id: 'cobranca', label: 'Cobrança'/);
+  assert.doesNotMatch(sections, /label: 'Estúdio'|Configuração do estúdio/);
   assert.doesNotMatch(source, /Salvar configuração/);
   const tabs = await readFile('src/components/admin-workspace/primitives.tsx', 'utf8');
   const css = await readFile('src/components/admin-workspace/studio.css', 'utf8');

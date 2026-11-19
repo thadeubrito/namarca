@@ -6,7 +6,7 @@ import { campaigns } from '@/db/schema';
 import { requireAdmin } from '@/lib/admin';
 import { campaignInput } from '@/lib/campaign-input';
 import { resolveCampaignClient } from '@/lib/campaign-client';
-export type CreateState = { error?: string };
+export type CreateState = { error?: string; saved?: { token: string; values: { name: string; slug: string; endsAt: string; clientId: string; clientName: string; clientContact: string; notes: string } } };
 export async function createCampaign(_previous: CreateState, form: FormData): Promise<CreateState> {
   await requireAdmin();
   const input = campaignInput.safeParse(Object.fromEntries(form));

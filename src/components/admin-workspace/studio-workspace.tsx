@@ -10,6 +10,7 @@ import { StudioColors } from './studio-colors';
 import { StudioSkeleton } from './studio-skeleton';
 import { StudioCleanup } from './studio-cleanup';
 import { StudioRecoveryDialog } from './studio-recovery-dialog';
+import { useCampaignRecovery } from './campaign-recovery';
 import { StudioSaveProgress, type SaveProgress, type UploadItem } from './studio-save-progress';
 import { sameDraftValue, claimDraftTab, localMaterialId, draftKey, readStudioDraft, writeStudioDraft, deleteStudioDraft, uploadPool, type LocalMaterial, type StudioDraft } from '@/lib/studio-draft';
 import { clampReference, ReferenceCanvas } from '@/editor/reference-canvas';
@@ -22,7 +23,7 @@ type Kind = 'artwork' | 'sticker';
 type SaveScope = 'artworks' | 'stickers' | 'theme';
 const scopeLabels: Record<SaveScope, string> = { artworks: 'artes', stickers: 'figurinhas', theme: 'cores' };
 
-export function StudioWorkspace({ campaignId }: { campaignId: string }) {
+export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: { campaignId: string; activeSection?: string; onPendingChange?: (section: string, pending: boolean) => void }) {
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const dark = useDarkTheme();
@@ -42,6 +43,8 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
   const [localAssets, setLocalAssets] = useState<Record<string, string>>({});
   const objectURLs = useRef(new Map<string, { file: Blob; url: string }>());
   const [recovery, setRecovery] = useState<StudioDraft | null>(null);
+  const registerRecovery = useCampaignRecovery();
+  const [recoveryChecked, setRecoveryChecked] = useState(false);
   const [draftStorageKey, setDraftStorageKey] = useState('');
   const [storageWarning, setStorageWarning] = useState('');
   const [progress, setProgress] = useState<SaveProgress | null>(null);
@@ -77,7 +80,15 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const reducedMotion = useReducedMotion();
   const sectionDirty = (scope: SaveScope) => !!event && !!snapshot && !sameDraftValue(event[scope], snapshot.event[scope]);
-  const dirty = sectionDirty('artworks') || sectionDirty('stickers') || sectionDirty('theme');
+  const artworksDirty = sectionDirty('artworks');
+  const stickersDirty = sectionDirty('stickers');
+  const themeDirty = sectionDirty('theme');
+  const dirty = artworksDirty || stickersDirty || themeDirty;
+  useEffect(() => {
+    onPendingChange?.('artes', artworksDirty);
+    onPendingChange?.('stickers', stickersDirty);
+    onPendingChange?.('cores', themeDirty);
+  }, [artworksDirty, stickersDirty, themeDirty, onPendingChange]);
   const assetURL = (file: string) => localAssets[file] ?? `/api/campaigns/${campaignId}/assets/${encodeURIComponent(file.replace(/\.png$/, ''))}`;
 
   const load = useCallback(async () => {
@@ -103,7 +114,7 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
       if (!key) setStorageWarning('Recuperação local indisponível. Não feche a página antes de salvar.');
       setSnapshot(value); setEvent(value.event); changeMaterials([]); setConflict(false); setSelected(value.event.artworks[0]?.id ?? '');
     } catch (error) { setFailure(true); setMessage(error instanceof Error ? error.message : 'Falha ao carregar.'); }
-    finally { setBusy(false); }
+    finally { setBusy(false); setRecoveryChecked(true); }
   }, [campaignId, persist]);
   useEffect(() => () => {
     const claim = tabClaim.current;
@@ -125,7 +136,7 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
     };
     const submit = (e: SubmitEvent) => {
       if (e.defaultPrevented || !(e.target instanceof HTMLFormElement)) return;
-      if (e.target.dataset.campaignNavigation !== 'true') return;
+      if (e.target.dataset.campaignSave === 'details' || e.target.dataset.campaignNavigation !== 'true') return;
       if (!window.confirm('Você tem alterações não salvas no estúdio. Salvar os dados da campanha pode descartá-las. Continuar sem salvar o estúdio?')) { e.preventDefault(); e.stopPropagation(); }
     };
     window.addEventListener('beforeunload', warn);
@@ -247,6 +258,27 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
     finally { setBusy(false); }
   };
 
+  const recoveryActions = useRef({ recover: () => {}, discard: async () => {} });
+  useEffect(() => {
+    recoveryActions.current = {
+      recover: () => {
+        if (!recovery) return;
+        setEvent(recovery.event); changeMaterials(recovery.materials); setSelected(recovery.event.artworks[0]?.id ?? '');
+        if (recovery.revision !== snapshot?.revision) {
+          setSnapshot(current => current && ({ ...current, revision: recovery.revision }));
+          setConflict(true); setFailure(true);
+          setMessage('A configuração no servidor mudou. Seu rascunho foi recuperado, mas não pode sobrescrevê-la. Recarregue a versão salva para continuar.');
+        }
+        setRecovery(null);
+      },
+      discard: async () => { if (draftStorageKey) await persist(draftStorageKey, null); setRecovery(null); },
+    };
+  });
+  useEffect(() => {
+    if (!registerRecovery || !recoveryChecked) return;
+    registerRecovery('studio', recovery ? { recover: () => recoveryActions.current.recover(), discard: () => recoveryActions.current.discard(), conflict: recovery.revision !== snapshot?.revision } : null);
+  }, [registerRecovery, recoveryChecked, recovery, snapshot?.revision]);
+
   if (!event) {
     if (!failure) return <StudioSkeleton />;
     return <section className="campaign-editor ws-studio-root" aria-label="Estúdio da campanha"><Surface><Notice tone="error" role="alert">{message}</Notice><Action type="button" onClick={() => void load()}>Tentar novamente</Action></Surface></section>;
@@ -286,13 +318,13 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
 
   return <section ref={studioRoot} tabIndex={-1} className="campaign-editor ws-studio-root" data-preview-collapsed={previewCollapsed} aria-label="Estúdio da campanha"><div className="ws-studio-workspace"><Workspace>
     <div className="sr-only" role="status" aria-live="polite">{message || (dirty ? 'Alterações não salvas.' : 'Configuração salva.')}</div>
-    {recovery && <StudioRecoveryDialog draft={recovery} conflict={recovery.revision !== snapshot?.revision} onDone={() => studioRoot.current?.focus()} onRecover={() => {
+    {recovery && !registerRecovery && <StudioRecoveryDialog draft={recovery} conflict={recovery.revision !== snapshot?.revision} onDone={() => studioRoot.current?.focus()} onRecover={() => {
       setEvent(recovery.event); changeMaterials(recovery.materials); setSelected(recovery.event.artworks[0]?.id ?? '');
       if (recovery.revision !== snapshot?.revision) { setSnapshot(current => current && ({ ...current, revision: recovery.revision })); setConflict(true); setFailure(true); setMessage('A configuração no servidor mudou. Seu rascunho foi recuperado, mas não pode sobrescrevê-la. Recarregue a versão salva para continuar.'); }
       setRecovery(null);
     }} onDiscard={async () => { if (draftStorageKey) await persist(draftStorageKey, null); setRecovery(null); }} />}
     {storageWarning && <Notice role="alert">{storageWarning}</Notice>}
-    <div className="ws-studio-columns"><div className="ws-studio-controls"><div className="ws-studio-library-panel"><fieldset className="ws-studio-fields" disabled={busy || !!recovery}><WorkspaceTabs label="Configuração do estúdio" items={[{ id: 'artes', label: 'Artes', pending: sectionDirty('artworks'), content: section('artworks', library('artwork', event.artworks)) }, { id: 'stickers', label: 'Figurinhas', pending: sectionDirty('stickers'), content: section('stickers', library('sticker', event.stickers)) }, { id: 'cores', label: 'Cores', pending: sectionDirty('theme'), content: section('theme', colors) }]} /></fieldset></div>
+    <div className="ws-studio-columns"><div className="ws-studio-controls"><div className="ws-studio-library-panel"><fieldset className="ws-studio-fields" disabled={busy || !!recovery}>{activeSection ? <div className="ws-studio-section"><div hidden={activeSection !== 'artes'}>{section('artworks', library('artwork', event.artworks))}</div><div hidden={activeSection !== 'stickers'}>{section('stickers', library('sticker', event.stickers))}</div><div hidden={activeSection !== 'cores'}>{section('theme', colors)}</div></div> : <WorkspaceTabs label="Configuração do estúdio" items={[{ id: 'artes', label: 'Artes', pending: sectionDirty('artworks'), content: section('artworks', library('artwork', event.artworks)) }, { id: 'stickers', label: 'Figurinhas', pending: sectionDirty('stickers'), content: section('stickers', library('sticker', event.stickers)) }, { id: 'cores', label: 'Cores', pending: sectionDirty('theme'), content: section('theme', colors) }]} />}</fieldset></div>
     {conflict && <div className="ws-studio-footer"><Notice tone="error">{message}</Notice><Action type="button" variant="secondary" disabled={busy} onClick={() => { if (window.confirm('Descartar suas alterações de todas as abas e carregar a configuração salva?')) { if (draftStorageKey) void persist(draftStorageKey, null).then(() => load()); else void load(); } }}>Recarregar versão salva</Action></div>}
       <Dialog.Root open={referenceOpen} onOpenChange={setReferenceOpen}><Dialog.Portal><Dialog.Overlay className="ws-client-dialog-overlay" /><Dialog.Content className={`ui-scope campaign-editor ws-studio-root ws-studio-reference-dialog ${dark ? 'dark' : ''}`} onInteractOutside={e => e.preventDefault()} onCloseAutoFocus={e => { e.preventDefault(); referenceTrigger.current?.focus(); }}><header className="ws-studio-dialog-heading"><Dialog.Title>Editar área da foto</Dialog.Title><Dialog.Close asChild><button type="button" className="ws-action ws-action-ghost" aria-label="Fechar ajuste da área da foto"><X aria-hidden /></button></Dialog.Close></header><Dialog.Description className="sr-only">Ajuste a área da foto arrastando o retângulo ou suas alças.</Dialog.Description>{referenceOpen && <div className="ws-studio-reference">{artwork ? <><fieldset className="ws-studio-fields" disabled={busy}><div className="ws-studio-reference-stage" style={{ '--artwork-ratio': artwork.width / artwork.height } as React.CSSProperties}><ReferenceCanvas key={artwork.id} artwork={artwork} assetURL={assetURL(artwork.file)} onChange={updateReference} /></div></fieldset></> : <EmptyState title="Selecione uma arte" description="A área da foto será definida aqui, separada da prévia do participante." />}</div>}<footer className="ws-studio-dialog-footer"><Dialog.Close asChild><button type="button" className="ws-action ws-action-primary">Concluir ajuste</button></Dialog.Close></footer></Dialog.Content></Dialog.Portal></Dialog.Root>
       </div><motion.aside id={`studio-preview-${campaignId}`} className="ws-studio-preview" aria-label="Prévia da campanha" initial={false} animate={{ opacity: 1 }} transition={{ duration: reducedMotion ? 0 : 0.18 }}>

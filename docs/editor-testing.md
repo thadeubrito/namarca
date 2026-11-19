@@ -1,5 +1,7 @@
 # Integração browser do editor
 
+`UNIFIED_TABS_ONLY=1` valida a linha única Detalhes/Artes/Figurinhas/Cores/Cobrança, teclado/foco/ARIA, um único painel ativo, controles scoped e ausência de overflow da página em 1440/390px, retenção do iframe, rascunhos allow-list de detalhes/valor em sessionStorage e recuperação por aba ativa após refresh, sem persistir no banco nem emitir cobrança. Executar isoladamente das outras flags. Os helpers de estúdio selecionam Artes na tablist principal; não existe tablist interna no fluxo ativo.
+
 Runner: `scripts/test-campaign-editor.ts`. Executar apenas em containers, banco descartável terminado em `_editor_test`, conta `editor-test@namarca.test`, origin `http://namarca-editor-test:3000`. O runner rejeita outro banco/origin/admin e banco com contas existentes. Não usa conta, cookies ou sessão do admin real. Não grava screenshots/traces, senhas, URI TOTP ou códigos de recuperação.
 
 ## Salvamentos por aba
