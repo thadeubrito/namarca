@@ -1,3 +1,4 @@
+import { openStudio, closeStudio } from './studio-navigation';
 import assert from 'node:assert/strict';
 import { expect, type BrowserContext, type Download, type Locator, type Page, type Route } from '@playwright/test';
 import { PNG } from 'pngjs';
@@ -174,6 +175,40 @@ export async function testEditorRuntime({ page, context, base, campaignId, event
       await target.getByRole('button', { name: 'Fechar painel', exact: true }).click();
     }
     await expect(composition).toHaveAttribute('aria-label', initialLabel!);
+    const frameIdentity = await iframe.elementHandle();
+    const draftName = page.getByLabel('Nome do evento', { exact: true });
+    // Hidden campaign form remains mounted while the studio changes presentation.
+    const originalDraftName = await draftName.inputValue();
+    await closeStudio(page);
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await draftName.fill(`${originalDraftName} local`);
+    await openStudio(page);
+    await openStudio(page);
+    await expect(page.getByRole('button', { name: 'Voltar à campanha', exact: true })).toBeFocused();
+    await expect(page.locator('.ws-studio-root')).toHaveAttribute('data-fullscreen', 'true');
+    await expect(composition).toHaveAttribute('aria-label', initialLabel!);
+    assert.ok(await frameIdentity!.evaluate(el => el === document.querySelector('iframe[title="Prévia real do editor da campanha"]')), 'Fullscreen preserves the same iframe node');
+    await page.getByRole('button', { name: 'Ocultar prévia', exact: true }).click();
+    await page.getByRole('button', { name: 'Mostrar prévia', exact: true }).click();
+    await expect(composition).toHaveAttribute('aria-label', initialLabel!);
+    const fullscreenViewport = page.viewportSize();
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const area of ['Área da foto', 'Materiais', 'Prévia']) {
+      await page.getByRole('navigation', { name: 'Áreas do estúdio' }).getByRole('button', { name: area, exact: true }).click();
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Fullscreen fits mobile');
+    }
+    await expect(composition).toHaveAttribute('aria-label', initialLabel!);
+    await page.getByRole('button', { name: 'Voltar à campanha', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Abrir estúdio', exact: true })).toBeFocused();
+    await openStudio(page);
+    await expect(composition).toHaveAttribute('aria-label', initialLabel!);
+    await expect(draftName).toHaveValue(`${originalDraftName} local`);
+    await closeStudio(page);
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await draftName.fill(originalDraftName);
+    await openStudio(page);
+    if (fullscreenViewport) await page.setViewportSize(fullscreenViewport);
+    await openStudio(page);
     await page.getByRole('button', { name: 'Ampliar prévia', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Recolher prévia', exact: true })).toHaveAttribute('aria-expanded', 'true');
     await expect(composition).toHaveAttribute('aria-label', initialLabel!);

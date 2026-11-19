@@ -19,7 +19,9 @@ export function CampaignSections({ label, items, initialId }: { label: string; i
     else return;
     event.preventDefault();
     setActive(items[next].id);
-    document.getElementById(`${prefix}-tab-${items[next].id}`)?.focus();
+    const tab = document.getElementById(`${prefix}-tab-${items[next].id}`);
+    tab?.focus({ preventScroll: true });
+    tab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   return <div className="campaign-sections">
     <div className="campaign-section-nav" role="tablist" aria-label={label}>

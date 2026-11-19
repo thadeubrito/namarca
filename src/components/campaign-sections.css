@@ -1,3 +1,4 @@
+@layer legacy {
 .campaign-sections { min-width: 0; }
 .campaign-section-nav { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; margin-bottom: 24px; border: 1px solid var(--line, #dededb); border-radius: 12px; background: var(--surface, #f5f5f2); }
 .campaign-section-nav [role="tab"] { min-height: 44px; padding: 10px 18px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: inherit; box-shadow: none; }
@@ -5,3 +6,4 @@
 .campaign-section-nav [role="tab"]:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 .campaign-sections > [role="tabpanel"][hidden] { display: none !important; }
 @media (max-width: 600px) { .campaign-section-nav [role="tab"] { flex: 1 1 auto; padding-inline: 12px; } }
+}

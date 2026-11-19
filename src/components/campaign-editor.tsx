@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { themeDefaults, type Artwork, type EventConfig, type Material } from '@namarca/editor/events';
 import { clampReference, ReferenceCanvas } from '@/editor/reference-canvas';
 import { CampaignSections } from '@/components/campaign-sections';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { uploadFailureMessage } from '@/lib/upload-feedback';
 import './campaign-editor.css';
 
@@ -101,7 +103,7 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Falha no envio.'); }
     finally { setBusy(false); }
   };
-  if (!event) return <section className="campaign-editor"><h2>Estúdio</h2><p role="status">{message || 'Carregando configuração…'}</p>{!busy && <button type="button" onClick={() => void load()}>Tentar novamente</button>}</section>;
+  if (!event) return <section className="campaign-editor"><h2>Estúdio</h2><p role="status">{message || 'Carregando configuração…'}</p>{!busy && <Button type="button" onClick={() => void load()}>Tentar novamente</Button>}</section>;
   const artwork = event.artworks.find(a => a.id === selected) ?? event.artworks[0];
   const updateReference = (reference: Artwork['reference']) => {
     if (artwork) change({ ...event, artworks: event.artworks.map(a => a.id === artwork.id ? { ...a, reference: clampReference(reference, a.width, a.height) } : a) });
@@ -116,15 +118,15 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
     return <section className="ce-section"><header><h3>{kind === 'artwork' ? 'Artes' : 'Stickers'}</h3><label className="ce-upload">{kind === 'artwork' ? 'Adicionar arte PNG' : 'Adicionar sticker PNG'}<input type="file" accept="image/png" disabled={busy} onChange={e => { void upload(e.currentTarget.files?.[0], kind); e.currentTarget.value = ''; }} /></label></header>
       {!items.length && <p className="ce-muted">{kind === 'artwork' ? 'Adicione uma arte PNG para abrir a prévia.' : 'Nenhum sticker adicionado.'}</p>}
       <ol className="ce-materials">{items.map((item, index) => <li key={item.id} className={artwork?.id === item.id ? 'is-selected' : ''}>
-        <button type="button" className="ce-thumbnail" disabled={kind === 'sticker' || busy} onClick={() => setSelected(item.id)} aria-label={`Editar área da foto: ${item.name}`}><img src={assetURL(item.file)} alt={item.name} /></button>
-        <input aria-label={`Nome ${kind === 'artwork' ? 'da arte' : 'do sticker'} ${index + 1}`} value={item.name} disabled={busy} onChange={e => change({ ...event, [key]: event[key].map(a => a.id === item.id ? { ...a, name: e.target.value } : a) })} />
-        <div className="ce-order"><button type="button" disabled={busy || !index} onClick={() => move(index, -1)} aria-label={`Mover ${item.name} para cima`}>↑</button><button type="button" disabled={busy || index === items.length - 1} onClick={() => move(index, 1)} aria-label={`Mover ${item.name} para baixo`}>↓</button><button type="button" disabled={busy} onClick={() => change({ ...event, [key]: event[key].filter(a => a.id !== item.id) })} aria-label={`Remover ${item.name}`}>Remover</button></div>
+        <Button type="button" className="ce-thumbnail" disabled={kind === 'sticker' || busy} onClick={() => setSelected(item.id)} aria-label={`Editar área da foto: ${item.name}`}><img src={assetURL(item.file)} alt={item.name} /></Button>
+        <Input aria-label={`Nome ${kind === 'artwork' ? 'da arte' : 'do sticker'} ${index + 1}`} value={item.name} disabled={busy} onChange={e => change({ ...event, [key]: event[key].map(a => a.id === item.id ? { ...a, name: e.target.value } : a) })} />
+        <div className="ce-order"><Button type="button" disabled={busy || !index} onClick={() => move(index, -1)} aria-label={`Mover ${item.name} para cima`}>↑</Button><Button type="button" disabled={busy || index === items.length - 1} onClick={() => move(index, 1)} aria-label={`Mover ${item.name} para baixo`}>↓</Button><Button type="button" disabled={busy} onClick={() => change({ ...event, [key]: event[key].filter(a => a.id !== item.id) })} aria-label={`Remover ${item.name}`}>Remover</Button></div>
       </li>)}</ol></section>;
   };
   return <section className="campaign-editor" aria-label="Estúdio da campanha">
-    <header className="ce-heading"><div><h2>Estúdio</h2><p>Fotos e composições ficam no navegador.</p></div><button type="button" disabled={busy || !dirty || conflict} onClick={() => void save()}>{busy ? 'Aguarde…' : 'Salvar configuração'}</button></header>
+    <header className="ce-heading"><div><h2>Estúdio</h2><p>Fotos e composições ficam no navegador.</p></div><Button type="button" disabled={busy || !dirty || conflict} onClick={() => void save()}>{busy ? 'Aguarde…' : 'Salvar configuração'}</Button></header>
     <div className="ce-feedback" role="status">{message || (dirty ? 'Alterações não salvas.' : 'Configuração salva.')}</div>
-    {conflict && <button type="button" disabled={busy} onClick={() => { if (window.confirm('Descartar suas alterações e carregar a configuração salva?')) void load(); }}>Recarregar versão salva</button>}
+    {conflict && <Button type="button" disabled={busy} onClick={() => { if (window.confirm('Descartar suas alterações e carregar a configuração salva?')) void load(); }}>Recarregar versão salva</Button>}
     <div className="ce-grid"><div className="ce-controls"><fieldset disabled={busy} className="ce-fieldset"><CampaignSections label="Configuração do estúdio" items={[
       { id: 'artes', label: 'Artes', content: <>{gallery('artwork', event.artworks)}
       {artwork && <section className="ce-section"><h3>Área da foto · {artwork.name}</h3><p className="ce-muted">Desenhe a área da foto. Arraste ou ajuste pelas alças.</p><ReferenceCanvas key={artwork.id} artwork={artwork} assetURL={assetURL(artwork.file)} onChange={updateReference} /></section>}
@@ -132,6 +134,6 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
       { id: 'stickers', label: 'Stickers', content: gallery('sticker', event.stickers) },
       { id: 'cores', label: 'Cores', content: <section className="ce-section"><h3>Cores</h3><div className="ce-colors">{(Object.keys(themeDefaults) as Array<keyof typeof themeDefaults>).map(key => <label key={key}><input type="color" value={event.theme?.[key] ?? themeDefaults[key]} onChange={e => change({ ...event, theme: { ...event.theme, [key]: e.target.value } })} />{labels[key]}</label>)}<label><input type="color" value={event.color} onChange={e => change({ ...event, color: e.target.value })} />Cor da campanha</label></div></section> },
     ]} />
-    </fieldset></div><aside className={`ce-preview${expanded ? ' ce-preview-expanded' : ''}`}><header><div><h3>Prévia</h3></div><button type="button" className="secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? 'Recolher prévia' : 'Ampliar prévia'}</button></header><p className="ce-muted" aria-live="polite">{previewReady ? 'Rascunho atual · foto local' : 'Carregando prévia…'}</p><div className="ce-preview-device"><iframe ref={frame} src={`/event-runtime/preview.html?campaignId=${campaignId}`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></div></aside></div>
+    </fieldset></div><aside className={`ce-preview${expanded ? ' ce-preview-expanded' : ''}`}><header><div><h3>Prévia</h3></div><Button type="button" className="secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? 'Recolher prévia' : 'Ampliar prévia'}</Button></header><p className="ce-muted" aria-live="polite">{previewReady ? 'Rascunho atual · foto local' : 'Carregando prévia…'}</p><div className="ce-preview-device"><iframe ref={frame} src={`/event-runtime/preview.html?campaignId=${campaignId}`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></div></aside></div>
   </section>;
 }

@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "paceui": {
+      "url": "https://paceui.com/api/mcp"
+    }
+  }
+}

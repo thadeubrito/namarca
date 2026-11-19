@@ -24,7 +24,7 @@ test('sem JavaScript formulário falha fechado e usa POST', async ({ browser }) 
     const form = page.locator('form');
     await expect(form).toHaveAttribute('method', 'post');
     await expect(form).toHaveAttribute('action', '/api/auth/form-unavailable');
-    await expect(page.getByRole('button')).toBeDisabled();
+    await expect(form.getByRole('button', { name: 'Carregando formulário…' })).toBeDisabled();
     await expect(page.getByRole('alert')).toContainText('Ative o JavaScript');
     expect(new URL(page.url()).search).toBe('');
   } finally { await context.close(); }

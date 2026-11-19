@@ -1,3 +1,6 @@
+import { openStudio, closeStudio } from './studio-navigation';
+import { auditAdminVisuals } from './admin-visual-audit';
+import { expectEditorReference, setEditorReference } from "./editor-reference-helper";
 // Container-only integration runner. Never point this at the normal application/database.
 import assert from 'node:assert/strict';
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
@@ -64,6 +67,18 @@ async function main() {
     }
     stage = 'browser password login';
     await page.goto(`${base}/login`);
+    if (process.env.ADMIN_UI_SHOTS === '1') {
+      for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.screenshot({ path: `/tmp/namarca-login-light-${width}.png` });
+        await page.getByRole('button', { name: 'Ativar tema escuro', exact: true }).click();
+        await expect(page.locator('input[name=email]')).toHaveCSS('color', 'rgb(250, 250, 250)');
+        await page.screenshot({ path: `/tmp/namarca-login-dark-${width}.png` });
+        await page.getByRole('button', { name: 'Ativar tema claro', exact: true }).click();
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      }
+      await page.setViewportSize({ width: 1440, height: 1400 });
+    }
     await page.getByLabel('E-mail', { exact: true }).fill(email);
     await page.getByLabel('Senha', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Entrar no administrativo' }).click();
@@ -84,27 +99,32 @@ async function main() {
     await page.getByRole('button', { name: 'Verificar código' }).click();
     await page.waitForURL('**/admin');
     stage = 'client directory create, search, edit and reload';
-    await page.getByRole('link', { name: 'Clientes', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Clientes', exact: true }).click();
     await expect(page.getByText('Nenhum cliente cadastrado.', { exact: false })).toBeVisible();
-    await page.getByRole('link', { name: 'Novo cliente', exact: true }).click();
+    await page.getByRole('button', { name: 'Novo cliente', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Novo cliente', exact: true })).toBeVisible();
+    await expect(page.getByLabel('Nome do cliente', { exact: true })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Novo cliente', exact: true })).toBeFocused();
+    await page.getByRole('button', { name: 'Novo cliente', exact: true }).click();
     await page.getByLabel('Nome do cliente', { exact: true }).fill('Cliente diretório sintético');
-    await page.getByLabel('Contato', { exact: false }).fill('diretorio@example.test');
+    await page.getByRole('textbox', { name: /^Contato/ }).fill('diretorio@example.test');
     await page.getByRole('button', { name: 'Cadastrar cliente', exact: true }).click();
     await page.waitForURL(/\/admin\/clientes\/[0-9a-f-]+\?salvo=1$/);
     const directoryId = new URL(page.url()).pathname.split('/').pop()!;
     clientIds.push(directoryId);
     await expect(page.getByRole('status')).toHaveText('Cliente salvo.');
-    await page.getByRole('link', { name: 'Clientes', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Clientes', exact: true }).click();
     await page.getByLabel('Buscar por nome ou contato').fill('diretorio@example.test');
     await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     await page.getByRole('link', { name: 'Cliente diretório sintético', exact: true }).click();
     await page.getByLabel('Nome do cliente', { exact: true }).fill('Cliente diretório atualizado');
-    await page.getByLabel('Contato', { exact: false }).fill('');
+    await page.getByRole('textbox', { name: /^Contato/ }).fill('');
     await page.getByRole('button', { name: 'Salvar cliente', exact: true }).click();
     await expect.poll(async () => (await pool.query('select name,contact from clients where id=$1', [directoryId])).rows[0]).toEqual({ name: 'Cliente diretório atualizado', contact: '' });
     await page.reload();
     await expect(page.getByLabel('Nome do cliente', { exact: true })).toHaveValue('Cliente diretório atualizado');
-    await page.getByRole('link', { name: 'Clientes', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Clientes', exact: true }).click();
     await page.getByLabel('Buscar por nome ou contato').fill('diretório atualizado');
     await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     await expect(page.getByRole('link', { name: 'Cliente diretório atualizado', exact: true })).toBeVisible();
@@ -114,13 +134,10 @@ async function main() {
     stage = 'create campaign through UI';
     await page.goto(`${base}/admin/campanhas/nova`);
     if (process.env.CAMPAIGN_SECTIONS_ONLY === '1') {
-      await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
       await page.getByRole('button', { name: 'Salvar rascunho', exact: true }).click();
-      await expect(page.getByRole('tab', { name: 'Evento e valor', exact: true })).toHaveAttribute('aria-selected', 'true');
       await expect(page.getByLabel('Nome do evento')).toBeFocused();
       assert.equal(new URL(page.url()).pathname, '/admin/campanhas/nova');
     }
-    await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
     await page.getByLabel('Nome do evento').fill('Integração editor isolada');
     await page.getByLabel('Endereço da campanha').fill(`editor-test-${randomBytes(5).toString('hex')}`);
     await page.getByLabel('Data de encerramento').fill('2099-12-31');
@@ -128,91 +145,45 @@ async function main() {
     await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
     campaignId = new URL(page.url()).pathname.split('/').pop()!;
     stage = 'client directory linked campaigns and inherited options';
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
-    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await page.getByLabel('Cliente', { exact: true }).selectOption(directoryId);
     await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
     await expect.poll(async () => (await pool.query('select client_id from campaigns where id=$1', [campaignId])).rows[0].client_id).toBe(directoryId);
     await page.goto(`${base}/admin/clientes/${directoryId}`);
     await expect(page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link', { name: 'Integração editor isolada' })).toHaveAttribute('href', `/admin/campanhas/${campaignId}`);
     await page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link').click();
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
-    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue(directoryId);
     await page.goto(`${base}/admin/clientes/${directoryId}`);
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Client details must fit mobile viewport');
-    await page.getByRole('link', { name: 'Clientes', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Clientes', exact: true }).click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Client directory must fit mobile viewport');
     await page.setViewportSize({ width: 1440, height: 1400 });
     await page.goto(`${base}/admin/campanhas/${campaignId}`);
     console.info('PASS client directory: anonymous/enrollment blocked, create/edit/reload, search name/contact and empty result, linked campaign, mobile overflow checks.');
     if (process.env.CAMPAIGN_SECTIONS_ONLY === '1') {
       stage = 'campaign sections visibility, keyboard and draft retention';
-      const labels = ['Estúdio', 'Dados da campanha', 'Aprovação visual', 'Cobrança'];
-      // Resolve hidden panels through aria-controls: hidden nodes have no accessible name.
-      const topTabs = labels.map(name => page.getByRole('tab', { name, exact: true }));
-      for (const width of [390, 1440]) {
-        await page.setViewportSize({ width, height: 1400 });
-        for (const tab of topTabs) {
-          await tab.click();
-          for (const other of topTabs) {
-            const panel = page.locator(`[id="${await other.getAttribute('aria-controls')}"]`);
-            if (other === tab) await expect(panel).toBeVisible(); else await expect(panel).toBeHidden();
-          }
-          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Campaign sections must fit viewport');
-        }
+      const labels = ['Dados da campanha', 'Aprovação visual', 'Cobrança'];
+      await expect(page.getByRole('tab', { name: 'Estúdio', exact: true })).toHaveCount(0);
+      for (const name of labels) {
+        await page.getByRole('tab', { name, exact: true }).click();
+        await openStudio(page);
+        await closeStudio(page);
+        await expect(page.getByRole('tab', { name, exact: true })).toHaveAttribute('aria-selected', 'true');
       }
-      await topTabs[0].click();
-      await topTabs[0].press('ArrowRight');
-      await expect(topTabs[1]).toBeFocused();
-      await expect(topTabs[1]).toHaveAttribute('aria-selected', 'true');
-      await topTabs[1].press('End');
-      await expect(topTabs[3]).toBeFocused();
-      await expect(topTabs[3]).toHaveAttribute('aria-selected', 'true');
-      await topTabs[3].press('Home');
-      await expect(topTabs[0]).toBeFocused();
-      await expect(topTabs[0]).toHaveAttribute('aria-selected', 'true');
-      await topTabs[1].click();
-      await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
-      await page.getByLabel('Nome do evento', { exact: true }).fill('Nome local retido');
-      await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
-      await page.locator('textarea[name=notes]').fill('Observação local retida');
-      await topTabs[2].click();
-      await topTabs[1].click();
-      await expect(page.locator('textarea[name=notes]')).toHaveValue('Observação local retida');
-      await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
-      await expect(page.getByLabel('Nome do evento', { exact: true })).toHaveValue('Nome local retido');
-      await topTabs[0].click();
-      const sectionStudio = page.getByRole('region', { name: 'Estúdio da campanha' });
-      await sectionStudio.getByLabel('Adicionar arte PNG').setInputFiles({ name: 'sections.png', mimeType: 'image/png', buffer: png(400, 'artwork') });
-      const artName = sectionStudio.getByLabel('Nome da arte 1', { exact: true });
-      await artName.fill('Arte local retida');
-      const puts: string[] = [];
-      const trackPut = (req: import('@playwright/test').Request) => { if (req.method() === 'PUT') puts.push(req.url()); };
-      page.on('request', trackPut);
-      try {
-        for (const tab of topTabs.slice(1)) await tab.click();
-        await topTabs[0].click();
-        await expect(artName).toHaveValue('Arte local retida');
-        await expect(sectionStudio.getByRole('status')).toContainText('Alterações não salvas');
-        // Only isolated synthetic campaign/artwork data is visible; no credentials or payment data.
-        for (const [width, height, suffix] of [[1440, 1400, 'desktop'], [390, 844, 'mobile']] as const) {
-          await page.setViewportSize({ width, height });
-          await page.evaluate(() => window.scrollTo(0, 0));
-          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Dirty studio must fit viewport');
-          await page.screenshot({ path: `/tmp/namarca-sections-${suffix}.png`, fullPage: true });
-        }
-        assert.deepEqual(puts, [], 'Switching sections must not save the studio');
-        assert.equal((await (await context.request.get(`${base}/api/campaigns/${campaignId}/editor`)).json()).revision, 0);
-        assert.equal((await pool.query('select name,notes from campaigns where id=$1', [campaignId])).rows[0].name, 'Integração editor isolada');
-        assert.equal((await pool.query('select notes from campaigns where id=$1', [campaignId])).rows[0].notes, '');
-      } finally { page.off('request', trackPut); }
-      console.info('PASS campaign sections: hidden required field revealed; exclusive top panels, keyboard, 390/1440 overflow and local form/studio retention without PUT.');
+      console.info('PASS campaign sections: no studio tab, independent launch returns to selected section.');
       return;
     }
     if (process.env.CLIENT_DIRECTORY_ONLY === '1') return;
+    stage = 'studio loads only on demand';
+    await expect(page.getByRole('button', { name: 'Abrir estúdio', exact: true })).toBeVisible();
+    await expect(page.locator('iframe[title="Prévia real do editor da campanha"]')).toHaveCount(0);
+    await expect(page.locator('.ws-studio-root')).toHaveCount(0);
     stage = 'upload validation feedback preserves empty draft';
+    await openStudio(page);
     const uploadStudio = page.getByRole('region', { name: 'Estúdio da campanha' });
     await expect(uploadStudio.getByLabel('Adicionar arte PNG')).toBeEnabled();
     await uploadStudio.getByLabel('Adicionar arte PNG').setInputFiles({ name: 'opaque-synthetic.png', mimeType: 'image/png', buffer: png(80, 'photo') });
@@ -232,9 +203,9 @@ async function main() {
     const dirtyColor = (await color.inputValue()) === '#123456' ? '#654321' : '#123456';
     // Playwright fill on color inputs triggers React's real change path.
     await color.fill(dirtyColor);
-    await expect(studio.getByRole('status')).toHaveText('Alterações não salvas. A prévia mostra o rascunho atual.');
+    await expect(studio.getByRole('status')).toHaveText('Alterações não salvas.');
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
-    await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
     await page.getByLabel('Nome do evento', { exact: true }).fill('Dados base confirmados');
     await page.locator('input[name=price]').fill('123,45');
     const submitBase = async (accept: boolean) => {
@@ -252,19 +223,20 @@ async function main() {
     page.on('request', trackBaseMutation);
     try {
       await submitBase(false);
-      await page.getByRole('tab', { name: 'Estúdio', exact: true }).click();
+      await openStudio(page);
       await expect(color).toHaveValue(dirtyColor);
       await expect(studio.getByRole('status')).toContainText('Alterações não salvas');
       assert.deepEqual((await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0], original);
       assert.equal(baseMutations.length, 0, 'Dismiss must prevent the real form mutation');
-      await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+      await closeStudio(page);
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
       await submitBase(true);
       await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
       await expect.poll(async () => (await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0]).toEqual({ name: 'Dados base confirmados', price_cents: 12345 });
       assert.ok(baseMutations.length > 0, 'Accept must allow the real form mutation');
       await page.reload();
-      await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
-      await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
+      await closeStudio(page);
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
       await expect(page.getByLabel('Nome do evento', { exact: true })).toHaveValue('Dados base confirmados');
       await expect(page.locator('input[name=price]')).toHaveValue('123,45');
       const unchangedEditor = await (await context.request.get(`${base}/api/campaigns/${campaignId}/editor`)).json();
@@ -277,7 +249,23 @@ async function main() {
       console.info('LIMITATION: empty-draft focused run has no approval form; dirty approval alert not exercised.');
       return;
     }
+    if (process.env.ADMIN_UI_SHOTS === '1') {
+      for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.screenshot({ path: `/tmp/namarca-admin-light-${width}.png` });
+        await page.getByRole('button', { name: 'Ativar tema escuro', exact: true }).click();
+        await expect(page.locator('.admin-shell')).toHaveClass(/dark/);
+        await expect(page.locator('input[name=name]')).toHaveCSS('color', 'rgb(250, 250, 250)');
+        await page.screenshot({ path: `/tmp/namarca-admin-dark-${width}.png` });
+        await page.reload();
+        await expect(page.locator('.admin-shell')).toHaveClass(/dark/);
+        await page.getByRole('button', { name: 'Ativar tema claro', exact: true }).click();
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      }
+      await page.setViewportSize({ width: 1440, height: 1400 });
+    }
     stage = 'admin issues checkout by real submit and copies link/message';
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Cobrança', exact: true }).click();
     await page.getByRole('button', { name: 'Emitir link de cobrança', exact: true }).click();
     await expect(page.getByRole('link', { name: 'Abrir checkout', exact: true })).toBeVisible({ timeout: 60_000 });
@@ -289,7 +277,7 @@ async function main() {
     await page.getByRole('button', { name: 'Copiar link', exact: true }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Link copiado.' })).toBeVisible();
     assert.equal(await page.locator('html').getAttribute('data-test-clipboard'), `${base}/checkout/${issued.token}`);
-    await page.getByRole('button', { name: 'Copiar mensagem de cobrança', exact: true }).click();
+    await page.getByRole('button', { name: 'Copiar mensagem', exact: true }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Mensagem copiada.' })).toBeVisible();
     assert.match((await page.locator('html').getAttribute('data-test-clipboard'))!, /Confira o nome, o valor e as orientações/);
     assert.ok((await page.locator('html').getAttribute('data-test-clipboard'))!.endsWith(`${base}/checkout/${issued.token}`));
@@ -321,7 +309,7 @@ async function main() {
       await expect(region.getByRole('heading')).toHaveText(/R\$\s*0,00/);
       await expect(region.getByText('0 tentativas', { exact: true })).toBeVisible();
     }
-    await expect(page.getByRole('link', { name: 'Baixar CSV financeiro' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Baixar CSV' })).toHaveCount(0);
     const csvHeader = '\uFEFF"Referência";"Situação";"Valor (BRL)";"Criada em (UTC)";"Confirmação registrada em (UTC)";"Atualizada em (UTC)"\r\n';
     assert.equal(await (await context.request.get(reportEndpoint)).text(), csvHeader);
     // Direct DB fixtures: no payer, no remote API or real gateway is involved.
@@ -362,7 +350,7 @@ async function main() {
     }
     const [csvDownload] = await Promise.all([
       page.waitForEvent('download'),
-      page.getByRole('link', { name: 'Baixar CSV financeiro', exact: true }).click(),
+      page.getByRole('link', { name: 'Baixar CSV', exact: true }).click(),
     ]);
     assert.equal(csvDownload.suggestedFilename(), `financeiro-${campaignId}.csv`);
     const csvStream = await csvDownload.createReadStream(); assert.ok(csvStream);
@@ -380,11 +368,12 @@ async function main() {
     if (process.env.FINANCIAL_REPORT_ONLY === '1') return;
     await page.goto(`${base}/admin/campanhas/${campaignId}`);
     const endpoint = `${base}/api/campaigns/${campaignId}/editor`;
+    await openStudio(page);
     const editor = page.getByRole('region', { name: 'Estúdio da campanha' });
     await testEditorGallery(page, endpoint, png, value => { stage = value; });
     if (process.env.GALLERY_ONLY === '1') return;
     stage = 'upload artwork and sticker through UI';
-    await page.getByRole('tab', { name: 'Artes e área da foto', exact: true }).click();
+    await page.getByRole('tab', { name: 'Artes', exact: true }).click();
     await editor.locator('input[type=file]').nth(0).setInputFiles({ name: 'frame.png', mimeType: 'image/png', buffer: png(400, 'artwork') });
     await page.getByLabel('Nome da arte 1', { exact: true }).waitFor();
     await page.getByRole('tab', { name: 'Stickers', exact: true }).click();
@@ -392,21 +381,20 @@ async function main() {
     await editor.locator('input[type=file]').nth(1).setInputFiles({ name: 'sticker.png', mimeType: 'image/png', buffer: png(128, 'sticker') });
     await page.getByLabel('Nome do sticker 1', { exact: true }).waitFor();
     stage = 'reference width after uploads';
-    await page.getByRole('tab', { name: 'Artes e área da foto', exact: true }).click();
-    await editor.getByLabel('Largura', { exact: true }).fill('320');
-    await editor.getByLabel('Altura', { exact: true }).fill('320');
-    await editor.getByLabel('X', { exact: true }).fill('40');
-    await editor.getByLabel('Y', { exact: true }).fill('40');
+    await page.getByRole('tab', { name: 'Artes', exact: true }).click();
+    await setEditorReference(page, editor, { x: 40, y: 40, width: 320, height: 320 });
     await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura teste');
     await page.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
-    await page.getByText('Configuração salva. A campanha não foi publicada.', { exact: true }).waitFor();
+    await expect(editor.getByRole('status')).toHaveText('Configuração salva. A campanha não foi publicada.');
     stage = 'reload and assert persistence';
     await page.reload();
+    await openStudio(page);
     await page.getByLabel('Nome da arte 1', { exact: true }).waitFor();
     assert.equal(await page.getByLabel('Nome da arte 1', { exact: true }).inputValue(), 'Moldura teste');
-    assert.equal(await editor.getByLabel('X', { exact: true }).inputValue(), '40');
+    await expectEditorReference(editor, { x: 40, y: 40, width: 320, height: 320 });
     const savedResponse = await context.request.get(endpoint); assert.equal(savedResponse.status(), 200);
     const saved = await savedResponse.json();
+    await auditAdminVisuals(page, base, campaignId);
     assert.equal(saved.event.artworks.length, 1); assert.equal(saved.event.stickers.length, 1);
     assert.deepEqual(saved.event.artworks[0].reference, { x: 40, y: 40, width: 320, height: 320 });
     stage = 'API authorization, CSRF, kind and revision guards';
@@ -422,6 +410,7 @@ async function main() {
     const uploads: string[] = [];
     page.on('request', req => { if (['POST', 'PUT', 'PATCH'].includes(req.method())) uploads.push(req.url()); });
     const preview = page.frameLocator('iframe[title="Prévia real do editor da campanha"]');
+    await expect(preview.getByRole('img', { name: 'Composição com a arte Moldura teste, sem foto', exact: true })).toBeVisible();
     await preview.locator('input[type=file]').setInputFiles({ name: 'local-participant.png', mimeType: 'image/png', buffer: png(600, 'photo') });
     await expect(preview.getByRole('button', { name: 'Salvar', exact: true })).toBeEnabled();
     await preview.getByRole('img', { name: /Composição com a arte .* e sua foto/ }).waitFor();
@@ -452,6 +441,7 @@ async function main() {
     console.info('PASS static runtime: shared CSS, isolated preview, public fetch/PNG, rejected bridge messages and ended manifest.');
     if (process.env.EDITOR_RUNTIME_ONLY === '1') return;
     stage = 'register visual approval v1 through UI';
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
     const approval = page.getByRole('region', { name: 'Aprovação visual', exact: true });
     const approvalDate = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
@@ -472,7 +462,7 @@ async function main() {
     await fillApproval(stalePage);
     await fillApproval(page);
     stage = 'dirty studio blocks approval of previously saved package';
-    await page.getByRole('tab', { name: 'Estúdio', exact: true }).click();
+    await openStudio(page);
     await page.getByLabel('Nome da arte 1', { exact: true }).fill('Rascunho não aprovado');
     await expect(editor.getByRole('status')).toContainText('Alterações não salvas');
     const approvalAlert = page.waitForEvent('dialog').then(async dialog => {
@@ -480,15 +470,17 @@ async function main() {
       assert.match(dialog.message(), /Salve as alterações do estúdio e recarregue/);
       await dialog.dismiss();
     });
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
     await Promise.all([approvalAlert, approval.getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click()]);
     assert.equal((await packages()).length, 0, 'Dirty preview must not approve the older saved package');
-    await page.getByRole('tab', { name: 'Estúdio', exact: true }).click();
+    await openStudio(page);
     await expect(page.getByLabel('Nome da arte 1', { exact: true })).toHaveValue('Rascunho não aprovado');
     await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura teste');
-    await expect(editor.getByRole('status')).toHaveText(`Configuração salva · revisão ${saved.revision}`);
+    await expect(editor.getByRole('status')).toHaveText('Configuração salva.');
     console.info('PASS dirty approval guard: real submit raises alert, no package created and dirty artwork preserved.');
     stage = 'register visual approval v1 through UI';
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
     await approval.getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
     await expect.poll(async () => {
@@ -510,10 +502,10 @@ async function main() {
     assert.equal((await packages()).length, 1);
     try {
       stage = 'editor save preserves approved snapshot';
-      await page.getByRole('tab', { name: 'Estúdio', exact: true }).click();
+      await openStudio(page);
       await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura revisada v2');
       await page.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
-      await page.getByText('Configuração salva. A campanha não foi publicada.', { exact: true }).waitFor();
+      await expect(editor.getByRole('status')).toHaveText('Configuração salva. A campanha não foi publicada.');
       const changed = await (await context.request.get(endpoint)).json();
       assert.ok(changed.revision > saved.revision);
       assert.equal(changed.event.artworks[0].name, 'Moldura revisada v2');
@@ -527,7 +519,8 @@ async function main() {
       assert.deepEqual(await packages(), [snapshotV1]);
       stage = 'register revised visual approval v2';
       await page.reload();
-      await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
+      await closeStudio(page);
+    await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
       await expect(approval.locator('input[name=revision]')).toHaveValue(String(changed.revision));
       await expect(approval.locator('input[name=identity]')).toHaveValue(identity);
       await fillApproval(page);
@@ -564,33 +557,31 @@ async function main() {
       assert.deepEqual(unpublished, { preparation_status: 'draft', publication_status: 'unpublished' });
     } finally { await stalePage.close(); }
     stage = 'inline client registration and campaign link';
+    await page.goto(`${base}/admin/campanhas/${campaignId}`);
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
-    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     assert.equal(await page.getByRole('heading', { name: 'Contratação', exact: true }).count(), 0);
     assert.equal(await page.locator('input[name=price]').count(), 1);
     await page.getByLabel('Cliente', { exact: true }).selectOption('new');
     await page.locator('input[name=clientName]').fill('Organizador teste');
     await page.locator('input[name=clientContact]').fill('contato@example.test');
     await page.locator('textarea[name=notes]').fill('Uma rodada extra combinada.');
-    await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
     await page.locator('input[name=price]').fill('395,00');
     await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
     await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
     const linked = (await pool.query('select client_id from campaigns where id=$1', [campaignId])).rows[0].client_id;
     assert.ok(linked); clientIds.push(linked);
     await page.reload();
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
-    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue(linked);
     await expect(page.locator('textarea[name=notes]')).toHaveValue('Uma rodada extra combinada.');
-    await page.getByRole('tab', { name: 'Evento e valor', exact: true }).click();
     await expect(page.locator('input[name=price]')).toHaveValue('395,00');
     stage = 'reuse client in another campaign';
     await page.goto(`${base}/admin/campanhas/nova`);
     await page.getByLabel('Nome do evento').fill('Segunda campanha mesmo cliente');
     await page.getByLabel('Endereço da campanha').fill(`client-test-${randomBytes(5).toString('hex')}`);
     await page.getByLabel('Data de encerramento').fill('2099-12-31');
-    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await page.getByLabel('Cliente', { exact: true }).selectOption(linked);
     await page.getByRole('button', { name: 'Salvar rascunho' }).click();
     await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
@@ -599,15 +590,15 @@ async function main() {
     assert.equal((await pool.query('select count(*)::int as n from clients where id=$1', [linked])).rows[0].n, 1);
     stage = 'unlink client without deleting reusable record';
     await page.goto(`${base}/admin/campanhas/${campaignId}`);
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
-    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await page.getByLabel('Cliente', { exact: true }).selectOption('');
     await page.locator('textarea[name=notes]').fill('');
     await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
     await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
     await page.reload();
+    await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
-    await page.getByRole('tab', { name: 'Cliente e observações', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue('');
     const afterEdit = (await pool.query('select client_id,price_cents,preparation_status,publication_status from campaigns where id=$1', [campaignId])).rows[0];
     assert.equal(afterEdit.client_id, null); assert.equal(afterEdit.price_cents, 39500);

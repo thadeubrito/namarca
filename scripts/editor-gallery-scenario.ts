@@ -1,5 +1,7 @@
+import { openStudio, closeStudio } from './studio-navigation';
 import assert from 'node:assert/strict';
 import { expect, type Page } from '@playwright/test';
+import { expectEditorReference, setEditorReference } from './editor-reference-helper';
 
 /** Browser-only gallery operations. Caller supplies synthetic PNGs and isolated fixtures. */
 export async function testEditorGallery(page: Page, endpoint: string, image: (size: number, kind: 'artwork' | 'sticker') => Buffer, setStage: (stage: string) => void) {
@@ -12,19 +14,15 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   };
   const save = async () => {
     await studio.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
-    await expect(studio.getByRole('status')).toHaveText('Configuração salva. A campanha não foi publicada.');
+    await expect(studio.getByRole('status')).toHaveText(/^Configuração salva\.(?: A campanha não foi publicada\.)?$/);
   };
-  const section = async (kind: 'arte' | 'sticker') => { await studio.getByRole('tab', { name: kind === 'arte' ? 'Artes e área da foto' : 'Stickers', exact: true }).click(); };
+  const section = async (kind: 'arte' | 'sticker') => { await studio.getByRole('tab', { name: kind === 'arte' ? 'Artes' : 'Stickers', exact: true }).click(); };
   const names = async (kind: 'arte' | 'sticker') => {
     await section(kind);
     return studio.getByRole('textbox', { name: new RegExp(`^Nome ${kind === 'arte' ? 'da arte' : 'do sticker'} \\d+$`) }).evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value));
   };
   const reference = async (x: number, y: number, width: number, height: number) => {
-    // Shrink before moving: every input change clamps to the image bounds.
-    for (const [label, value] of [['Largura', width], ['Altura', height], ['X', x], ['Y', y]] as const) {
-      await studio.getByLabel(label, { exact: true }).fill(String(value));
-      await expect(studio.getByLabel(label, { exact: true })).toHaveValue(String(value));
-    }
+    await setEditorReference(page, studio, { x, y, width, height });
   };
   const positionPreview = async () => {
     await page.locator('iframe[title="Prévia real do editor da campanha"]').evaluate(el => window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top - 100));
@@ -33,7 +31,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   assert.equal(initial.event.artworks.length, 0);
   assert.equal(initial.event.stickers.length, 0);
   setStage('gallery: upload and rename three artworks and stickers');
-  await page.getByRole('tab', { name: 'Estúdio', exact: true }).click();
+  await openStudio(page);
   for (const kind of ['artwork', 'sticker'] as const) {
     await section(kind === 'artwork' ? 'arte' : 'sticker');
     for (let n = 1; n <= 3; n++) {
@@ -54,7 +52,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   await section('arte');
   await studio.getByRole('button', { name: 'Editar área da foto: Arte 2', exact: true }).click();
   await expect(studio.getByRole('heading', { name: 'Área da foto · Arte 2', exact: true })).toBeVisible();
-  await expect(studio.getByLabel('X', { exact: true })).toHaveValue('20');
+  await expectEditorReference(studio, { x: 20, y: 20, width: 220, height: 220 });
   await reference(25, 30, 250, 260);
   for (const kind of ['Arte', 'Sticker']) {
     await section(kind === 'Arte' ? 'arte' : 'sticker');
@@ -67,7 +65,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   assert.deepEqual(await names('sticker'), ['Sticker 2', 'Sticker 3', 'Sticker 1']);
   await section('arte');
   await expect(studio.getByRole('heading', { name: 'Área da foto · Arte 2', exact: true })).toBeVisible();
-  await expect(studio.getByLabel('X', { exact: true })).toHaveValue('25');
+  await expectEditorReference(studio, { x: 25, y: 30, width: 250, height: 260 });
   await save();
   const multiple = await saved();
   assert.equal(multiple.revision, initial.revision + 1);
@@ -80,17 +78,20 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   ]);
   setStage('gallery: reload order and switch preview artwork');
   await page.reload();
+    await openStudio(page);
   await expect(studio.getByLabel('Nome da arte 1', { exact: true })).toHaveValue('Arte 2');
   assert.deepEqual(await names('arte'), ['Arte 2', 'Arte 3', 'Arte 1']);
   assert.deepEqual(await names('sticker'), ['Sticker 2', 'Sticker 3', 'Sticker 1']);
   await section('arte');
-  await expect(studio.getByLabel('X', { exact: true })).toHaveValue('25');
+  await expectEditorReference(studio, { x: 25, y: 30, width: 250, height: 260 });
   await expect(preview.getByRole('img', { name: 'Composição com a arte Arte 2, sem foto', exact: true })).toBeVisible();
   await positionPreview();
+  setStage('gallery: open preview artwork picker');
   await preview.getByRole('button', { name: 'Artes', exact: true }).click();
   const choices = preview.getByRole('button', { name: /^Arte Arte \d 400 × 400 px$/ });
   await expect(choices).toHaveCount(3);
   assert.deepEqual(await choices.evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))), ['Arte Arte 2 400 × 400 px', 'Arte Arte 3 400 × 400 px', 'Arte Arte 1 400 × 400 px']);
+  setStage('gallery: choose preview artwork');
   await preview.getByRole('button', { name: 'Arte Arte 1 400 × 400 px', exact: true }).click();
   await expect(preview.getByRole('img', { name: 'Composição com a arte Arte 1, sem foto', exact: true })).toBeVisible();
   // Trying another art inside the participant UI does not mutate the studio.
@@ -111,7 +112,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   await studio.getByRole('button', { name: 'Remover Sticker 2', exact: true }).click();
   await section('arte');
   await expect(studio.getByRole('heading', { name: 'Área da foto · Arte 3', exact: true })).toBeVisible();
-  await expect(studio.getByLabel('X', { exact: true })).toHaveValue('30');
+  await expectEditorReference(studio, { x: 30, y: 30, width: 230, height: 230 });
   await expect(preview.getByRole('button', { name: 'Adicionar sticker Sticker 2', exact: true })).toHaveCount(0);
   await save();
   const removed = await saved();
@@ -126,6 +127,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
     assert.ok((await response.body()).length > 0);
   }
   await page.reload();
+    await openStudio(page);
   await expect(studio.getByLabel('Nome da arte 1', { exact: true })).toHaveValue('Arte 3');
   assert.deepEqual(await names('arte'), ['Arte 3', 'Arte 1']);
   assert.deepEqual(await names('sticker'), ['Sticker 3', 'Sticker 1']);
@@ -136,7 +138,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
     await studio.getByRole('button', { name: `Remover ${name}`, exact: true }).click();
   }
   await section('arte');
-  await expect(studio.getByText('Rascunho sem artes. Adicione um PNG para liberar a prévia.', { exact: true })).toBeVisible();
+  await expect(studio.getByText('Adicione uma arte PNG para abrir a prévia.', { exact: true })).toBeVisible();
   await section('sticker');
   await expect(studio.getByText('Nenhum sticker adicionado.', { exact: true })).toBeVisible();
   await section('arte');
@@ -147,6 +149,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   assert.deepEqual(empty.event.artworks, []);
   assert.deepEqual(empty.event.stickers, []);
   await page.reload();
+    await openStudio(page);
   await section('sticker');
   await expect(studio.getByText('Nenhum sticker adicionado.', { exact: true })).toBeVisible();
   await section('arte');

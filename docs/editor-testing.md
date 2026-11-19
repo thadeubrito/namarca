@@ -77,6 +77,10 @@ Nesta etapa: 43 testes, lint/typecheck, migrations descartáveis e build isolado
 
 O runner agora chama `scripts/editor-runtime-scenario.ts` após o export local. `EDITOR_RUNTIME_ONLY=1` encerra depois dele. Confere estilos dos controles público/prévia, ausência de Next no iframe, fotos/PNGs locais, mensagens não autorizadas rejeitadas, ampliar/recolher preservando composição, viewport 390px sem overflow e manifesto encerrado. Público usa interceptação de manifesto/assets sintéticos, não bucket publicado. Histórico aprovado foi adaptado ao iframe estático e inclui endpoint anônimo 403 e vínculo inválido 404. `EDITOR_RUNTIME_SHOTS=1` grava capturas sintéticas em `/tmp`; montar `/tmp` no container para vê-las no host. Prévia tem sticker, público não: não são capturas da mesma composição. Ver limites e detalhes em [editor-runtime.md](editor-runtime.md). Runner integral final aprovado, sem declarar resolvida a flakiness histórica.
 
+## Refatoração UI shadcn / temas
+
+Runner atualizado para aba `Artes`, textos atuais e área da foto ajustada com ponteiro real nas alças (`scripts/editor-reference-helper.ts`), sem inputs numéricos removidos. Seletores de Clientes limitados à navegação principal. `ADMIN_UI_SHOTS=1` produz capturas sintéticas de login e dados da campanha em claro/escuro, 1440/390px, verifica overflow, contraste dos inputs e persistência após reload. Não captura setup/QR/códigos. Montar `/tmp` para inspecionar imagens. `scripts/run-admin-ui-test.mjs` é launcher de container que aponta somente para o DB/origin descartáveis documentados acima, sem imprimir credenciais. Runner integral aprovado após migração, sem prometer ausência de flakiness histórica.
+
 ## Encerramento
 
 ```sh

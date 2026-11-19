@@ -5,6 +5,9 @@ const subscribeHydration = () => () => {};
 const hydratedSnapshot = () => true;
 const serverSnapshot = () => false;
 import { authClient } from '@/lib/auth-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ThemeScope, ThemeToggle } from '@/components/theme-scope';
 
 export function AuthPanel({ mode }: { mode: 'login' | 'verify' | 'setup' }) {
   const ready = useSyncExternalStore(subscribeHydration, hydratedSnapshot, serverSnapshot);
@@ -42,8 +45,8 @@ export function AuthPanel({ mode }: { mode: 'login' | 'verify' | 'setup' }) {
     finally { setBusy(false); }
   }
 
-  return <div className="auth-layout">
-    <aside className="auth-brand"><span className="wordmark">namarca</span><div><p className="eyebrow" style={{ color: '#c5ee59' }}>Administração de campanhas</p><h2>O evento começa<br />antes da largada.</h2><p>Prepare a ativação. Organize a entrega. Acompanhe cada campanha em um só lugar.</p></div><small style={{ color: '#c4d0c1' }}>Acesso exclusivo da equipe Namarca.</small></aside>
+  return <ThemeScope className="auth-scope"><div className="auth-toolbar"><ThemeToggle /></div><div className="auth-layout">
+    <aside className="auth-brand"><span className="wordmark">namarca</span><div><p className="eyebrow">Administração de campanhas</p><h2>O evento começa<br />antes da largada.</h2><p>Prepare a ativação. Organize a entrega. Acompanhe cada campanha em um só lugar.</p></div><small>Acesso exclusivo da equipe Namarca.</small></aside>
     <main className="auth-form" id="conteudo"><div className="auth-card">
       <span className="wordmark login-mark">namarca</span>
       <p className="eyebrow">Área administrativa</p>
@@ -51,15 +54,15 @@ export function AuthPanel({ mode }: { mode: 'login' | 'verify' | 'setup' }) {
       <p className="muted">{mode === 'login' ? 'Use as credenciais da conta provisionada para você.' : mode === 'setup' ? 'Configure um aplicativo autenticador. O segundo fator é obrigatório.' : 'Informe o código do seu autenticador para concluir o login.'}</p>
       <form method="post" action="/api/auth/form-unavailable" onSubmit={submit}>
         <noscript><p role="alert">Ative o JavaScript para entrar. Nenhuma credencial será enviada pela URL.</p></noscript>
-        {mode === 'login' && <><label>E-mail<input name="email" type="email" autoComplete="username" required maxLength={254} /></label><label>Senha<input name="password" type="password" autoComplete="current-password" required maxLength={128} /></label></>}
-        {mode === 'setup' && !setup && <label>Confirme sua senha<input name="password" type="password" autoComplete="current-password" required maxLength={128} /></label>}
-        {setup && <><div className="notice">Escaneie o QR Code com seu autenticador.</div>{qr && <img className="qr" src={qr} alt="QR Code para configurar o autenticador Namarca" width={256} height={256} />}<details><summary>Configurar manualmente</summary><code className="secret">{setup.totpURI}</code></details><div><h2>Códigos de recuperação</h2><p className="muted">Guarde fora deste navegador. Cada código funciona uma única vez.</p><code className="secret">{setup.backupCodes.join('\n')}</code></div><label className="row" style={{ fontWeight: 400 }}><input type="checkbox" checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)} style={{ width: 20, minHeight: 20 }} />Guardei os códigos em local seguro.</label></>}
-        {(mode === 'verify' || setup) && <label>{recovery ? 'Código de recuperação' : 'Código de seis dígitos'}<input name="code" type="text" autoComplete="one-time-code" inputMode={recovery ? 'text' : 'numeric'} pattern={recovery ? undefined : '[0-9]{6}'} maxLength={recovery ? 100 : 6} required /></label>}
+        {mode === 'login' && <><label>E-mail<Input name="email" type="email" autoComplete="username" required maxLength={254} /></label><label>Senha<Input name="password" type="password" autoComplete="current-password" required maxLength={128} /></label></>}
+        {mode === 'setup' && !setup && <label>Confirme sua senha<Input name="password" type="password" autoComplete="current-password" required maxLength={128} /></label>}
+        {setup && <><div className="notice">Escaneie o QR Code com seu autenticador.</div>{qr && <img className="qr" src={qr} alt="QR Code para configurar o autenticador Namarca" width={256} height={256} />}<details><summary>Configurar manualmente</summary><code className="secret">{setup.totpURI}</code></details><div><h2>Códigos de recuperação</h2><p className="muted">Guarde fora deste navegador. Cada código funciona uma única vez.</p><code className="secret">{setup.backupCodes.join('\n')}</code></div><label className="row" style={{ fontWeight: 400 }}><Input type="checkbox" checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)} style={{ width: 20, minHeight: 20 }} />Guardei os códigos em local seguro.</label></>}
+        {(mode === 'verify' || setup) && <label>{recovery ? 'Código de recuperação' : 'Código de seis dígitos'}<Input name="code" type="text" autoComplete="one-time-code" inputMode={recovery ? 'text' : 'numeric'} pattern={recovery ? undefined : '[0-9]{6}'} maxLength={recovery ? 100 : 6} required /></label>}
         {error && <div className="error" role="alert">{error}</div>}
-        <button disabled={!ready || busy || (!!setup && !acknowledged)}>{!ready ? 'Carregando formulário…' : busy ? 'Aguarde…' : mode === 'login' ? 'Entrar no administrativo' : mode === 'setup' && !setup ? 'Configurar autenticador' : 'Verificar código'}</button>
-        {mode === 'verify' && <button type="button" className="secondary" onClick={() => { setRecovery(!recovery); setError(''); }}>{recovery ? 'Usar código do autenticador' : 'Usar código de recuperação'}</button>}
+        <Button disabled={!ready || busy || (!!setup && !acknowledged)}>{!ready ? 'Carregando formulário…' : busy ? 'Aguarde…' : mode === 'login' ? 'Entrar no administrativo' : mode === 'setup' && !setup ? 'Configurar autenticador' : 'Verificar código'}</Button>
+        {mode === 'verify' && <Button type="button" variant="outline" onClick={() => { setRecovery(!recovery); setError(''); }}>{recovery ? 'Usar código do autenticador' : 'Usar código de recuperação'}</Button>}
       </form>
       <footer>Não há cadastro público. Se perdeu o acesso, utilize os códigos de recuperação ou o procedimento administrativo.</footer>
     </div></main>
-  </div>;
+  </div></ThemeScope>;
 }
