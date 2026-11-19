@@ -1,4 +1,4 @@
-import { openStudio, closeStudio } from './studio-navigation';
+import { openStudio, expectStudioLayout, expectCollapsedStudioPreview } from './studio-navigation';
 import { expect, type Page } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 
@@ -15,10 +15,20 @@ export async function auditAdminVisuals(page: Page, base: string, campaignId: st
       await expect(page.getByRole('button', { name: /Ativar tema (claro|escuro)/ })).toBeEnabled();
       if (await toggle.count()) await toggle.click();
       await expect(page.locator('.admin-shell')).toHaveClass(theme === 'dark' ? /\bdark\b/ : /^(?!.*\bdark\b)/);
-      await page.getByRole('button', { name: 'Minha conta', exact: true }).click();
-      await expect(page.getByRole('menuitem', { name: 'Segurança da conta' })).toBeVisible();
-      await page.keyboard.press('Escape');
-      await expect(page.getByRole('button', { name: 'Minha conta', exact: true })).toBeFocused();
+      const header = page.locator('.admin-header');
+      await expect(header.getByRole('button', { name: 'Sair', exact: true })).toBeVisible();
+      await expect(header.getByRole('navigation', { name: 'Principal' })).toBeVisible();
+      const boxes = await Promise.all([
+        header.locator('.admin-brand').boundingBox(),
+        header.getByRole('navigation').boundingBox(),
+        header.locator('.admin-tools').boundingBox(),
+      ]);
+      expect(boxes.every(Boolean)).toBe(true);
+      const [brand, navigation, tools] = boxes.map(box => box!);
+      expect(brand.x + brand.width).toBeLessThanOrEqual(navigation.x);
+      expect(navigation.x + navigation.width).toBeLessThanOrEqual(tools.x);
+      expect(Math.abs(brand.y + brand.height / 2 - tools.y - tools.height / 2)).toBeLessThan(2);
+      expect(await header.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe('rgb(0, 0, 0)');
       const views = [
         { name: 'new-campaign', url: `${base}/admin/campanhas/nova` },
         { name: 'new-client', url: `${base}/admin/clientes/novo` },
@@ -54,13 +64,18 @@ export async function auditAdminVisuals(page: Page, base: string, campaignId: st
         await page.waitForFunction(() => document.getAnimations().every(animation => animation.playState !== 'running' || animation.effect?.getTiming().iterations === Infinity));
         await page.screenshot({ path: `/tmp/namarca-visual-audit/${view.name}-${theme}-${width}.png`, fullPage: true });
         if (view.name === 'studio') {
-          await openStudio(page);
-          if (width === 390 || width === 768) {
-            if (width === 390) await page.getByRole('navigation', { name: 'Áreas do estúdio' }).getByRole('button', { name: 'Área da foto', exact: true }).click();
-          }
-          await page.waitForFunction(() => document.getAnimations().every(animation => animation.playState !== 'running' || animation.effect?.getTiming().iterations === Infinity));
-          await page.screenshot({ path: `/tmp/namarca-visual-audit/studio-fullscreen-${theme}-${width}.png` });
-          await closeStudio(page);
+          await expectStudioLayout(page);
+          const iframe = page.locator('iframe[title="Prévia real do editor da campanha"]');
+          const identity = await iframe.elementHandle();
+          await page.getByRole('button', { name: 'Ocultar prévia', exact: true }).click();
+          await expect(iframe).toBeHidden();
+          await expectCollapsedStudioPreview(page);
+          await expect(page.getByRole('button', { name: 'Mostrar prévia', exact: true })).toHaveAttribute('aria-expanded', 'false');
+          await page.screenshot({ path: `/tmp/namarca-visual-audit/studio-preview-hidden-${theme}-${width}.png`, fullPage: true });
+          await page.getByRole('button', { name: 'Mostrar prévia', exact: true }).click();
+          await expect(iframe).toBeVisible();
+          expect(await identity!.evaluate(el => el === document.querySelector('iframe[title="Prévia real do editor da campanha"]'))).toBe(true);
+          await expectStudioLayout(page);
         }
         const metrics = await page.evaluate(() => {
           const scope = document.querySelector('.admin-shell')!;

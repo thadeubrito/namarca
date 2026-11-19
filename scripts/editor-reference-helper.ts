@@ -4,9 +4,28 @@ export type EditorReference = { x: number; y: number; width: number; height: num
 type Dimensions = { width: number; height: number };
 const fixtureDimensions: Dimensions = { width: 400, height: 400 };
 
+/** The reference editor lives in a Radix portal, outside the studio region. */
+async function openReferenceDialog(scope: Locator) {
+  const page = scope.page();
+  const dialog = page.getByRole('dialog', { name: 'Editar área da foto', exact: true });
+  if (!await dialog.isVisible()) {
+    const selected = scope.getByRole('button', { name: /^Selecionar arte: / }).and(scope.locator('[aria-pressed="true"]'));
+    const label = await selected.getAttribute('aria-label');
+    if (!label) throw new Error('No selected artwork to edit');
+    await scope.getByRole('button', { name: `Editar área da foto: ${label.replace(/^Selecionar arte: /, '')}`, exact: true }).click();
+  }
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+async function closeReferenceDialog(dialog: Locator) {
+  await dialog.getByRole('button', { name: 'Concluir ajuste', exact: true }).click();
+  await expect(dialog).toBeHidden();
+}
+
 /** Read the actual inline percentage rectangle, in source-image pixels (not CSS pixels). */
-export async function readEditorReference(scope: Locator, dimensions: Dimensions = fixtureDimensions): Promise<EditorReference> {
-  return scope.locator('.local-reference-canvas .local-reference-box').evaluate((element, size) => {
+async function readReferenceRectangle(dialog: Locator, dimensions: Dimensions): Promise<EditorReference> {
+  return dialog.locator('.local-reference-canvas .local-reference-box').evaluate((element, size) => {
     const style = (element as HTMLElement).style;
     const values = [style.left, style.top, style.width, style.height];
     const extents = [size.width, size.height, size.width, size.height];
@@ -21,9 +40,23 @@ export async function readEditorReference(scope: Locator, dimensions: Dimensions
   }, dimensions);
 }
 
+export async function readEditorReference(scope: Locator, dimensions: Dimensions = fixtureDimensions): Promise<EditorReference> {
+  const dialog = await openReferenceDialog(scope);
+  try {
+    return await readReferenceRectangle(dialog, dimensions);
+  } finally {
+    await closeReferenceDialog(dialog);
+  }
+}
+
 export async function expectEditorReference(scope: Locator, reference: EditorReference, dimensions: Dimensions = fixtureDimensions) {
-  await expect(scope.locator('.local-reference-canvas')).toBeVisible();
-  await expect.poll(() => readEditorReference(scope, dimensions)).toEqual(reference);
+  const dialog = await openReferenceDialog(scope);
+  try {
+    await expect(dialog.locator('.local-reference-canvas')).toBeVisible();
+    await expect.poll(() => readReferenceRectangle(dialog, dimensions)).toEqual(reference);
+  } finally {
+    await closeReferenceDialog(dialog);
+  }
 }
 
 /** Resize via real pointer input; never write React state, DOM styles or dispatch synthetic events. */
@@ -34,7 +67,9 @@ export async function setEditorReference(page: Page, scope: Locator, reference: 
     || x + width > dimensions.width || y + height > dimensions.height) {
     throw new Error('Reference must be an integer rectangle inside the source image');
   }
-  const canvas = scope.locator('.local-reference-canvas');
+  const dialog = await openReferenceDialog(scope);
+  try {
+  const canvas = dialog.locator('.local-reference-canvas');
   const image = canvas.locator('img');
   await expect(canvas).toBeVisible();
   await expect.poll(() => image.evaluate(el => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0)).toBe(true);
@@ -71,5 +106,8 @@ export async function setEditorReference(page: Page, scope: Locator, reference: 
   await dragHandle('se', dimensions.width, dimensions.height);
   await dragHandle('nw', x, y);
   await dragHandle('se', x + width, y + height);
-  await expectEditorReference(scope, reference, dimensions);
+  await expect.poll(() => readReferenceRectangle(dialog, dimensions)).toEqual(reference);
+  } finally {
+    await closeReferenceDialog(dialog);
+  }
 }

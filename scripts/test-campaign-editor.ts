@@ -1,4 +1,4 @@
-import { openStudio, closeStudio } from './studio-navigation';
+import { openStudio, closeStudio, campaignSections, expectStudioLayout } from './studio-navigation';
 import { auditAdminVisuals } from './admin-visual-audit';
 import { expectEditorReference, setEditorReference } from "./editor-reference-helper";
 // Container-only integration runner. Never point this at the normal application/database.
@@ -166,20 +166,61 @@ async function main() {
     console.info('PASS client directory: anonymous/enrollment blocked, create/edit/reload, search name/contact and empty result, linked campaign, mobile overflow checks.');
     if (process.env.CAMPAIGN_SECTIONS_ONLY === '1') {
       stage = 'campaign sections visibility, keyboard and draft retention';
-      const labels = ['Dados da campanha', 'Aprovação visual', 'Cobrança'];
-      await expect(page.getByRole('tab', { name: 'Estúdio', exact: true })).toHaveCount(0);
-      for (const name of labels) {
-        await page.getByRole('tab', { name, exact: true }).click();
+      const sections = campaignSections(page);
+      await expect(sections.getByRole('tab', { name: 'Dados da campanha', exact: true })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.locator('.ws-studio-root')).toHaveCount(0);
+      await expect(page.locator('iframe')).toHaveCount(0);
+      const localName = page.getByLabel('Nome do evento', { exact: true });
+      const localNotes = page.getByLabel('Observações do combinado', { exact: true });
+      await localName.fill('Nome local retido entre seções');
+      await localNotes.fill('Observação local retida entre seções');
+      const editorReads: string[] = [];
+      const trackRead = (request: import('@playwright/test').Request) => {
+        if (request.method() === 'GET' && request.url() === `${base}/api/campaigns/${campaignId}/editor`) editorReads.push(request.url());
+      };
+      page.on('request', trackRead);
+      try {
+        await sections.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
+        await sections.getByRole('tab', { name: 'Cobrança', exact: true }).click();
+        await expect(page.locator('.ws-studio-root')).toHaveCount(0);
+        expect(editorReads).toHaveLength(0);
         await openStudio(page);
-        await closeStudio(page);
-        await expect(page.getByRole('tab', { name, exact: true })).toHaveAttribute('aria-selected', 'true');
-      }
-      console.info('PASS campaign sections: no studio tab, independent launch returns to selected section.');
+        const root = await page.locator('.ws-studio-root').elementHandle();
+        await expectStudioLayout(page);
+        const color = page.getByLabel('Cor da campanha', { exact: true });
+        await page.getByRole('tab', { name: 'Cores', exact: true }).click();
+        await color.fill('#123456');
+        for (const name of ['Dados da campanha', 'Aprovação visual', 'Cobrança']) {
+          await sections.getByRole('tab', { name, exact: true }).click();
+          await expect(page.locator('.ws-studio-root')).toBeHidden();
+          await openStudio(page);
+          expect(await root!.evaluate(el => el === document.querySelector('.ws-studio-root'))).toBe(true);
+          await expect(color).toHaveValue('#123456');
+          await expect(localName).toHaveValue('Nome local retido entre seções');
+          await expect(localNotes).toHaveValue('Observação local retida entre seções');
+          await expect(page.getByRole('region', { name: 'Estúdio da campanha' }).getByRole('status')).toContainText('Alterações não salvas');
+        }
+        await expect.poll(() => editorReads.length).toBe(1);
+        await sections.getByRole('tab', { name: 'Dados da campanha', exact: true }).focus();
+        await page.keyboard.press('Home');
+        await expect(sections.getByRole('tab', { name: 'Estúdio', exact: true })).toBeFocused();
+        await page.keyboard.press('ArrowRight');
+        await expect(sections.getByRole('tab', { name: 'Dados da campanha', exact: true })).toHaveAttribute('aria-selected', 'true');
+        await page.keyboard.press('End');
+        await expect(sections.getByRole('tab', { name: 'Cobrança', exact: true })).toHaveAttribute('aria-selected', 'true');
+        for (const width of [1440, 390]) {
+          await page.setViewportSize({ width, height: 1000 });
+          await openStudio(page);
+          await expectStudioLayout(page);
+        }
+      } finally { page.off('request', trackRead); }
+      console.info('PASS campaign sections: Dados initial, lazy studio tab, retained dirty draft, keyboard navigation and responsive columns.');
       return;
     }
     if (process.env.CLIENT_DIRECTORY_ONLY === '1') return;
     stage = 'studio loads only on demand';
-    await expect(page.getByRole('button', { name: 'Abrir estúdio', exact: true })).toBeVisible();
+    await expect(campaignSections(page).getByRole('tab', { name: 'Dados da campanha', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await expect(campaignSections(page).getByRole('tab', { name: 'Estúdio', exact: true })).toBeVisible();
     await expect(page.locator('iframe[title="Prévia real do editor da campanha"]')).toHaveCount(0);
     await expect(page.locator('.ws-studio-root')).toHaveCount(0);
     stage = 'upload validation feedback preserves empty draft';
@@ -376,13 +417,16 @@ async function main() {
     await page.getByRole('tab', { name: 'Artes', exact: true }).click();
     await editor.locator('input[type=file]').nth(0).setInputFiles({ name: 'frame.png', mimeType: 'image/png', buffer: png(400, 'artwork') });
     await page.getByLabel('Nome da arte 1', { exact: true }).waitFor();
-    await page.getByRole('tab', { name: 'Stickers', exact: true }).click();
+    await page.getByRole('tab', { name: 'Figurinhas', exact: true }).click();
     await expect(editor.locator('input[type=file]').nth(1)).toBeEnabled();
     await editor.locator('input[type=file]').nth(1).setInputFiles({ name: 'sticker.png', mimeType: 'image/png', buffer: png(128, 'sticker') });
     await page.getByLabel('Nome do sticker 1', { exact: true }).waitFor();
-    stage = 'reference width after uploads';
+    stage = 'reference modal after uploads';
     await page.getByRole('tab', { name: 'Artes', exact: true }).click();
+    await expect(page.locator('.local-reference-canvas')).toHaveCount(0);
     await setEditorReference(page, editor, { x: 40, y: 40, width: 320, height: 320 });
+    await expect(page.getByRole('dialog', { name: 'Editar área da foto', exact: true })).toBeHidden();
+    await expect(page.locator('.local-reference-canvas')).toHaveCount(0);
     await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura teste');
     await page.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
     await expect(editor.getByRole('status')).toHaveText('Configuração salva. A campanha não foi publicada.');

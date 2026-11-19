@@ -64,27 +64,21 @@
 .admin-shell { display:flex; flex-direction:column; }
 .admin-shell .shell { width:100%; max-width:1440px; padding-inline:24px; }
 .admin-shell .content { flex:1; padding-top:24px; padding-bottom:40px; }
-.admin-header { border-bottom:1px solid var(--line); }
-.admin-masthead { background:#000; color:#fafafa; }
+.admin-header { border-bottom:1px solid var(--line); background:var(--surface); color:var(--foreground); }
 .admin-header-inner { display:flex; align-items:center; justify-content:space-between; gap:24px; width:100%; max-width:1280px; margin-inline:auto; padding-inline:24px; }
-.admin-masthead .admin-header-inner { min-height:68px; }
+.admin-header > .admin-header-inner { min-height:56px; }
 .admin-brand { display:flex; align-items:center; gap:12px; font-size:20px; font-weight:600; letter-spacing:-.6px; min-height:44px; }
 .admin-brand-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:#fafafa; color:#0a0a0a; font-size:20px; font-weight:700; }
 .admin-brand-divider { height:20px; width:1px; background:#404040; margin-inline:8px; }
 .admin-brand-context { color:#a3a3a3; font-size:13px; font-weight:400; letter-spacing:0; }
-.admin-tools { display:flex; align-items:center; gap:12px; }
-.ui-scope .admin-masthead [data-slot=button] { color:#fafafa; }
+.admin-tools { display:flex; align-items:center; gap:8px; margin-left:auto; flex-shrink:0; }
 .ui-scope .account-trigger { min-height:36px; border:0; padding:6px 12px; background:#171717; color:#fafafa; font-size:13px; font-weight:500; }
 .ui-scope [data-slot=breadcrumb-list] { list-style:none; padding:0; margin:0; }
-.ui-scope .admin-masthead [data-slot=button]:hover { background:#262626; }
 .admin-avatar { display:grid; place-items:center; width:30px; height:30px; border-radius:8px; background:#262626; color:#fafafa; }
-.admin-nav-row { background:var(--background); }
-.admin-nav-row .admin-header-inner { min-height:52px; gap:16px; }
-.admin-links { display:flex; gap:24px; align-items:stretch; align-self:stretch; }
+.admin-links { display:flex; gap:24px; margin-left:24px; align-items:stretch; align-self:stretch; }
 .admin-links a { position:relative; display:flex; align-items:center; gap:8px; min-height:52px; color:var(--muted); font-size:14px; font-weight:500; white-space:nowrap; transition:color .15s; }
-.admin-links a::after { content:''; position:absolute; height:2px; bottom:0; left:0; right:0; background:currentColor; transform:scaleX(0); transform-origin:left; transition:transform .15s; }
+.admin-nav-indicator { position:absolute; height:2px; bottom:0; left:0; right:0; background:var(--foreground); pointer-events:none; }
 .admin-links a:hover,.admin-links a[aria-current=page] { color:var(--foreground); }
-.admin-links a:hover::after,.admin-links a[aria-current=page]::after { transform:scaleX(1); }
 .admin-content { background:var(--background); }
 .ui-scope.account-menu { min-height:0; border:1px solid var(--line); background:var(--surface); }
 .admin-footer { display:flex;justify-content:space-between;gap:16px;padding-block:20px;color:var(--muted);font-size:11px; }
@@ -140,7 +134,7 @@
  .admin-shell .shell { padding-inline:16px; } .admin-shell .content { padding-top:20px; }
  .admin-header-inner { padding-inline:16px; gap:12px; }
  .admin-brand-context,.admin-brand-divider { display:none; }
- .admin-links { gap:20px; }
+ .admin-links { gap:20px; margin-left:16px; }
  .admin-links a { font-size:13px; }
  .admin-tools { gap:4px; margin-left:auto; }
  .account-trigger > span:not(.admin-avatar),.account-trigger > svg:last-child { display:none; }
@@ -154,5 +148,14 @@
  .ui-scope .ce-preview-expanded { position:fixed; }
  .ui-scope .ce-heading { padding:16px; } .ui-scope .ce-feedback { padding-inline:16px; }
  .admin-footer span:last-child { display:none; }
+}
+@media(max-width:480px) {
+ .admin-header-inner { padding-inline:12px; gap:10px; }
+ .admin-brand { font-size:18px; flex-shrink:0; }
+ .admin-links { gap:10px; margin-left:6px; }
+ .admin-links a { gap:0; font-size:12px; }
+ .admin-links a > svg { display:none; }
+ .admin-tools { gap:0; }
+ .ui-scope .admin-tools [data-slot=button] { padding-inline:8px; }
 }
 }

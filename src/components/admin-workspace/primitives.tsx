@@ -48,19 +48,24 @@ export function Pill({ children, tone = 'neutral' }: { children: ReactNode; tone
 }
 /** Pace motion-tabs shared indicator, with content kept mounted even when inactive.
  * The registry's conditional child rendering would discard studio/form state. */
-export function WorkspaceTabs({ label, items, initialId }: { label: string; items: { id: string; label: string; content: ReactNode }[]; initialId?: string }) {
+export function WorkspaceTabs({ label, items, initialId }: { label: string; items: { id: string; label: string; content: ReactNode; lazy?: boolean }[]; initialId?: string }) {
   const id = useId();
   const [active, setActive] = useState(initialId ?? items[0]?.id);
+  const [visited, setVisited] = useState<string[]>([initialId ?? items[0]?.id]);
+  function activate(next: string) {
+    setVisited(current => current.includes(next) ? current : [...current, next]);
+    setActive(next);
+  }
   const reduced = useReducedMotion();
   function keydown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const keys: Record<string, number> = { ArrowRight: (index + 1) % items.length, ArrowLeft: (index - 1 + items.length) % items.length, Home: 0, End: items.length - 1 };
     if (!(event.key in keys)) return;
     event.preventDefault();
     const next = items[keys[event.key]].id;
-    setActive(next);
+    activate(next);
     const tab = document.getElementById(`${id}-${next}-tab`);
     tab?.focus({ preventScroll: true });
     tab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
-  return <div className="ws-tabs"><div className="ws-tabrail" role="tablist" aria-label={label}>{items.map((item, index) => <button type="button" role="tab" key={item.id} id={`${id}-${item.id}-tab`} aria-selected={active === item.id} aria-controls={`${id}-${item.id}-panel`} tabIndex={active === item.id ? 0 : -1} onClick={() => setActive(item.id)} onKeyDown={e => keydown(e, index)}>{active === item.id && <motion.span aria-hidden layoutId={`${id}-indicator`} className="ws-tab-indicator" transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }} />}<span>{item.label}</span></button>)}</div>{items.map(item => <div key={item.id} role="tabpanel" id={`${id}-${item.id}-panel`} aria-labelledby={`${id}-${item.id}-tab`} hidden={active !== item.id} tabIndex={0} onInvalidCapture={() => flushSync(() => setActive(item.id))}>{item.content}</div>)}</div>;
+  return <div className="ws-tabs"><div className="ws-tabrail" role="tablist" aria-label={label}>{items.map((item, index) => <button type="button" role="tab" key={item.id} id={`${id}-${item.id}-tab`} aria-selected={active === item.id} aria-controls={`${id}-${item.id}-panel`} tabIndex={active === item.id ? 0 : -1} onClick={() => activate(item.id)} onKeyDown={e => keydown(e, index)}>{active === item.id && <motion.span aria-hidden layoutId={`${id}-indicator`} className="ws-tab-indicator" transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }} />}<span>{item.label}</span></button>)}</div>{items.map(item => <div key={item.id} role="tabpanel" id={`${id}-${item.id}-panel`} aria-labelledby={`${id}-${item.id}-tab`} hidden={active !== item.id} tabIndex={0} onInvalidCapture={() => flushSync(() => setActive(item.id))}>{!item.lazy || visited.includes(item.id) ? item.content : null}</div>)}</div>;
 }

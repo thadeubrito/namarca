@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, PanelRightClose, PanelRightOpen } from 'lucide-react';
-import { themeDefaults, type Artwork, type EventConfig, type Material } from '@namarca/editor/events';
+import { PanelRightClose, PanelRightOpen, ArrowUp, ArrowDown, Scan, Trash2, X } from 'lucide-react';
+import { Dialog } from 'radix-ui';
+import { useDarkTheme } from '@/components/theme-scope';
+import { type Artwork, type EventConfig, type Material } from '@namarca/editor/events';
+import { StudioColors } from './studio-colors';
 import { clampReference, ReferenceCanvas } from '@/editor/reference-canvas';
 import { uploadFailureMessage } from '@/lib/upload-feedback';
 import { Action, Surface, Field, TextInput, Notice, EmptyState, Workspace, Pill, WorkspaceTabs } from './primitives';
@@ -11,39 +14,21 @@ import './studio.css';
 
 type Snapshot = { event: EventConfig; revision: number };
 type Kind = 'artwork' | 'sticker';
-const labels: Record<keyof typeof themeDefaults, string> = { background: 'Fundo', surface: 'Painéis', text: 'Texto', mutedText: 'Texto secundário', primary: 'Botões', onPrimary: 'Texto dos botões', accent: 'Destaque', border: 'Bordas' };
 
-export function StudioWorkspace({ campaignId, campaignName = 'Campanha', fullscreen, onClose }: { campaignId: string; campaignName?: string; fullscreen: boolean; onClose: () => void }) {
-  const [mobileArea, setMobileArea] = useState('materials');
+export function StudioWorkspace({ campaignId }: { campaignId: string }) {
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
-  const root = useRef<HTMLElement>(null);
-  const back = useRef<HTMLButtonElement>(null);
+  const [referenceOpen, setReferenceOpen] = useState(false);
+  const dark = useDarkTheme();
+  const referenceTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
-    if (!fullscreen || !root.current) return;
-    const previousOverflow = document.body.style.overflow;
-    const isolated: { node: HTMLElement; inert: boolean }[] = [];
-    let node: HTMLElement = root.current;
-    while (node.parentElement && node.parentElement !== document.body) {
-      for (const sibling of node.parentElement.children) {
-        if (sibling !== node && sibling instanceof HTMLElement && !['SCRIPT', 'STYLE', 'LINK'].includes(sibling.tagName)) {
-          isolated.push({ node: sibling, inert: sibling.inert });
-          sibling.inert = true;
-        }
-      }
-      node = node.parentElement;
-    }
+    if (!referenceOpen) return;
+    const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    back.current?.focus({ preventScroll: true });
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      for (const item of isolated) item.node.inert = item.inert;
-    };
-  }, [fullscreen]);
+    return () => { document.body.style.overflow = previous; };
+  }, [referenceOpen]);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [event, setEvent] = useState<EventConfig | null>(null);
   const [selected, setSelected] = useState('');
-  const [expanded, setExpanded] = useState(false);
-  const [previewReady, setPreviewReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [conflict, setConflict] = useState(false);
@@ -98,7 +83,7 @@ export function StudioWorkspace({ campaignId, campaignName = 'Campanha', fullscr
   useEffect(() => {
     sendPreview();
     const ready = (e: MessageEvent) => {
-      if (e.origin === window.location.origin && e.source === frame.current?.contentWindow && e.data?.type === 'namarca:preview-ready' && e.data.campaignId === campaignId) { setPreviewReady(true); sendPreview(); }
+      if (e.origin === window.location.origin && e.source === frame.current?.contentWindow && e.data?.type === 'namarca:preview-ready' && e.data.campaignId === campaignId) { sendPreview(); }
     };
     window.addEventListener('message', ready);
     return () => window.removeEventListener('message', ready);
@@ -134,7 +119,7 @@ export function StudioWorkspace({ campaignId, campaignName = 'Campanha', fullscr
     finally { setBusy(false); }
   };
 
-  if (!event) return <section ref={root} className="campaign-editor ws-studio-root" data-fullscreen={fullscreen} aria-label="Estúdio da campanha" hidden={!fullscreen}><div className="ws-studio-workspace"><Workspace><div className="ws-studio-toolbar"><button ref={back} type="button" className="ws-action ws-action-ghost" onClick={onClose}><ArrowLeft aria-hidden />Voltar à campanha</button><h2>Estúdio</h2></div><Surface><p role="status">{message || 'Carregando estúdio…'}</p>{!busy && <Action type="button" onClick={() => void load()}>Tentar novamente</Action>}</Surface></Workspace></div></section>;
+  if (!event) return <section className="campaign-editor ws-studio-root" aria-label="Estúdio da campanha"><Surface><p role="status">{message || 'Carregando estúdio…'}</p>{!busy && <Action type="button" onClick={() => void load()}>Tentar novamente</Action>}</Surface></section>;
 
   const artwork = event.artworks.find(a => a.id === selected) ?? event.artworks[0];
   const updateReference = (reference: Artwork['reference']) => {
@@ -153,28 +138,29 @@ export function StudioWorkspace({ campaignId, campaignName = 'Campanha', fullscr
       </div>
       {!items.length ? <EmptyState title={kind === 'artwork' ? 'Sua biblioteca de artes está vazia' : 'Nenhum sticker adicionado.'} description={kind === 'artwork' ? 'Adicione uma arte PNG para abrir a prévia.' : 'Adicione arquivos PNG para disponibilizá-los na composição.'} /> :
         <ol className="ws-studio-rail" aria-label={kind === 'artwork' ? 'Artes da campanha' : 'Stickers da campanha'}>{items.map((item, index) => <li key={item.id} className="ws-studio-asset" data-selected={kind === 'artwork' && artwork?.id === item.id}>
-          <div className="ws-studio-asset-top"><span className="ws-studio-index">{String(index + 1).padStart(2, '0')}</span>{kind === 'artwork' && artwork?.id === item.id && <Pill tone="success">Em edição</Pill>}</div>
-          {kind === 'artwork' ? <Action type="button" variant="ghost" className="ws-studio-thumbnail" disabled={busy} onClick={() => setSelected(item.id)} aria-pressed={artwork?.id === item.id} aria-label={`Editar área da foto: ${item.name}`}><img src={assetURL(item.file)} alt={item.name} /></Action> : <div className="ws-studio-thumbnail"><img src={assetURL(item.file)} alt={item.name} /></div>}
+          <div className="ws-studio-asset-top"><span className="ws-studio-index">{String(index + 1).padStart(2, '0')}</span>{kind === 'artwork' && artwork?.id === item.id && <Pill tone="success">Selecionada</Pill>}</div>
+          {kind === 'artwork' ? <Action type="button" variant="ghost" className="ws-studio-thumbnail" disabled={busy} onClick={() => setSelected(item.id)} aria-pressed={artwork?.id === item.id} aria-label={`Selecionar arte: ${item.name}`}><img src={assetURL(item.file)} alt={item.name} /></Action> : <div className="ws-studio-thumbnail"><img src={assetURL(item.file)} alt={item.name} /></div>}
           <TextInput aria-label={`Nome ${kind === 'artwork' ? 'da arte' : 'do sticker'} ${index + 1}`} value={item.name} disabled={busy} onChange={e => change({ ...event, [key]: event[key].map(a => a.id === item.id ? { ...a, name: e.target.value } : a) })} />
-          <div className="ws-studio-asset-actions"><Action type="button" variant="ghost" disabled={busy || !index} onClick={() => move(index, -1)} aria-label={`Mover ${item.name} para cima`}>↑</Action><Action type="button" variant="ghost" disabled={busy || index === items.length - 1} onClick={() => move(index, 1)} aria-label={`Mover ${item.name} para baixo`}>↓</Action><Action type="button" variant="danger" disabled={busy} onClick={() => change({ ...event, [key]: event[key].filter(a => a.id !== item.id) })} aria-label={`Remover ${item.name}`}>Remover</Action></div>
+          <div className="ws-studio-asset-actions"><Action type="button" variant="ghost" disabled={busy || !index} onClick={() => move(index, -1)} aria-label={`Mover ${item.name} para cima`}><ArrowUp aria-hidden /></Action><Action type="button" variant="ghost" disabled={busy || index === items.length - 1} onClick={() => move(index, 1)} aria-label={`Mover ${item.name} para baixo`}><ArrowDown aria-hidden /></Action>{kind === 'artwork' && <Action type="button" variant="ghost" disabled={busy} aria-label={`Editar área da foto: ${item.name}`} title="Editar área da foto" onClick={e => { referenceTrigger.current = e.currentTarget; setSelected(item.id); setReferenceOpen(true); }}><Scan aria-hidden /></Action>}<Action type="button" variant="danger" disabled={busy} onClick={() => change({ ...event, [key]: event[key].filter(a => a.id !== item.id) })} aria-label={`Remover ${item.name}`}><Trash2 aria-hidden /></Action></div>
         </li>)}</ol>}
     </div>;
   };
-  const colors = <div className="ws-studio-palette"><div className="ws-studio-panel-heading"><h3>Paleta do editor</h3><p>As cores são aplicadas à experiência da campanha.</p></div><div className="ws-studio-swatches">{(Object.keys(themeDefaults) as Array<keyof typeof themeDefaults>).map(key => <Field key={key} label={labels[key]}><TextInput type="color" aria-label={labels[key]} value={event.theme?.[key] ?? themeDefaults[key]} onChange={e => change({ ...event, theme: { ...event.theme, [key]: e.target.value } })} /></Field>)}<Field label="Cor da campanha"><TextInput type="color" aria-label="Cor da campanha" value={event.color} onChange={e => change({ ...event, color: e.target.value })} /></Field></div></div>;
+  const colors = <StudioColors event={event} disabled={busy} onChange={change} />;
 
-  return <section ref={root} className="campaign-editor ws-studio-root" data-standalone="true" data-fullscreen={fullscreen} data-mobile-area={mobileArea} data-preview-collapsed={previewCollapsed} aria-label="Estúdio da campanha"><div className="ws-studio-workspace" hidden={!fullscreen}><Workspace>
-    <div className="ws-studio-toolbar"><div className="ws-studio-title">{fullscreen && <button ref={back} type="button" aria-label="Voltar à campanha" className="ws-action ws-action-ghost ws-studio-back" onClick={() => { onClose(); setExpanded(false); }}><ArrowLeft aria-hidden /><span>Voltar à campanha</span></button>}<div><h2>{fullscreen ? campaignName : 'Estúdio'}</h2>{fullscreen && <p className="ws-studio-context">Estúdio da campanha</p>}</div><Pill tone={conflict || dirty ? 'warning' : 'success'}>{conflict ? 'Revisão em conflito' : dirty ? 'Rascunho alterado' : 'Salvo'}</Pill></div><div className="ws-studio-toolbar-actions">{fullscreen && <Action variant="ghost" className="ws-studio-toggle-preview" aria-pressed={!previewCollapsed} onClick={() => setPreviewCollapsed(value => !value)}>{previewCollapsed ? <PanelRightOpen aria-hidden /> : <PanelRightClose aria-hidden />}{previewCollapsed ? 'Mostrar prévia' : 'Ocultar prévia'}</Action>}{conflict && <Action type="button" variant="secondary" disabled={busy} onClick={() => { if (window.confirm('Descartar suas alterações e carregar a configuração salva?')) void load(); }}>Recarregar versão salva</Action>}<Action type="button" variant="primary" disabled={busy || !dirty || conflict} onClick={() => void save()}>{busy ? 'Aguarde…' : 'Salvar configuração'}</Action></div></div>
-    <div className="ws-studio-feedback" role="status" aria-live="polite"><Notice role="presentation" tone={failure ? 'error' : 'info'}>{message || (dirty ? 'Alterações não salvas.' : 'Configuração salva.')}</Notice></div>
-    {fullscreen && <nav className="ws-studio-mobile-nav" aria-label="Áreas do estúdio">{[['materials', 'Materiais'], ['reference', 'Área da foto'], ['preview', 'Prévia']].map(([id, label]) => <Action key={id} variant={mobileArea === id ? 'primary' : 'ghost'} style={{ background: mobileArea === id ? 'var(--primary)' : 'transparent', color: mobileArea === id ? 'var(--primary-foreground)' : 'var(--muted)' }} aria-pressed={mobileArea === id} onClick={() => setMobileArea(id)}>{label}</Action>)}</nav>}
-    <Surface className="ws-studio-library-panel"><fieldset className="ws-studio-fields" disabled={busy}><WorkspaceTabs label="Configuração do estúdio" items={[{ id: 'artes', label: 'Artes', content: library('artwork', event.artworks) }, { id: 'stickers', label: 'Stickers', content: library('sticker', event.stickers) }, { id: 'cores', label: 'Cores', content: colors }]} /></fieldset></Surface>
-    <div className="ws-studio-desks">
-      <Surface className="ws-studio-reference"><div className="ws-studio-panel-heading"><div><span className="ws-studio-kicker">Referência</span><h3>{artwork ? `Área da foto · ${artwork.name}` : 'Referência da composição'}</h3></div><Pill tone="neutral">{artwork ? `${artwork.width} × ${artwork.height}` : 'Sem arte'}</Pill></div>{artwork ? <><p className="ws-studio-instruction">Desenhe a área da foto. Arraste ou ajuste pelas alças.</p><fieldset className="ws-studio-fields" disabled={busy}><div className="ws-studio-reference-stage"><ReferenceCanvas key={artwork.id} artwork={artwork} assetURL={assetURL(artwork.file)} onChange={updateReference} /></div></fieldset></> : <EmptyState title="Selecione uma arte" description="A área da foto será definida aqui, separada da prévia do participante." />}</Surface>
-      <motion.aside className="ws-studio-preview" data-expanded={expanded} aria-label="Prévia da campanha" initial={false} animate={{ backgroundColor: expanded ? '#101c20' : '#17272b' }} transition={{ duration: reducedMotion ? 0 : 0.18 }}>
-        <div className="ws-studio-preview-bar"><div><span className="ws-studio-kicker">Experiência do participante</span><h3>Prévia</h3></div><Action type="button" variant="secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? 'Recolher prévia' : 'Ampliar prévia'}</Action></div>
-        <p className="ws-studio-preview-status" aria-live="polite">{previewReady ? 'Rascunho atual · foto local' : 'Carregando prévia…'}</p>
+  return <section className="campaign-editor ws-studio-root" data-preview-collapsed={previewCollapsed} aria-label="Estúdio da campanha"><div className="ws-studio-workspace"><Workspace>
+    <div className="sr-only" role="status" aria-live="polite">{message || (dirty ? 'Alterações não salvas.' : 'Configuração salva.')}</div>
+    <div className="ws-studio-columns"><div className="ws-studio-controls"><div className="ws-studio-library-panel"><fieldset className="ws-studio-fields" disabled={busy}><WorkspaceTabs label="Configuração do estúdio" items={[{ id: 'artes', label: 'Artes', content: library('artwork', event.artworks) }, { id: 'stickers', label: 'Figurinhas', content: library('sticker', event.stickers) }, { id: 'cores', label: 'Cores', content: colors }]} /></fieldset></div>
+      <Dialog.Root open={referenceOpen} onOpenChange={setReferenceOpen}><Dialog.Portal><Dialog.Overlay className="ws-client-dialog-overlay" /><Dialog.Content className={`ui-scope campaign-editor ws-studio-root ws-studio-reference-dialog ${dark ? 'dark' : ''}`} onInteractOutside={e => e.preventDefault()} onCloseAutoFocus={e => { e.preventDefault(); referenceTrigger.current?.focus(); }}><header className="ws-studio-dialog-heading"><Dialog.Title>Editar área da foto</Dialog.Title><Dialog.Close asChild><button type="button" className="ws-action ws-action-ghost" aria-label="Fechar ajuste da área da foto"><X aria-hidden /></button></Dialog.Close></header><Dialog.Description className="sr-only">Ajuste a área da foto arrastando o retângulo ou suas alças.</Dialog.Description>{referenceOpen && <div className="ws-studio-reference">{artwork ? <><fieldset className="ws-studio-fields" disabled={busy}><div className="ws-studio-reference-stage" style={{ '--artwork-ratio': artwork.width / artwork.height } as React.CSSProperties}><ReferenceCanvas key={artwork.id} artwork={artwork} assetURL={assetURL(artwork.file)} onChange={updateReference} /></div></fieldset></> : <EmptyState title="Selecione uma arte" description="A área da foto será definida aqui, separada da prévia do participante." />}</div>}<footer className="ws-studio-dialog-footer"><Dialog.Close asChild><button type="button" className="ws-action ws-action-primary">Concluir ajuste</button></Dialog.Close></footer></Dialog.Content></Dialog.Portal></Dialog.Root>
+      </div><motion.aside id={`studio-preview-${campaignId}`} className="ws-studio-preview" aria-label="Prévia da campanha" initial={false} animate={{ opacity: 1 }} transition={{ duration: reducedMotion ? 0 : 0.18 }}>
+        <div className="ws-studio-preview-bar"><Action variant="ghost" className="ws-studio-toggle-preview" aria-expanded={!previewCollapsed} aria-controls={`studio-preview-content-${campaignId}`} onClick={() => setPreviewCollapsed(value => !value)}>{previewCollapsed ? <PanelRightOpen aria-hidden /> : <PanelRightClose aria-hidden />}{previewCollapsed ? 'Mostrar prévia' : 'Ocultar prévia'}</Action></div>
+        <div id={`studio-preview-content-${campaignId}`} className="ws-studio-preview-content" hidden={previewCollapsed}>
         <div className="ws-studio-device"><iframe ref={frame} src={`/event-runtime/preview.html?campaignId=${campaignId}`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></div>
-        <p className="ws-studio-privacy">Fotos e composições ficam no navegador.</p>
+        <p className="ws-studio-privacy">Fotos e composições ficam no navegador.</p></div>
       </motion.aside>
     </div>
+    <footer className="ws-studio-footer">
+      {failure && <Notice tone="error" role="alert">{message}</Notice>}
+      <div className="ws-studio-footer-actions">{conflict && <Action type="button" variant="secondary" disabled={busy} onClick={() => { if (window.confirm('Descartar suas alterações e carregar a configuração salva?')) void load(); }}>Recarregar versão salva</Action>}<Action type="button" variant="primary" disabled={busy || !dirty || conflict} onClick={() => void save()}>{busy ? 'Aguarde…' : 'Salvar configuração'}</Action></div>
+    </footer>
   </Workspace></div></section>;
 }

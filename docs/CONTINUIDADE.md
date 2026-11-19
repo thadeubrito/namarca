@@ -2,6 +2,62 @@
 
 > Documento de passagem de contexto para novas sessões de IA. Atualizado em 18/11/2026 ao final da sessão inicial. Descreve decisões do fundador, implementação existente, pendências e evidências; NÃO constitui aceite comercial ou declaração de prontidão de produção. O código e os serviços podem ter mudado depois: conferir antes de agir.
 
+## Header — densidade e indicador animado (19/11/2026)
+
+Refinamento pedido pelo fundador: altura mínima de 68px para 56px, espaço marca/menu de 24px para 48px no desktop (gap + margin), adaptado em telas estreitas. Linha ativa usa Motion layoutId com spring entre Campanhas/Clientes, em vez de duas linhas com scale independente; reduced-motion zera duração. Typecheck/lint/48 testes/build isolado aprovados. Sem nova validação browser ou migrations (schema/auth inalterados).
+
+## Estúdio — controles de cores organizados (19/11/2026)
+
+Aba Cores agora usa `studio-colors.tsx`: identidade da campanha separada e grupos Superfícies, Textos e Ações/destaque. Cada controle tem amostra clicável com seletor nativo e código HEX editável/nome acessível; apenas #RRGGBB válido altera rascunho, entrada incompleta reverte ao sair. Restaurar padrão exige confirmação e só altera rascunho; salvar continua explícito. Controles desabilitados durante operações, layout adapta para uma coluna no celular, tokens administrativos preservados. Removida também linha Rascunho atual · foto local da prévia por pedido anterior. Typecheck/lint/48 testes e build isolado aprovados em containers. Sem nova validação browser/migrations (schema inalterado), sem commit/push/publicação.
+
+## Estúdio — salvar no rodapé e interface sem faixa de status (19/11/2026)
+
+Fundador optou por manter salvamentos independentes em Dados e Estúdio (não implementar botão global). Na aba Estúdio removidos título redundante, indicador de rascunho/salvo e faixa visual permanente de notificações. Salvar configuração e recuperação de conflito ficam no rodapé, abaixo da biblioteca/prévia. Mensagens de sucesso/progresso permanecem apenas em região acessível sr-only; erros aparecem sob demanda junto ao rodapé, sem ocultar falhas de upload/salvamento. Guards dirty, API e persistência inalterados. Typecheck/lint/48 testes e build isolado aprovados em containers; sem nova execução browser ou migrations (schema inalterado). Sem commit/push/publicação.
+
+## Header — barra única (19/11/2026)
+
+Pedido do fundador: marca, menu e ações em uma única linha, sem masthead preto. `AdminNav` agora apresenta Namarca, Campanhas/Clientes e à direita tema + Sair diretamente (sem dropdown de conta). Fundo usa surface/foreground do tema. Em telas estreitas reduz gaps e oculta apenas ícones decorativos do menu, preservando nomes. SignOut e lógica de autenticação inalterados. Auditoria browser atualizada para verificar ordem/alinhamento e ausência de fundo preto no lugar do dropdown removido, mas não executada nesta alteração. Typecheck/lint/48 testes e build isolado executados com sucesso; sem nova execução browser/migrations (schema inalterado). Sem commit/push/publicação.
+
+## Estúdio — correção real da altura mínima do Dialog (19/11/2026)
+
+Fundador confirmou que dialog ainda ocupava a tela. Causa real encontrada: `.ui-scope` em `ui.css` impõe `min-height:100dvh` e também é classe do Dialog.Content. Corrigido no próprio `.ui-scope.ws-studio-reference-dialog` com `min-height:0`; ajustes anteriores só nos filhos/height não venciam mínimo. Canvas quadrado preservado; altura disponível reserva 280px para modal/folgas. Testes de galeria atualizados (heading redundante já removido), asserts no dialog real de margem >=60px, min-height 0, ausência de scroll e stage quadrado em 1440×900, 1440×768, 390×844. Capturas reais autenticadas observadas desktop 768 e mobile: `/tmp/namarca-dialog-real/namarca-reference-dialog-*.png`. Runner focal GALLERY_ONLY passou incluindo cliente/dirty/financeiro/galeria e referência por ponteiro real; tentativa intermediária detectou overflow a 768 e reserva ajustada antes PASS final. Typecheck/lint/48 testes/migrations descartáveis/build aprovados; fixtures vazias e app/DB/volume testes encerrados. Sem auth/schema/publicação. Evidências CSS sintéticas anteriores NÃO detectavam ui-scope e não comprovavam correção real.
+
+## Estúdio — remoção de altura extra do modal (19/11/2026)
+
+Novo ajuste: removida linha repetida nome/dimensões, padding 16px, footer sem padding extra e referência sem flex-grow. Modal fit-content limitado à viewport menos 128px, caixa quadrada preservada pela largura disponível/altura segura. Chromium com fixture CSS: margens verticais 118px em 1440×900, 64px em 1440×768, 199px em 390×844 e 64px em 844×390. Typecheck aprovado; fixture não substitui nova execução autenticada.
+
+## Estúdio — modal compacto pela altura do conteúdo (19/11/2026)
+
+Removida altura fixa do modal por pedido do fundador. Limite inicial de 300px foi regressão apontada pelo fundador e removido: área quadrada volta a ocupar a largura disponível (limitada apenas pela altura da viewport). Modal envolve conteúdo sem altura fixa; removidos textos visíveis de instrução/rascunho e kicker Referência, mantendo descrição acessível. Mantidos proporção da arte, limite da viewport e controles. Sem nova validação automatizada nesta alteração pontual.
+
+## Estúdio — área da arte quadrada (19/11/2026)
+
+Esclarecimento do fundador: a área que recebe a arte deve ser quadrada, com o lado maior da imagem preenchendo o quadrado e sobra no outro eixo, sem distorcer/cortar. Stage agora quadrado limitado por largura/altura disponíveis, centralizado no modal; canvas continua proporcional, sem padding entre arte e limites do quadrado no eixo maior. Dimensões do modal mantidas. Typecheck/lint aprovados; sem nova validação browser nesta alteração.
+
+## Estúdio — mais respiro ao redor do modal (19/11/2026)
+
+Fundador achou modal próximo demais do topo/rodapé: tamanho padrão inicialmente 720×640px, reduzido novamente a 560×520px por pedido do fundador, limitado a viewport menos 48px na largura e 96px na altura (mínimo 48px de margem vertical). Canvas adaptável e ausência de rolagem preservados. Typecheck/lint aprovados; sem nova execução browser/build/testes nesta mudança pontual de dimensões.
+
+## Estúdio — modal da referência sem rolagem (19/11/2026)
+
+Modal agora usa altura limitada à viewport, flex com área central encolhível e sem overflow. Canvas dimensionado pela proporção real da arte e altura/largura disponíveis via container size; não corta imagem nem modifica coordenadas fonte. Cabeçalho/Concluir permanecem fora da área flexível; instruções omitidas em janelas muito baixas. Scroll lock da página preservado. Typecheck/lint/48 testes/build aprovados. Chromium em fixture CSS sintética: 4 viewports (inclui 844x390 e 320x568) × 5 proporções (1:20 a 20:1), sem overflow do modal e canvas dentro da área. Não repetido runner autenticado integral nesta alteração, sem schema/auth/publicação.
+
+## Estúdio — prévia com largura máxima (19/11/2026)
+
+Coluna desktop limitada a 380px, dispositivo interno a 320px; iframe deixa 760px fixos e usa `clamp(360px, calc(100dvh - 280px), 624px)` para adaptar altura à janela sem esconder controles por corte CSS. Empilhamento mobile e recolhimento preservados. Typecheck/lint/48 testes/build isolado aprovados; sem nova validação browser nesta alteração pontual. Sem schema/auth/migrations novas ou publicação.
+
+## Estúdio — container único e referência em modal (19/11/2026)
+
+Refinamento pedido pelo fundador: biblioteca e prévia no mesmo container com divisória contínua, sem cards externos separados. Toggle dentro da própria área da prévia; quando recolhida mantém trilho com Mostrar prévia e iframe montado oculto. Biblioteca de artes usa grade de cards lado a lado com ações no rodapé (mover, editar área da foto, excluir). Thumbnail apenas seleciona arte na prévia. Referência não é renderizada inicialmente: botão do card abre Dialog Radix com canvas, Escape/foco contido/restauração ao botão, tema e scroll lock; Concluir aplica ao rascunho e salvar configuração continua explícito. Em telas pequenas a divisória fica horizontal e os cards empilham. Sem alteração domínio/auth/schema.
+
+Validação: typecheck/lint, 48 testes, migrations descartáveis e build isolado aprovados. Runner integral Chromium com auditoria passou (galerias/referências por ponteiro em modal, Escape/foco, runtime/foto/export, dirty/aprovação/clientes/financeiro); captura desktop observada em `/tmp/namarca-unified-audit/namarca-visual-audit`. Duas execuções detectaram divisória sem borda por token CSS inexistente; corrigido para `--line` antes do PASS final. Pequeno ajuste final do rodapé dos cards para quatro ações em grid após captura/runner, com typecheck/lint/build repetidos, sem nova captura deste ajuste. Fixtures verificadas vazias e recursos descartáveis encerrados; principais preservados. Sem commit/push/deploy.
+
+## Estúdio — integrado à aba da campanha (19/11/2026)
+
+Pedido vigente do fundador substitui o modo dedicado: Estúdio voltou como aba ao lado de Dados/Aprovação/Cobrança; Dados continua inicial. Removidos lançador/fullscreen, isolamento inert/scroll lock, ampliador e navegação mobile separada. Conteúdo em duas colunas: esquerda com abas Artes/Figurinhas/Cores e referência da foto abaixo; direita com prévia. Ocultar/Mostrar prévia expande a esquerda sem desmontar iframe. Até 900px empilha controles e prévia, mantendo toggle. WorkspaceTabs aceita lazy opcional, monta estúdio somente na primeira visita e preserva rascunho/foto entre abas.
+
+Validação em containers: typecheck/lint, 48 testes, migrations em banco descartável e build isolado aprovados. Runner integral Chromium com auditoria visual aprovado, incluindo retenção do mesmo iframe/foto ao alternar abas e ocultar/mostrar em desktop/mobile, galerias/export/aprovação/clientes/dirty/financeiro. Capturas desktop claro e mobile escuro observadas em `/tmp/namarca-tab-audit/namarca-visual-audit`. Primeira execução concorrente à atualização dos testes falhou no assert de composição durante retenção; execução final com scripts concluídos passou. Não comprova toque físico/materiais reais nem elimina flakiness histórica. Fixtures verificadas vazias. Sem auth/schema/backend, commit/push/deploy ou alteração do projeto antigo.
+
 ## Formulário — resumo removido (19/11/2026)
 
 Decisão final do fundador: remover totalmente o resumo, inclusive Revisar resumo no rodapé. Removidos markup, estado reativo exclusivo e CSS do resumo. Restam Cancelar/Salvar; campos/validações mantidos. Typecheck/lint aprovados após remoção. Autorizado commit local do conjunto de alterações UI; push/publicação não autorizados.

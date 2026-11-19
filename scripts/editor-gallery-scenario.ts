@@ -1,4 +1,4 @@
-import { openStudio, closeStudio } from './studio-navigation';
+import { openStudio } from './studio-navigation';
 import assert from 'node:assert/strict';
 import { expect, type Page } from '@playwright/test';
 import { expectEditorReference, setEditorReference } from './editor-reference-helper';
@@ -16,7 +16,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
     await studio.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
     await expect(studio.getByRole('status')).toHaveText(/^Configuração salva\.(?: A campanha não foi publicada\.)?$/);
   };
-  const section = async (kind: 'arte' | 'sticker') => { await studio.getByRole('tab', { name: kind === 'arte' ? 'Artes' : 'Stickers', exact: true }).click(); };
+  const section = async (kind: 'arte' | 'sticker') => { await studio.getByRole('tab', { name: kind === 'arte' ? 'Artes' : 'Figurinhas', exact: true }).click(); };
   const names = async (kind: 'arte' | 'sticker') => {
     await section(kind);
     return studio.getByRole('textbox', { name: new RegExp(`^Nome ${kind === 'arte' ? 'da arte' : 'do sticker'} \\d+$`) }).evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value));
@@ -50,8 +50,35 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   assert.deepEqual(await saved(), initial);
   setStage('gallery: select independent reference and reorder both galleries');
   await section('arte');
-  await studio.getByRole('button', { name: 'Editar área da foto: Arte 2', exact: true }).click();
-  await expect(studio.getByRole('heading', { name: 'Área da foto · Arte 2', exact: true })).toBeVisible();
+  await expect(page.locator('.local-reference-canvas')).toHaveCount(0);
+  const editArea = studio.getByRole('button', { name: 'Editar área da foto: Arte 2', exact: true });
+  await editArea.click();
+  const referenceDialog = page.getByRole('dialog', { name: 'Editar área da foto', exact: true });
+  await expect(referenceDialog.locator('.local-reference-canvas')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(referenceDialog).toBeHidden();
+  await expect(page.locator('.local-reference-canvas')).toHaveCount(0);
+  await expect(editArea).toBeFocused();
+  await editArea.click();
+  await expect(referenceDialog).toBeVisible();
+  const modalBounds = await referenceDialog.boundingBox();
+  assert.ok(modalBounds);
+  assert.ok(modalBounds.y >= 60, 'Dialog must leave breathing room above');
+  assert.ok(modalBounds.y + modalBounds.height <= page.viewportSize()!.height - 60, 'Dialog must leave breathing room below');
+  await expect(referenceDialog).toHaveCSS('min-height', '0px');
+  await referenceDialog.screenshot({ path: '/tmp/namarca-reference-dialog.png' });
+  await page.screenshot({ path: '/tmp/namarca-reference-dialog-viewport.png' });
+  const originalViewport = page.viewportSize()!;
+  for (const size of [{ width: 1440, height: 900 }, { width: 1440, height: 768 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(size);
+    const bounds = await referenceDialog.boundingBox();
+    assert.ok(bounds && bounds.y >= 60 && bounds.y + bounds.height <= size.height - 60, 'Real dialog must not fill viewport');
+    assert.ok(await referenceDialog.evaluate(el => el.scrollHeight <= el.clientHeight + 1), 'No modal scroll');
+    const stage = await referenceDialog.locator('.ws-studio-reference-stage').boundingBox();
+    assert.ok(stage && Math.abs(stage.width - stage.height) < 1, 'Artwork box remains square');
+    await page.screenshot({ path: `/tmp/namarca-reference-dialog-${size.width}x${size.height}.png` });
+  }
+  await page.setViewportSize(originalViewport);
   await expectEditorReference(studio, { x: 20, y: 20, width: 220, height: 220 });
   await reference(25, 30, 250, 260);
   for (const kind of ['Arte', 'Sticker']) {
@@ -64,7 +91,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   assert.deepEqual(await names('arte'), ['Arte 2', 'Arte 3', 'Arte 1']);
   assert.deepEqual(await names('sticker'), ['Sticker 2', 'Sticker 3', 'Sticker 1']);
   await section('arte');
-  await expect(studio.getByRole('heading', { name: 'Área da foto · Arte 2', exact: true })).toBeVisible();
+  await expect(studio.getByRole('button', { name: 'Selecionar arte: Arte 2', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expectEditorReference(studio, { x: 25, y: 30, width: 250, height: 260 });
   await save();
   const multiple = await saved();
@@ -95,11 +122,12 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   await preview.getByRole('button', { name: 'Arte Arte 1 400 × 400 px', exact: true }).click();
   await expect(preview.getByRole('img', { name: 'Composição com a arte Arte 1, sem foto', exact: true })).toBeVisible();
   // Trying another art inside the participant UI does not mutate the studio.
-  await expect(studio.getByRole('heading', { name: 'Área da foto · Arte 2', exact: true })).toBeVisible();
+  await expect(studio.getByRole('button', { name: 'Selecionar arte: Arte 2', exact: true })).toHaveAttribute('aria-pressed', 'true');
   // Selecting in the studio does synchronize the live participant preview.
-  await studio.getByRole('button', { name: 'Editar área da foto: Arte 3', exact: true }).click();
+  await studio.getByRole('button', { name: 'Selecionar arte: Arte 3', exact: true }).click();
   await expect(preview.getByRole('img', { name: 'Composição com a arte Arte 3, sem foto', exact: true })).toBeVisible();
-  await studio.getByRole('button', { name: 'Editar área da foto: Arte 2', exact: true }).click();
+  await studio.getByRole('button', { name: 'Selecionar arte: Arte 2', exact: true }).click();
+  await expect(page.locator('.local-reference-canvas')).toHaveCount(0);
   await expect(preview.getByRole('img', { name: 'Composição com a arte Arte 2, sem foto', exact: true })).toBeVisible();
   await positionPreview();
   await preview.getByRole('button', { name: 'Stickers', exact: true }).click();
@@ -111,7 +139,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   await section('sticker');
   await studio.getByRole('button', { name: 'Remover Sticker 2', exact: true }).click();
   await section('arte');
-  await expect(studio.getByRole('heading', { name: 'Área da foto · Arte 3', exact: true })).toBeVisible();
+  await expect(studio.getByRole('button', { name: 'Selecionar arte: Arte 3', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expectEditorReference(studio, { x: 30, y: 30, width: 230, height: 230 });
   await expect(preview.getByRole('button', { name: 'Adicionar sticker Sticker 2', exact: true })).toHaveCount(0);
   await save();
@@ -142,7 +170,8 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   await section('sticker');
   await expect(studio.getByText('Nenhum sticker adicionado.', { exact: true })).toBeVisible();
   await section('arte');
-  await expect(studio.getByRole('heading', { name: /^Área da foto/ })).toHaveCount(0);
+  await expect(page.locator('.local-reference-canvas')).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Editar área da foto', exact: true })).toHaveCount(0);
   await expect(preview.getByText('Adicione uma arte PNG para experimentar o editor.', { exact: true })).toBeVisible();
   await save();
   const empty = await saved();
