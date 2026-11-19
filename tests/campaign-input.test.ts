@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { campaignInput } from '../src/lib/campaign-input';
-const input = { name: 'Corrida Horizonte', slug: 'corrida-horizonte', endsAt: '2099-01-01', price: '395,50' };
+const input = { name: 'Corrida Horizonte', slug: 'corrida-horizonte', endsAt: '2099-01-01' };
 test('cliente é opcional; novo exige nome, contato opcional e limites', () => {
   const empty = campaignInput.parse(input);
   assert.equal(empty.clientId, ''); assert.equal(empty.notes, '');
@@ -10,8 +10,8 @@ test('cliente é opcional; novo exige nome, contato opcional e limites', () => {
   assert.equal(campaignInput.safeParse({ ...input, clientId: 'new', clientName: 'Cliente' }).success, true);
   for (const extra of [{ clientId: 'new', clientName: '' }, { clientId: 'invalido' }, { clientName: 'a'.repeat(161) }, { clientContact: 'a'.repeat(255) }, { notes: 'a'.repeat(3001) }]) assert.equal(campaignInput.safeParse({ ...input, ...extra }).success, false);
 });
-test('converte preço em centavos', () => { assert.equal(campaignInput.parse(input).price, 39550); });
-test('permite preço a definir', () => { assert.equal(campaignInput.parse({ ...input, price: '' }).price, null); });
-test('rejeita valor abaixo do mínimo PixGo', () => { assert.equal(campaignInput.safeParse({ ...input, price: '9,99' }).success, false); });
+test('dados da campanha não aceitam alteração de preço', () => {
+  assert.equal('price' in campaignInput.parse({ ...input, price: '395,50' }), false);
+});
 test('rejeita slug inválido', () => { assert.equal(campaignInput.safeParse({ ...input, slug: '../evento' }).success, false); });
 test('rejeita data passada e data impossível', () => { for (const endsAt of ['2020-01-01', '2099-02-31']) assert.equal(campaignInput.safeParse({ ...input, endsAt }).success, false); });

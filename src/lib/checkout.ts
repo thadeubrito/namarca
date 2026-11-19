@@ -9,7 +9,7 @@ export const checkoutTokenValid = (token: string) => /^[a-f0-9]{64}$/.test(token
 export function requireMockCheckout() {
   if (getEnv().PIXGO_MODE !== 'mock' || new URL(getEnv().PIXGO_BASE_URL).hostname !== 'pixgo-mock') throw new Error('Checkout disponível apenas no simulador local.');
 }
-export async function issueCheckout(campaignId: string) {
+export async function issueCheckout(campaignId: string, amountCents?: number) {
   requireMockCheckout();
   return db.transaction(async tx => {
     const [campaign] = await tx.select().from(campaigns).where(eq(campaigns.id, campaignId)).for('update');
@@ -17,8 +17,10 @@ export async function issueCheckout(campaignId: string) {
     // Reuse the permanent link: repeated submits must not create competing requests.
     const [existing] = await tx.select().from(checkoutLinks).where(eq(checkoutLinks.campaignId, campaignId));
     if (existing) return existing;
-    if (!campaign.priceCents || campaign.priceCents < 1000 || campaign.priceCents > 600000) throw new Error('Defina um valor entre R$ 10 e R$ 6.000 antes de emitir.');
-    const [link] = await tx.insert(checkoutLinks).values({ campaignId, token: randomBytes(32).toString('hex'), campaignName: campaign.name, amountCents: campaign.priceCents }).returning();
+    const amount = amountCents ?? campaign.priceCents;
+    if (!amount || !Number.isSafeInteger(amount) || amount < 1000 || amount > 600000) throw new Error('Defina um valor entre R$ 10 e R$ 6.000 antes de emitir.');
+    await tx.update(campaigns).set({ priceCents: amount, updatedAt: new Date() }).where(eq(campaigns.id, campaignId));
+    const [link] = await tx.insert(checkoutLinks).values({ campaignId, token: randomBytes(32).toString('hex'), campaignName: campaign.name, amountCents: amount }).returning();
     return link;
   });
 }

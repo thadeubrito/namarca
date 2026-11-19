@@ -49,9 +49,9 @@ Migrations em `drizzle/` são versionadas. `db:push` existe somente para explora
 ## Escopo desta base
 
 - Login administrativo com senha, TOTP, códigos de recuperação e cadastro público bloqueado.
-- Cadastro, listagem, detalhes e edição de campanhas em rascunho, com preço e encerramento; consulta de cobranças já registradas.
+- Cadastro, listagem, detalhes e edição de campanhas em rascunho, com encerramento; consulta de cobranças já registradas.
 - Estúdio: seleção local de artes/figurinhas PNG com recuperação de rascunho após refresh, upload privado ao salvar (até três envios simultâneos), nomes/ordenação, retângulo visual da foto, cores, limpeza manual de materiais não usados e prévia estática isolada com composição/exportação no navegador. Editor e estilos únicos em `packages/editor`, consumidos pelas entradas privada e pública local de `apps/event`; público antigo não migrado. [Arquitetura do editor](docs/editor-runtime.md).
-- Cliente leve reutilizável entre campanhas, seleção/cadastro inline com nome e contato opcional; seção Clientes com busca, cadastro, edição e campanhas vinculadas. Valor único e observações na campanha, sem contratos.
+- Cliente leve reutilizável entre campanhas, seleção/cadastro inline com nome e contato opcional; seção Clientes com busca, cadastro, edição e campanhas vinculadas. Observações na campanha, sem contratos. Valor definido na aba Cobrança ao emitir o link.
 - Cobrança exclusivamente mock: link opaco com nome/valor congelados, checkout sem conta, QR simulado, recuperação de tentativa incerta e consulta manual no painel. [Limites do checkout](docs/checkout.md).
 - Resumo financeiro por campanha com totais por situação e CSV administrativo protegido, sem dados de pagador ou tokens. [Relatório financeiro](docs/financial-report.md).
 - Banco transacional, S3 privado, adapter PixGo e recebimento de webhooks.

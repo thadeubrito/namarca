@@ -50,6 +50,14 @@ export async function auditAdminVisuals(page: Page, base: string, campaignId: st
           await page.getByRole('button', { name: /^Todas/ }).click();
         }
         if (view.tab) await page.getByRole('tab', { name: view.tab, exact: true }).click();
+        if (view.name === 'new-campaign' || view.name === 'data') {
+          await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
+          await expect(page.locator('.ws-campaign-form h3')).toHaveText(['Evento', 'Cliente e observações']);
+        }
+        if (view.name === 'billing') {
+          await expect(page.locator('input[name=amount]')).toBeVisible();
+          await expect(page.locator('input[name=amount]')).toHaveAttribute('required', '');
+        }
         if (view.name === 'studio') {
           await openStudio(page);
           await page.frameLocator('iframe[title="Prévia real do editor da campanha"]').getByRole('img', { name: 'Composição com a arte Moldura teste, sem foto', exact: true }).waitFor();

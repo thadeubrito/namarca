@@ -8,20 +8,17 @@ import { Action, ActionLink, Field, Notice, Surface, TextArea, TextInput } from 
 // References fetched from PaceUI registry: https://paceui.com/r/form-input.json
 // and https://paceui.com/r/motion-alert.json. Adapted to native FormData/server actions,
 // with visible labels, contextual fields and reduced-motion feedback; no TanStack dependency.
-export type CampaignDefaults = { name: string; slug: string; endsAt: string; price: string; clientId?: string | null; notes?: string };
+export type CampaignDefaults = { name: string; slug: string; endsAt: string; clientId?: string | null; notes?: string };
 export type CampaignDataFormProps = {
   defaults?: CampaignDefaults;
   clients?: { id: string; name: string; contact: string }[];
   save?: (state: CreateState, form: FormData) => Promise<CreateState>;
 };
 
-function FormSection({ number, title, description, children }: { number: string; title: string; description: string; children: ReactNode }) {
+function FormSection({ title, children }: { title: string; children: ReactNode }) {
   return <section className="min-w-0 space-y-6 border-b border-border pb-8 last:border-0 last:pb-0">
-    <header className="flex items-start gap-4">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border font-mono text-xs text-muted-foreground" aria-hidden="true">{number}</span>
-      <div><h3 className="text-lg font-semibold tracking-tight">{title}</h3><p className="mt-1 text-sm text-muted-foreground">{description}</p></div>
-    </header>
-    <div className="space-y-5 sm:pl-13">{children}</div>
+    <h3 className="text-base font-semibold">{title}</h3>
+    <div className="space-y-5">{children}</div>
   </section>;
 }
 
@@ -33,17 +30,12 @@ export function CampaignDataForm({ defaults, clients = [], save = createCampaign
 
   return <form action={action} data-campaign-navigation="true" aria-busy={pending} className="ws-campaign-form min-w-0">
     <Surface className="min-w-0 space-y-8 p-5 sm:p-8">
-      <FormSection number="01" title="Evento" description="Comece pela identificação da campanha.">
+      <FormSection title="Evento">
         <Field label="Nome do evento"><TextInput type="text" name="name" defaultValue={defaults?.name} required minLength={2} maxLength={160} placeholder="Ex.: Corrida Horizonte" /></Field>
         <Field label="Endereço da campanha" hint="Letras minúsculas, números e hífens."><TextInput type="text" name="slug" defaultValue={defaults?.slug} required minLength={2} maxLength={80} pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="corrida-horizonte" /></Field>
+        <Field label="Data de encerramento" hint="Às 23h59 de São Paulo."><TextInput name="endsAt" type="date" defaultValue={defaults?.endsAt} required /></Field>
       </FormSection>
-      <FormSection number="02" title="Prazo e valor" description="Defina o encerramento e o valor combinado.">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Data de encerramento" hint="Às 23h59 de São Paulo."><TextInput name="endsAt" type="date" defaultValue={defaults?.endsAt} required /></Field>
-          <Field label="Valor da campanha (R$)" hint="Opcional. Não gera nem altera cobranças."><TextInput name="price" defaultValue={defaults?.price} type="text" inputMode="decimal" placeholder="A definir" maxLength={10} /></Field>
-        </div>
-      </FormSection>
-      <FormSection number="03" title="Cliente e observações" description="Vincule um cliente ou mantenha apenas os dados do evento.">
+      <FormSection title="Cliente e observações">
         <Field label="Cliente" hint="Opcional">
           <select className="min-h-11 w-full rounded-xl border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" name="clientId" aria-label="Cliente" value={clientId} onChange={event => setClientId(event.target.value)}>
             <option value="">Sem cliente vinculado</option>

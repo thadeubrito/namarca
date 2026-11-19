@@ -56,7 +56,7 @@
 .ws-campaign-form-footer { display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding:16px 0; }
 .ws-campaign-form-error { width:100%; }
 .ws-campaign-form-actions { display:flex;gap:8px;margin-left:auto; }
-@media(min-width:1000px) { .ws-campaign-form> .ws-surface { display:grid;grid-template-columns:1fr 1fr;column-gap:32px;row-gap:24px; } .ws-campaign-form> .ws-surface>section { margin:0!important; } .ws-campaign-form> .ws-surface>section:nth-child(3),.ws-campaign-form> .ws-surface>p { grid-column:1/-1; } }
+@media(min-width:1000px) { .ws-campaign-form> .ws-surface { display:grid;grid-template-columns:1fr 1fr;column-gap:32px;row-gap:24px; } .ws-campaign-form> .ws-surface>section { margin:0!important; } .ws-campaign-form> .ws-surface>p { grid-column:1/-1; } }
 @media(max-width:600px) { .ws-campaign-form-actions { width:100%; } .ws-campaign-form-actions>.ws-action { flex:1; } }
 .ws-directory-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .ws-project-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }

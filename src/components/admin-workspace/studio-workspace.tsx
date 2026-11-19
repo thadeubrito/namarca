@@ -14,7 +14,7 @@ import { StudioSaveProgress, type SaveProgress, type UploadItem } from './studio
 import { sameDraftValue, claimDraftTab, localMaterialId, draftKey, readStudioDraft, writeStudioDraft, deleteStudioDraft, uploadPool, type LocalMaterial, type StudioDraft } from '@/lib/studio-draft';
 import { clampReference, ReferenceCanvas } from '@/editor/reference-canvas';
 import { uploadFailureMessage } from '@/lib/upload-feedback';
-import { Action, Surface, TextInput, Notice, EmptyState, Workspace, Pill, WorkspaceTabs } from './primitives';
+import { Action, Surface, TextInput, Notice, EmptyState, Workspace, WorkspaceTabs } from './primitives';
 import './studio.css';
 
 type Snapshot = { event: EventConfig; revision: number; draftOwner?: string; cleanupWarning?: string };
@@ -271,7 +271,6 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
       </div>
       {!items.length ? <EmptyState title={kind === 'artwork' ? 'Sua biblioteca de artes está vazia' : 'Nenhum sticker adicionado.'} description={kind === 'artwork' ? 'Adicione uma arte PNG para abrir a prévia.' : 'Adicione arquivos PNG para disponibilizá-los na composição.'} /> :
         <ol className="ws-studio-rail" aria-label={kind === 'artwork' ? 'Artes da campanha' : 'Stickers da campanha'}>{items.map((item, index) => <li key={item.id} className="ws-studio-asset" data-selected={kind === 'artwork' && artwork?.id === item.id}>
-          <div className="ws-studio-asset-top"><span className="ws-studio-index">{String(index + 1).padStart(2, '0')}</span>{kind === 'artwork' && artwork?.id === item.id && <Pill tone="success">Selecionada</Pill>}</div>
           {kind === 'artwork' ? <Action type="button" variant="ghost" className="ws-studio-thumbnail" disabled={busy} onClick={() => setSelected(item.id)} aria-pressed={artwork?.id === item.id} aria-label={`Selecionar arte: ${item.name}`}><img src={assetURL(item.file)} alt={item.name} /></Action> : <div className="ws-studio-thumbnail"><img src={assetURL(item.file)} alt={item.name} /></div>}
           <TextInput aria-label={`Nome ${kind === 'artwork' ? 'da arte' : 'do sticker'} ${index + 1}`} value={item.name} disabled={busy} onChange={e => change({ ...event, [key]: event[key].map(a => a.id === item.id ? { ...a, name: e.target.value } : a) })} />
           <div className="ws-studio-asset-actions"><Action type="button" variant="ghost" disabled={busy || !index} onClick={() => move(index, -1)} aria-label={`Mover ${item.name} para cima`}><ArrowUp aria-hidden /></Action><Action type="button" variant="ghost" disabled={busy || index === items.length - 1} onClick={() => move(index, 1)} aria-label={`Mover ${item.name} para baixo`}><ArrowDown aria-hidden /></Action>{kind === 'artwork' && <Action type="button" variant="ghost" disabled={busy} aria-label={`Editar área da foto: ${item.name}`} title="Editar área da foto" onClick={e => { referenceTrigger.current = e.currentTarget; setSelected(item.id); setReferenceOpen(true); }}><Scan aria-hidden /></Action>}<Action type="button" variant="danger" disabled={busy} onClick={() => change({ ...event, [key]: event[key].filter(a => a.id !== item.id) })} aria-label={`Remover ${item.name}`}><Trash2 aria-hidden /></Action></div>

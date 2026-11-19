@@ -21,7 +21,7 @@ export async function updateCampaign(id: string, _previous: CreateState, form: F
       if (!current) return 'missing';
       if (current.preparationStatus !== 'draft' || current.publicationStatus !== 'unpublished') return 'locked';
       const clientId = await resolveCampaignClient(tx, input.data);
-      await tx.update(campaigns).set({ name: input.data.name, slug: input.data.slug, endsAt: new Date(`${input.data.endsAt}T23:59:59-03:00`), priceCents: input.data.price, clientId, notes: input.data.notes, updatedAt: new Date() }).where(eq(campaigns.id, id));
+      await tx.update(campaigns).set({ name: input.data.name, slug: input.data.slug, endsAt: new Date(`${input.data.endsAt}T23:59:59-03:00`), clientId, notes: input.data.notes, updatedAt: new Date() }).where(eq(campaigns.id, id));
       return 'updated';
     });
     if (outcome === 'missing') return { error: 'Campanha não encontrada.' };

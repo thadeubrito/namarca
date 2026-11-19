@@ -1,5 +1,23 @@
 # Namarca — continuidade de implementação da V1
 
+## Campanha — formulário sóbrio e valor na Cobrança (19/11/2026)
+
+Pedido do fundador: formulário compartilhado criar/dados sem círculos 01/02/03, descrições introdutórias ou seção de valor. Dois grupos discretos Evento (inclui encerramento) e Cliente e observações; colunas desktop, empilhado mobile. Schema/actions de dados não recebem nem persistem preço, preservando valores existentes; criação deixa null. Aba Cobrança recebe valor validado R$10–6.000 e emissão explícita. issueCheckout grava preço e snapshot na mesma transação sob lock; existente retorna sem mudar valor. Sem reemissão/revogação, gateway segue mock. Sem DDL/auth.
+
+Typecheck/lint/67 testes, migrations históricas em DB descartável e build isolado aprovados em containers. BILLING_UI_ONLY Chromium passou criação sem preço, clientes, dirty guard preservando preço legado, rejeição de valor inválido, emissão com valor explícito e edição posterior preservando preço/snapshot. Cópia simulada na fronteira API, não SO. Capturas dados 1440 claro/390 escuro observadas em /tmp/namarca-admin-*.png; sem auditoria visual integral. Tentativas intermediárias do cenário extra de snapshot antes da cópia produziram timeout após navegação; teste reordenado para cópia no contexto de emissão, preservação após reload e novo submit, sem alteração produção para mascarar. Fixtures vazias; DB/app/volume exclusivos encerrados, principal preservado. Sem commit/push/publicação.
+
+## Estúdio — quadriculado preservado no hover (19/11/2026)
+
+Corrigido conflito do background shorthand do hover genérico de ws-action-ghost com thumbnail: seletor local agora inclui ui-scope e hover explícito para preservar quadriculado no card de arte. Typecheck/lint aprovados em container; sem nova inspeção browser, testes ou build nesta alteração CSS pontual. Sem schema/auth/publicação.
+
+## Estúdio — sem selo de arte selecionada (19/11/2026)
+
+Pedido seguinte do fundador: removido também o selo Selecionada dos cards de artes, junto do wrapper/CSS e import exclusivos. Seleção funcional, data-selected e aria-pressed preservados. Sem nova validação automatizada nesta alteração pontual; sem schema/auth/publicação.
+
+## Estúdio — cards sem numeração no topo (19/11/2026)
+
+Pedido do fundador: removida numeração visual no topo dos cards de artes e figurinhas, inclusive CSS exclusivo. Selo Selecionada da arte atual preservado; sem cabeçalho vazio nos demais cards. Ordem, ações e nomes acessíveis dos campos mantidos. Validação em container foi tentada, mas a saída recebida não confirmou execução dos checks; não declarar aprovação. Sem schema/auth/publicação.
+
 ## Transparência — quadriculado acompanha o tema administrativo (19/11/2026)
 
 Miniaturas e canvas de referência do estúdio agora usam `--line`/`--surface` no quadriculado, inclusive no portal do modal, acompanhando claro/escuro sem mudar PNGs ou exportação. CSS legado recebeu o mesmo tratamento com fallback claro; quadriculado do runtime usa superfície/borda do tema da campanha (iframe tem tema próprio, independente do admin). Typecheck/lint/58 testes e build:event aprovados em containers; sem nova inspeção browser ou build Next nesta alteração CSS, sem schema/auth/publicação/commit.

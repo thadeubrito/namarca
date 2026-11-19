@@ -15,7 +15,7 @@ export async function createCampaign(_previous: CreateState, form: FormData): Pr
   try {
     id = await db.transaction(async tx => {
       const clientId = await resolveCampaignClient(tx, input.data);
-      const [created] = await tx.insert(campaigns).values({ name: input.data.name, slug: input.data.slug, endsAt: new Date(`${input.data.endsAt}T23:59:59-03:00`), priceCents: input.data.price, clientId, notes: input.data.notes }).returning({ id: campaigns.id });
+      const [created] = await tx.insert(campaigns).values({ name: input.data.name, slug: input.data.slug, endsAt: new Date(`${input.data.endsAt}T23:59:59-03:00`), clientId, notes: input.data.notes }).returning({ id: campaigns.id });
       return created.id;
     });
   } catch (error) {

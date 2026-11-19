@@ -10,5 +10,4 @@ export const campaignInput = z.object({
     const date = new Date(`${value}T23:59:59-03:00`);
     return Number.isFinite(date.getTime()) && date.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }) === value && date.getTime() > Date.now();
   }, 'O encerramento deve ser uma data válida no futuro.'),
-  price: z.string().trim().refine(value => value === '' || /^\d{1,6}(?:[,.]\d{1,2})?$/.test(value), 'Informe um valor como 395,00.').transform(value => value === '' ? null : Math.round(Number(value.replace(',', '.')) * 100)).refine(value => value === null || value >= 1000, 'A PixGo exige no mínimo R$ 10,00.'),
 }).refine(value => value.clientId !== 'new' || value.clientName.length >= 2, { message: 'Informe o nome do novo cliente.', path: ['clientName'] });

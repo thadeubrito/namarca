@@ -136,6 +136,8 @@ async function main() {
     await expect(page.getByText('Nenhum cliente encontrado.', { exact: false })).toBeVisible();
     stage = 'create campaign through UI';
     await page.goto(`${base}/admin/campanhas/nova`);
+    await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
+    await expect(page.locator('.ws-campaign-form h3')).toHaveText(['Evento', 'Cliente e observações']);
     if (process.env.CAMPAIGN_SECTIONS_ONLY === '1') {
       await page.getByRole('button', { name: 'Salvar rascunho', exact: true }).click();
       await expect(page.getByLabel('Nome do evento')).toBeFocused();
@@ -147,6 +149,7 @@ async function main() {
     await page.getByRole('button', { name: 'Salvar rascunho' }).click();
     await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
     campaignId = new URL(page.url()).pathname.split('/').pop()!;
+    assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, null, 'Creation without billing must leave price unset');
     if (process.env.SECTION_SAVE_ONLY === '1') {
       await testEditorSectionSave(page, `${base}/api/campaigns/${campaignId}/editor`, pool, png, value => { stage = value; });
       return;
@@ -169,7 +172,7 @@ async function main() {
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
     await page.getByLabel('Cliente', { exact: true }).selectOption(directoryId);
     await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
-    await expect.poll(async () => (await pool.query('select client_id from campaigns where id=$1', [campaignId])).rows[0].client_id).toBe(directoryId);
+    await expect.poll(async () => (await pool.query('select client_id,price_cents from campaigns where id=$1', [campaignId])).rows[0]).toEqual({ client_id: directoryId, price_cents: null });
     await page.goto(`${base}/admin/clientes/${directoryId}`);
     await expect(page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link', { name: 'Integração editor isolada' })).toHaveAttribute('href', `/admin/campanhas/${campaignId}`);
     await page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link').click();
@@ -262,7 +265,10 @@ async function main() {
     const studio = page.getByRole('region', { name: 'Estúdio da campanha' });
     const color = studio.getByLabel('Destaque', { exact: true });
     await expect(color).toBeVisible();
+    // Legacy price fixture: editing campaign data must preserve it, not clear or replace it.
+    await pool.query('update campaigns set price_cents=39500 where id=$1', [campaignId]);
     const original = (await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0];
+    assert.equal(original.price_cents, 39500);
     const originalEditor = await (await context.request.get(`${base}/api/campaigns/${campaignId}/editor`)).json();
     assert.equal(originalEditor.event.artworks.length, 0);
     assert.equal(originalEditor.event.theme.version, 1);
@@ -273,7 +279,7 @@ async function main() {
     await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
     await page.getByLabel('Nome do evento', { exact: true }).fill('Dados base confirmados');
-    await page.locator('input[name=price]').fill('123,45');
+    await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
     const submitBase = async (accept: boolean) => {
       const dialogHandled = page.waitForEvent('dialog').then(async dialog => {
         assert.equal(dialog.type(), 'confirm');
@@ -298,18 +304,19 @@ async function main() {
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
       await submitBase(true);
       await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
-      await expect.poll(async () => (await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0]).toEqual({ name: 'Dados base confirmados', price_cents: 12345 });
+      await expect.poll(async () => (await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0]).toEqual({ name: 'Dados base confirmados', price_cents: original.price_cents });
       assert.ok(baseMutations.length > 0, 'Accept must allow the real form mutation');
       await page.reload();
       await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
       await expect(page.getByLabel('Nome do evento', { exact: true })).toHaveValue('Dados base confirmados');
-      await expect(page.locator('input[name=price]')).toHaveValue('123,45');
+      await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
+      assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, original.price_cents, 'Confirmed data update must preserve the original price after reload');
       const unchangedEditor = await (await context.request.get(`${base}/api/campaigns/${campaignId}/editor`)).json();
       assert.equal(unchangedEditor.revision, originalEditor.revision);
       assert.equal(unchangedEditor.event.theme.accent, originalEditor.event.theme.accent, 'Base-data submit must not save the dirty studio accent');
     } finally { page.off('request', trackBaseMutation); }
-    console.info('PASS dirty guard: real base-data submit dismissed with no mutation, DB name/price intact and dirty color preserved; second submit confirmed, DB and reload verified; studio not saved.');
+    console.info('PASS dirty guard: real base-data submit dismissed with no mutation, DB name/price intact and dirty color preserved; confirmed update changes name but preserves original price after reload; studio not saved.');
     if (process.env.DIRTY_GUARD_ONLY === '1') return;
     if (process.env.ADMIN_UI_SHOTS === '1') {
       for (const width of [1440, 390]) {
@@ -329,11 +336,22 @@ async function main() {
     stage = 'admin issues checkout by real submit and copies link/message';
     await closeStudio(page);
     await page.getByRole('tab', { name: 'Cobrança', exact: true }).click();
+    await expect(page.locator('input[name=amount]')).toHaveAttribute('required', '');
+    stage = 'billing rejects invalid amount';
+    await page.locator('input[name=amount]').fill('9,99');
+    await page.getByRole('button', { name: 'Emitir link de cobrança', exact: true }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Informe um valor entre' })).toBeVisible();
+    assert.equal((await pool.query('select count(*)::int as n from checkout_links where campaign_id=$1', [campaignId])).rows[0].n, 0);
+    if (process.env.ADMIN_UI_SHOTS === '1') await page.screenshot({ path: '/tmp/namarca-billing-before-issue.png' });
+    stage = 'billing emits explicit valid amount';
+    await page.locator('input[name=amount]').fill('123,45');
     await page.getByRole('button', { name: 'Emitir link de cobrança', exact: true }).click();
     await expect(page.getByRole('link', { name: 'Abrir checkout', exact: true })).toBeVisible({ timeout: 60_000 });
     const issued = (await pool.query('select token,amount_cents,campaign_name from checkout_links where campaign_id=$1', [campaignId])).rows[0];
     assert.equal(issued.amount_cents, 12345);
     assert.equal(issued.campaign_name, 'Dados base confirmados');
+    assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, 12345);
+    await expect(page.locator('input[name=amount]')).toHaveCount(0);
     // HTTP container origin has no OS clipboard: capture the browser API boundary explicitly.
     await page.evaluate("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { document.documentElement.dataset.testClipboard = text; } } })");
     await page.getByRole('button', { name: 'Copiar link', exact: true }).click();
@@ -347,8 +365,23 @@ async function main() {
     await page.getByRole('button', { name: 'Copiar link', exact: true }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'Não foi possível copiar.' })).toHaveText('Não foi possível copiar. Abra o checkout e copie o endereço.');
     await expect(page.getByRole('status').filter({ hasText: /Link copiado|Mensagem copiada/ })).toHaveCount(0);
+    // Reload clears the intentionally dirty studio fixture before editing data again.
+    await page.reload();
+    stage = 'billing snapshot preserved after base-data edit';
+    await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
+    await page.getByLabel('Nome do evento', { exact: true }).fill('Dados editados após cobrança');
+    const acceptDirtySubmit = (dialog: import('@playwright/test').Dialog) => dialog.accept();
+    page.on('dialog', acceptDirtySubmit);
+    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    page.off('dialog', acceptDirtySubmit);
+    await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
+    assert.deepEqual((await pool.query('select token,amount_cents,campaign_name from checkout_links where campaign_id=$1', [campaignId])).rows[0], issued);
+    assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, 12345);
+    await page.getByRole('tab', { name: 'Cobrança', exact: true }).click();
+    await expect(page.locator('input[name=amount]')).toHaveCount(0);
     // No payment was created. Remove only this isolated link before financial fixtures.
     await pool.query('delete from checkout_links where campaign_id=$1', [campaignId]);
+    console.info('PASS billing UI: invalid amount rejected; explicit amount issued and stored atomically; editing campaign data preserves price and checkout snapshot; link/message copy and denied clipboard verified.');
     if (process.env.BILLING_UI_ONLY === '1') return;
     stage = 'financial report guards, empty summary and synthetic payments';
     const reportEndpoint = `${base}/api/campaigns/${campaignId}/financial-report`;
@@ -510,12 +543,12 @@ async function main() {
     await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
     assert.equal(await page.getByRole('heading', { name: 'Contratação', exact: true }).count(), 0);
-    assert.equal(await page.locator('input[name=price]').count(), 1);
+    await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
+    const priceBeforeClientEdit = (await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents;
     await page.getByLabel('Cliente', { exact: true }).selectOption('new');
     await page.locator('input[name=clientName]').fill('Organizador teste');
     await page.locator('input[name=clientContact]').fill('contato@example.test');
     await page.locator('textarea[name=notes]').fill('Uma rodada extra combinada.');
-    await page.locator('input[name=price]').fill('395,00');
     await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
     await page.getByText('Dados da campanha salvos.', { exact: true }).waitFor();
     const linked = (await pool.query('select client_id from campaigns where id=$1', [campaignId])).rows[0].client_id;
@@ -525,7 +558,8 @@ async function main() {
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue(linked);
     await expect(page.locator('textarea[name=notes]')).toHaveValue('Uma rodada extra combinada.');
-    await expect(page.locator('input[name=price]')).toHaveValue('395,00');
+    await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
+    assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, priceBeforeClientEdit);
     stage = 'reuse client in another campaign';
     await page.goto(`${base}/admin/campanhas/nova`);
     await page.getByLabel('Nome do evento').fill('Segunda campanha mesmo cliente');
@@ -535,7 +569,7 @@ async function main() {
     await page.getByRole('button', { name: 'Salvar rascunho' }).click();
     await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
     secondCampaignId = new URL(page.url()).pathname.split('/').pop()!;
-    assert.equal((await pool.query('select client_id from campaigns where id=$1', [secondCampaignId])).rows[0].client_id, linked);
+    assert.deepEqual((await pool.query('select client_id,price_cents from campaigns where id=$1', [secondCampaignId])).rows[0], { client_id: linked, price_cents: null });
     assert.equal((await pool.query('select count(*)::int as n from clients where id=$1', [linked])).rows[0].n, 1);
     stage = 'unlink client without deleting reusable record';
     await page.goto(`${base}/admin/campanhas/${campaignId}`);
@@ -550,7 +584,7 @@ async function main() {
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue('');
     const afterEdit = (await pool.query('select client_id,price_cents,preparation_status,publication_status from campaigns where id=$1', [campaignId])).rows[0];
-    assert.equal(afterEdit.client_id, null); assert.equal(afterEdit.price_cents, 39500);
+    assert.equal(afterEdit.client_id, null); assert.equal(afterEdit.price_cents, priceBeforeClientEdit);
     assert.equal(afterEdit.preparation_status, 'draft'); assert.equal(afterEdit.publication_status, 'unpublished');
     console.info('PASS editor + clients: real password/TOTP; editor regression/local export; client creation/reload/reuse/unlink; draft/unpublished.');
   } finally {

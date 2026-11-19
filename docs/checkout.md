@@ -1,6 +1,6 @@
 # Checkout V1 — primeira fatia, exclusivamente simulada
 
-O administrador emite um link nos detalhes da campanha. O primeiro clique congela `campaignName` e `amountCents` em `checkout_links`. Cliques seguintes reutilizam esse link, inclusive após edição da campanha. O nome congelado aparecerá na página acessível a quem possuir o link; não inclua dados pessoais no nome. Não há reemissão com outro valor nem revogação nesta fatia; não cobrar valor corrigido por outro canal sem conferir a solicitação existente.
+O administrador define o valor (R$ 10–6.000) na aba Cobrança dos detalhes e emite o link. Criação/edição dos dados da campanha não contém preço nem altera o valor existente. A emissão valida o valor no servidor e grava `campaigns.priceCents` junto do primeiro snapshot sob lock; links existentes são reutilizados sem mudar o valor. O primeiro clique congela `campaignName` e `amountCents` em `checkout_links`. Cliques seguintes reutilizam esse link, inclusive após edição da campanha. O nome congelado aparecerá na página acessível a quem possuir o link; não inclua dados pessoais no nome. Não há reemissão com outro valor nem revogação nesta fatia; não cobrar valor corrigido por outro canal sem conferir a solicitação existente.
 
 O token aleatório tem 256 bits e funciona como credencial de consulta: não compartilhar publicamente. Página sem conta, no-store, noindex e no-referrer; não expõe cliente, contato, observações, CPF ou IDs do gateway. Não existe envio WhatsApp automático. O painel permite copiar o link.
 

@@ -3,7 +3,7 @@
 import { useActionState, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { billingAction, type BillingState } from '@/app/admin/campanhas/[id]/billing-actions';
-import { Action, ActionLink, Notice } from './primitives';
+import { Action, ActionLink, Field, TextInput, Notice } from './primitives';
 
 // PaceUI references consulted via container fetch:
 // https://paceui.com/r/motion-alert.json and https://paceui.com/r/motion-spring-button.json.
@@ -26,6 +26,18 @@ export function PaymentAction({ id, operation, children }: { id: string; operati
     <motion.div className="inline-flex max-sm:w-full" whileTap={reducedMotion || pending ? undefined : { scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 24 }}>
       <Action className="max-sm:w-full" type="submit" variant="secondary" disabled={pending}>{pending ? 'Processando…' : children}</Action>
     </motion.div>
+    <Feedback error={state.error} success={state.success} />
+  </form>;
+}
+
+export function BillingIssueForm({ id, defaultAmount }: { id: string; defaultAmount: string }) {
+  const [state, action, pending] = useActionState<BillingState, FormData>(billingAction.bind(null, id), {});
+  return <form action={action} aria-busy={pending} className="max-w-md space-y-4">
+    <input type="hidden" name="operation" value="issue" />
+    <Field label="Valor da cobrança (R$)" hint="De R$ 10,00 a R$ 6.000,00. O valor fica fixo após emitir o link.">
+      <TextInput name="amount" type="text" inputMode="decimal" required maxLength={7} placeholder="395,00" defaultValue={defaultAmount} disabled={pending} />
+    </Field>
+    <Action type="submit" disabled={pending}>{pending ? 'Emitindo…' : 'Emitir link de cobrança'}</Action>
     <Feedback error={state.error} success={state.success} />
   </form>;
 }
