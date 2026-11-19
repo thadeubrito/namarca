@@ -27,7 +27,7 @@ section { margin-top: 3rem; }
 .material-grid { padding: 0; list-style: none; display: grid; gap: 1.5rem; }
 .material-grid li { min-width: 0; background: #fff; border: 1px solid #ddd; padding: 1rem; border-radius: .75rem; }
 .artworks { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
-.artworks img { height: 19rem; object-fit: contain; background: repeating-conic-gradient(#eee 0% 25%, white 0% 50%) 50% / 20px 20px; }
+.artworks img { height: 19rem; object-fit: contain; background: repeating-conic-gradient(var(--theme-border,#e5e5e5) 0% 25%, var(--theme-surface,#fff) 0% 50%) 50% / 20px 20px; }
 .stickers { grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); }
 .stickers img { height: 6rem; object-fit: contain; }
 details { padding: 1rem 0; border-bottom: 1px solid #ccc; }

@@ -3,8 +3,24 @@
   "style": "new-york",
   "rsc": true,
   "tsx": true,
-  "tailwind": { "config": "", "css": "src/app/ui.css", "baseColor": "neutral", "cssVariables": true },
+  "tailwind": {
+    "config": "",
+    "css": "src/app/ui.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
   "iconLibrary": "lucide",
-  "aliases": { "components": "@/components", "utils": "@/lib/utils", "ui": "@/components/ui", "lib": "@/lib", "hooks": "@/hooks" },
-  "registries": { "@paceui": { "url": "https://paceui.com/r/{name}.json" } }
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "registries": {
+    "@paceui": {
+      "url": "https://paceui.com/r/{name}.json"
+    },
+    "@react-bits": "https://reactbits.dev/r/{name}.json"
+  }
 }

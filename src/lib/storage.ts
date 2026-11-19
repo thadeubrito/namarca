@@ -1,4 +1,4 @@
-import { HeadBucketCommand, S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, ListObjectsV2Command, HeadBucketCommand, S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { z } from "zod";
 import { getEnv } from "./env";
 
@@ -30,6 +30,28 @@ export async function putPrivateObject(key: string, body: Uint8Array, contentTyp
   const client = createStorageClient();
   try { await client.send(new PutObjectCommand({ Bucket: getEnv().S3_BUCKET, Key: key, Body: body, ContentType: contentType })); }
   finally { client.destroy(); }
+}
+export async function deletePrivateObject(key: string) {
+  if (!key.startsWith("private/") || key.includes("..")) throw new Error("Invalid private key");
+  const client = createStorageClient();
+  try { await client.send(new DeleteObjectCommand({ Bucket: getEnv().S3_BUCKET, Key: key })); }
+  finally { client.destroy(); }
+}
+export type PrivateObjectInfo = { key: string; size?: number; lastModified?: Date };
+export async function listPrivateObjects(prefix: string): Promise<PrivateObjectInfo[]> {
+  if (!/^private\/campaigns\/[0-9a-f-]{36}\/assets\/$/.test(prefix)) throw new Error("Invalid campaign prefix");
+  const client = createStorageClient();
+  const objects: PrivateObjectInfo[] = [];
+  let token: string | undefined;
+  try {
+    do {
+      const page = await client.send(new ListObjectsV2Command({ Bucket: getEnv().S3_BUCKET, Prefix: prefix, ContinuationToken: token }));
+      for (const item of page.Contents ?? []) if (item.Key?.startsWith(prefix)) objects.push({ key: item.Key, size: item.Size, lastModified: item.LastModified });
+      if (page.IsTruncated && (!page.NextContinuationToken || page.NextContinuationToken === token)) throw new Error("Incomplete storage listing");
+      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (token);
+    return objects;
+  } finally { client.destroy(); }
 }
 export async function getPrivateObject(key: string) {
   if (!key.startsWith("private/") || key.includes("..")) throw new Error("Invalid private key");

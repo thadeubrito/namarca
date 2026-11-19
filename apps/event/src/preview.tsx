@@ -17,8 +17,21 @@ function validate(value: unknown): EventConfig {
   return event
 }
 
+function validateLocalAssets(value: unknown, event: EventConfig): Record<string, string> {
+  if (value === undefined) return {}
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) throw new Error('Invalid local assets')
+  const files = new Set([...event.artworks, ...event.stickers].map(material => material.file))
+  const prefix = `blob:${window.location.origin}/`
+  const assets: Record<string, string> = {}
+  for (const [file, url] of Object.entries(value)) {
+    if (!privateFile.test(file) || !files.has(file) || typeof url !== 'string' || !url.startsWith(prefix) || url.length === prefix.length || /\s/.test(url) || new URL(url).origin !== window.location.origin) throw new Error('Invalid local asset')
+    assets[file] = url
+  }
+  return assets
+}
+
 function Preview() {
-  const [config, setConfig] = useState<{ event: EventConfig; selectedArtworkId?: string } | null>(null)
+  const [config, setConfig] = useState<{ event: EventConfig; selectedArtworkId?: string; assetUrls: Record<string, string> } | null>(null)
   const [warning, setWarning] = useState(false)
   const failed = !validQuery
 
@@ -32,7 +45,8 @@ function Preview() {
         const event = validate(data.event)
         const selectedArtworkId: unknown = data.selectedArtworkId
         if (selectedArtworkId !== undefined && (typeof selectedArtworkId !== 'string' || !event.artworks.some(artwork => artwork.id === selectedArtworkId))) throw new Error('Invalid selection')
-        setConfig({ event, selectedArtworkId: selectedArtworkId as string | undefined })
+        const assetUrls = validateLocalAssets(data.localAssets, event)
+        setConfig({ event, selectedArtworkId: selectedArtworkId as string | undefined, assetUrls })
         setWarning(false)
       } catch { setWarning(true) }
     }
@@ -46,7 +60,7 @@ function Preview() {
     {warning && <p className="preview-warning" role="alert">Prévia pausada: corrija os campos inválidos. A última configuração válida permanece visível.</p>}
     {!config ? <p role="status">Aguardando configuração da prévia…</p> :
       <div className="editor-page" style={eventThemeStyle(config.event) as CSSProperties}>
-        {config.event.artworks.length ? <PhotoEditor event={config.event} assetBase={`/api/campaigns/${campaignId}/assets`} preferredArtworkId={config.selectedArtworkId} /> : <p>Adicione uma arte PNG para experimentar o editor.</p>}
+        {config.event.artworks.length ? <PhotoEditor event={config.event} assetUrls={config.assetUrls} assetBase={`/api/campaigns/${campaignId}/assets`} preferredArtworkId={config.selectedArtworkId} /> : <p>Adicione uma arte PNG para experimentar o editor.</p>}
       </div>}
   </>
 }

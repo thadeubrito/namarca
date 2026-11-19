@@ -16,7 +16,7 @@ A pasta é um módulo interno de código-fonte, não pacote npm publicado. O adm
 ## Entradas e isolamento
 
 - `apps/event/src/main.tsx`: resolve `/<slug>`, busca `/events/<slug>/event.json`, valida, carrega PNGs em `/events/<slug>/<file>`. Não recebe mensagens de configuração. Estado de encerramento conferido após leitura, a cada segundo e ao retornar à aba; ao encerrar desmonta o editor. Isso existe apenas no novo frontend local, não altera o público antigo.
-- `apps/event/src/preview.tsx`: mesma interface e CSS, mas configuração em memória via bridge de mesma origem. Aceita somente parent, origem e campaignId correspondentes, contrato válido e filenames privados UUID.png. Mensagem inválida preserva última configuração e informa pausa. Sem foto/composição no bridge.
+- `apps/event/src/preview.tsx`: mesma interface e CSS, mas configuração em memória via bridge de mesma origem. Aceita somente parent, origem e campaignId correspondentes, contrato válido e filenames privados UUID.png. Mensagem inválida preserva última configuração e informa pausa. Para materiais novos do Plano A, mapa `localAssets` separado associa somente filenames presentes no evento a blob URLs da mesma origem; `PhotoEditor.assetUrls` prioriza esses materiais sem remontar a composição. Sem foto/composição no bridge; a entrada pública não aceita esse mapa.
 
 O iframe aponta diretamente para HTML estático em `/event-runtime/preview.html`, sem layout/CSS/JS do Next. O caminho administrativo antigo de prévia foi mantido como redirect autenticado. Não há CORS externo nem afrouxamento de CSP.
 

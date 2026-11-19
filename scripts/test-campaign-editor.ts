@@ -1,3 +1,5 @@
+import { saveStudioSection, studioTabName } from './editor-section-save-helper';
+import { testEditorSectionSave } from './editor-section-save-scenario';
 import { openStudio, closeStudio, campaignSections, expectStudioLayout } from './studio-navigation';
 import { auditAdminVisuals } from './admin-visual-audit';
 import { expectEditorReference, setEditorReference } from "./editor-reference-helper";
@@ -10,6 +12,7 @@ import { Pool } from 'pg';
 import { PNG } from 'pngjs';
 import { S3Client, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { testEditorGallery } from './editor-gallery-scenario';
+import { testEditorPlanA } from './editor-plan-a-scenario';
 import { testEditorRuntime } from './editor-runtime-scenario';
 
 const base = 'http://namarca-editor-test:3000';
@@ -144,6 +147,14 @@ async function main() {
     await page.getByRole('button', { name: 'Salvar rascunho' }).click();
     await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
     campaignId = new URL(page.url()).pathname.split('/').pop()!;
+    if (process.env.SECTION_SAVE_ONLY === '1') {
+      await testEditorSectionSave(page, `${base}/api/campaigns/${campaignId}/editor`, pool, png, value => { stage = value; });
+      return;
+    }
+    if (process.env.PLAN_A_ONLY === '1') {
+      await testEditorPlanA(page, `${base}/api/campaigns/${campaignId}/editor`, pool, png, value => { stage = value; });
+      return;
+    }
     stage = 'visual approval tab and snapshot routes are removed';
     await expect(campaignSections(page).getByRole('tab', { name: 'Aprovação visual', exact: true, includeHidden: true })).toHaveCount(0);
     const removedPackageId = randomUUID();
@@ -196,7 +207,7 @@ async function main() {
         const root = await page.locator('.ws-studio-root').elementHandle();
         await expectStudioLayout(page);
         const color = page.getByLabel('Destaque', { exact: true });
-        await page.getByRole('tab', { name: 'Cores', exact: true }).click();
+        await page.getByRole('tab', { name: studioTabName('Cores') }).click();
         await color.fill('#123456');
         for (const name of ['Dados da campanha', 'Cobrança']) {
           await sections.getByRole('tab', { name, exact: true }).click();
@@ -236,13 +247,18 @@ async function main() {
     const uploadStudio = page.getByRole('region', { name: 'Estúdio da campanha' });
     await expect(uploadStudio.getByLabel('Adicionar arte PNG')).toBeEnabled();
     await uploadStudio.getByLabel('Adicionar arte PNG').setInputFiles({ name: 'opaque-synthetic.png', mimeType: 'image/png', buffer: png(80, 'photo') });
-    await expect(uploadStudio.getByRole('status')).toContainText('totalmente transparente e um totalmente opaco', { timeout: 60_000 });
+    // Selection only decodes locally; alpha validation happens on the real POST at save.
+    await expect(uploadStudio.getByLabel('Nome da arte 1', { exact: true })).toBeEnabled();
+    assert.equal((await pool.query('select count(*)::int as n from campaign_assets where campaign_id=$1', [campaignId])).rows[0].n, 0);
+    await uploadStudio.getByRole('button', { name: 'Salvar artes', exact: true }).click();
+    await expect(uploadStudio.getByRole('alert')).toContainText('totalmente transparente e um totalmente opaco', { timeout: 60_000 });
+    await uploadStudio.getByRole('button', { name: 'Remover opaque-synthetic', exact: true }).click();
     await uploadStudio.getByLabel('Adicionar arte PNG').setInputFiles({ name: 'invalid-synthetic.png', mimeType: 'image/png', buffer: Buffer.from('synthetic invalid PNG') });
-    await expect(uploadStudio.getByRole('status')).toContainText('Exporte novamente como PNG', { timeout: 60_000 });
+    await expect(uploadStudio.getByRole('alert')).toContainText('Não foi possível abrir o PNG', { timeout: 60_000 });
     assert.equal((await pool.query('select count(*)::int as n from campaign_assets where campaign_id=$1', [campaignId])).rows[0].n, 0);
     if (process.env.UPLOAD_FEEDBACK_ONLY === '1') return;
     stage = 'dirty studio blocks cancelled base-data submit and permits confirmed submit';
-    await page.getByRole('tab', { name: 'Cores', exact: true }).click();
+    await page.getByRole('tab', { name: studioTabName('Cores') }).click();
     const studio = page.getByRole('region', { name: 'Estúdio da campanha' });
     const color = studio.getByLabel('Destaque', { exact: true });
     await expect(color).toBeVisible();
@@ -419,22 +435,22 @@ async function main() {
     await testEditorGallery(page, endpoint, png, value => { stage = value; });
     if (process.env.GALLERY_ONLY === '1') return;
     stage = 'upload artwork and sticker through UI';
-    await page.getByRole('tab', { name: 'Artes', exact: true }).click();
+    await page.getByRole('tab', { name: studioTabName('Artes') }).click();
     await editor.locator('input[type=file]').nth(0).setInputFiles({ name: 'frame.png', mimeType: 'image/png', buffer: png(400, 'artwork') });
     await page.getByLabel('Nome da arte 1', { exact: true }).waitFor();
-    await page.getByRole('tab', { name: 'Figurinhas', exact: true }).click();
+    await page.getByRole('tab', { name: studioTabName('Figurinhas') }).click();
     await expect(editor.locator('input[type=file]').nth(1)).toBeEnabled();
     await editor.locator('input[type=file]').nth(1).setInputFiles({ name: 'sticker.png', mimeType: 'image/png', buffer: png(128, 'sticker') });
     await page.getByLabel('Nome do sticker 1', { exact: true }).waitFor();
     stage = 'reference modal after uploads';
-    await page.getByRole('tab', { name: 'Artes', exact: true }).click();
+    await page.getByRole('tab', { name: studioTabName('Artes') }).click();
     await expect(page.locator('.local-reference-canvas')).toHaveCount(0);
     await setEditorReference(page, editor, { x: 40, y: 40, width: 320, height: 320 });
     await expect(page.getByRole('dialog', { name: 'Editar área da foto', exact: true })).toBeHidden();
     await expect(page.locator('.local-reference-canvas')).toHaveCount(0);
     await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura teste');
-    await page.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
-    await expect(editor.getByRole('status')).toHaveText('Configuração salva. A campanha não foi publicada.');
+    await saveStudioSection(editor, 'artes');
+    await saveStudioSection(editor, 'figurinhas');
     stage = 'reload and assert persistence';
     await page.reload();
     await openStudio(page);
@@ -453,8 +469,8 @@ async function main() {
       assert.ok([401, 403].includes((await anon.put(endpoint, { data: saved, headers: { origin: base } })).status()));
     } finally { await anon.dispose(); }
     assert.equal((await context.request.put(endpoint, { data: saved, headers: { origin: 'https://untrusted.invalid' } })).status(), 403);
-    assert.equal((await context.request.post(`${base}/api/campaigns/${campaignId}/assets?kind=photo`, { data: png(128, 'photo'), headers: { origin: base, 'content-type': 'image/png' } })).status(), 422);
-    assert.equal((await context.request.put(endpoint, { data: { ...saved, revision: saved.revision - 1 }, headers: { origin: base } })).status(), 409);
+    assert.equal((await context.request.post(`${base}/api/campaigns/${campaignId}/assets?kind=photo`, { data: png(128, 'photo'), headers: { origin: base, 'content-type': 'image/png', 'x-upload-id': randomUUID() } })).status(), 422);
+    assert.equal((await context.request.put(endpoint, { data: { event: saved.event, revision: saved.revision - 1 }, headers: { origin: base } })).status(), 409);
     stage = 'local photo preview and PNG export';
     const uploads: string[] = [];
     page.on('request', req => { if (['POST', 'PUT', 'PATCH'].includes(req.method())) uploads.push(req.url()); });

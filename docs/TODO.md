@@ -33,7 +33,8 @@ Escopo confirmado em 18/11/2026: administrativo local, serviços Docker e pagame
 
 - Diagnóstico do 422 com material real: investigação explicitamente adiada anteriormente. Melhor mensagem não é diagnóstico.
 - Validação de gestos em celular físico e com materiais autorizados do fundador.
-- Política de limpeza/retenção dos uploads privados órfãos, preservando todos os snapshots.
+- [x] Plano A: seleção local, upload ao salvar em até três requisições, recuperação IndexedDB após refresh, exclusão após save dos removidos e varredura manual com retenção de históricos e janela de 24h. Sem rotina automática. Ver `campaign-editor.md`.
+- Política operacional de backups/retenção de longo prazo permanece pendente; recuperação local não é backup.
 - Reemissão/revogação de links, CNPJ e regras de cancelamento/reembolso: não impor decisões comerciais nem inventar operações do gateway.
 - Oferta/preço, condições jurídicas/DePix e processo fiscal: decisões externas ao desenvolvimento local.
 

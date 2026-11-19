@@ -1,3 +1,4 @@
+import { saveStudioSection, studioTabName } from './editor-section-save-helper';
 import { openStudio } from './studio-navigation';
 import assert from 'node:assert/strict';
 import { expect, type Page } from '@playwright/test';
@@ -13,10 +14,9 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
     return response.json();
   };
   const save = async () => {
-    await studio.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
-    await expect(studio.getByRole('status')).toHaveText(/^Configuração salva\.(?: A campanha não foi publicada\.)?$/);
+    for (const label of ['artes', 'figurinhas'] as const) await saveStudioSection(studio, label);
   };
-  const section = async (kind: 'arte' | 'sticker') => { await studio.getByRole('tab', { name: kind === 'arte' ? 'Artes' : 'Figurinhas', exact: true }).click(); };
+  const section = async (kind: 'arte' | 'sticker') => { await studio.getByRole('tab', { name: studioTabName(kind === 'arte' ? 'Artes' : 'Figurinhas') }).click(); };
   const names = async (kind: 'arte' | 'sticker') => {
     await section(kind);
     return studio.getByRole('textbox', { name: new RegExp(`^Nome ${kind === 'arte' ? 'da arte' : 'do sticker'} \\d+$`) }).evaluateAll(inputs => inputs.map(input => (input as HTMLInputElement).value));
@@ -32,16 +32,31 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   assert.equal(initial.event.stickers.length, 0);
   setStage('gallery: upload and rename three artworks and stickers');
   await openStudio(page);
+  // The preceding dirty-guard scenario intentionally leaves a recoverable color draft.
+  // Gallery starts from the empty server fixture, not that unrelated local draft.
+  const recovery = page.getByRole('alertdialog');
+  if (await recovery.isVisible()) {
+    await recovery.getByRole('button', { name: 'Descartar', exact: true }).click();
+    await expect(recovery).toHaveAccessibleName('Descartar este rascunho?');
+    await recovery.getByRole('button', { name: 'Descartar rascunho', exact: true }).click();
+    await expect(recovery).toHaveCount(0);
+    await expect(studio).toBeFocused();
+  }
   for (const kind of ['artwork', 'sticker'] as const) {
+    setStage(`gallery: open ${kind} section`);
     await section(kind === 'artwork' ? 'arte' : 'sticker');
     for (let n = 1; n <= 3; n++) {
+      setStage(`gallery: select ${kind} ${n}`);
       const upload = studio.locator('input[type=file]').nth(kind === 'artwork' ? 0 : 1);
       await expect(upload).toBeEnabled();
       await upload.setInputFiles({ name: `${kind}-${n}.png`, mimeType: 'image/png', buffer: image(kind === 'artwork' ? 400 : 128, kind) });
       const input = studio.getByLabel(`Nome ${kind === 'artwork' ? 'da arte' : 'do sticker'} ${n}`, { exact: true });
       await expect(input).toBeEnabled();
       await input.fill(`${kind === 'artwork' ? 'Arte' : 'Sticker'} ${n}`);
-      if (kind === 'artwork') await reference(n * 10, n * 10, 200 + n * 10, 200 + n * 10);
+      if (kind === 'artwork') {
+        setStage(`gallery: reference local artwork ${n}`);
+        await reference(n * 10, n * 10, 200 + n * 10, 200 + n * 10);
+      }
     }
   }
   assert.deepEqual(await names('arte'), ['Arte 1', 'Arte 2', 'Arte 3']);
@@ -95,7 +110,7 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   await expectEditorReference(studio, { x: 25, y: 30, width: 250, height: 260 });
   await save();
   const multiple = await saved();
-  assert.equal(multiple.revision, initial.revision + 1);
+  assert.equal(multiple.revision, initial.revision + 2);
   assert.deepEqual(multiple.event.artworks.map((art: { name: string }) => art.name), ['Arte 2', 'Arte 3', 'Arte 1']);
   assert.deepEqual(multiple.event.stickers.map((item: { name: string }) => item.name), ['Sticker 2', 'Sticker 3', 'Sticker 1']);
   assert.deepEqual(multiple.event.artworks.map((art: { reference: unknown }) => art.reference), [
@@ -146,13 +161,12 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   const removed = await saved();
   assert.deepEqual(removed.event.artworks, multiple.event.artworks.slice(1));
   assert.deepEqual(removed.event.stickers, multiple.event.stickers.slice(1));
-  // Removing gallery entries must not delete the private objects (snapshots may use them).
+  // Unreferenced saved materials are deleted only after the new gallery is saved.
+  // This fixture has no historical packages referencing these materials.
   const assets = endpoint.replace(/\/editor$/, '/assets');
   for (const material of [multiple.event.artworks[0], multiple.event.stickers[0]]) {
     const response = await page.request.get(`${assets}/${material.file.replace(/\.png$/, '')}`);
-    assert.equal(response.status(), 200);
-    assert.equal(response.headers()['content-type'], 'image/png');
-    assert.ok((await response.body()).length > 0);
+    assert.equal(response.status(), 404);
   }
   await page.reload();
     await openStudio(page);
@@ -183,5 +197,5 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   await expect(studio.getByText('Nenhum sticker adicionado.', { exact: true })).toBeVisible();
   await section('arte');
   await expect(preview.getByText('Adicione uma arte PNG para experimentar o editor.', { exact: true })).toBeVisible();
-  console.info('PASS gallery: 3 artworks + 3 stickers; names/order/reference selection; preview switching; removal fallback; save/reload/API; removed private PNGs retained; empty draft. Synthetic desktop Chromium only.');
+  console.info('PASS gallery: 3 artworks + 3 stickers; names/order/reference selection; preview switching; removal fallback; save/reload/API; unreferenced private PNGs deleted after save; empty draft. Synthetic desktop Chromium only.');
 }

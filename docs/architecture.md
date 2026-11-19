@@ -74,6 +74,12 @@ Falha antes do commit retorna 503; o provedor pode re-tentar, mas não presumir 
 
 Respostas: 200 aceita/duplicada, 400 payload, 401 assinatura, 413 tamanho, 422 pagamento desconhecido/divergente, 409 conflito, 503 dependência. Nenhuma inclui stack traces/segredos. A consulta gateway tem timeout 4s; requisições lentas podem ultrapassar os 5s do provedor. Reenvio não duplica efeitos. Não iniciar trabalho não rastreado após responder.
 
+## Materiais do estúdio — Plano A
+
+Seleção de artes/figurinhas fica local (Blobs + IndexedDB por administrador/campanha/aba); foto/composição não entram no rascunho. Ao salvar, até três uploads simultâneos com UUID estável `X-Upload-Id`, seguido do PUT com revisão e scope artworks/stickers/theme. Servidor mescla apenas seção solicitada; omitir scope preserva API legada de save completo. UI mantém alterações locais das outras abas e atualiza revisão do rascunho após save parcial. Upload repetido só reutiliza asset com mesma campanha/tipo/dimensões e bytes. Prévia privada recebe mapa separado de blob URLs same-origin limitado aos materiais do manifesto; público inalterado.
+
+Após commit, exclusão de IDs removidos revalida configuração atual e packages históricos sob lock da campanha. Falha de limpeza não desfaz save. GET/POST `/api/campaigns/:id/assets/cleanup` oferece análise e confirmação manual em lotes de até100 IDs, sem worker/cron; preserva referências e materiais <24h. Lista somente prefixo exato/chave canônica, incluindo resíduos storage sem DB. Sem schema novo; storage e banco continuam sem atomicidade conjunta. Detalhes em [campaign-editor.md](campaign-editor.md).
+
 ## Storage e readiness
 
 S3 privado, path-style, sem ACL pública. Helpers devem ser chamados somente após autorização pela camada de aplicação. Manifesto público é allow-list estrita de version, slug, name, endsAt, assets; nunca serializar linhas comerciais. Não existe publicador de manifest nesta V1.

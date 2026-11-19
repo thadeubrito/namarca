@@ -84,7 +84,21 @@ const eventInput = z.object({
   artworks: z.array(material.extend({ width: z.number().int().positive(), height: z.number().int().positive(), reference: rectangle }).strict()),
   stickers: z.array(material.extend({ width: z.number().int().positive().optional(), height: z.number().int().positive().optional() }).strict()),
 }).strict();
-export const editorSaveInput = z.object({ event: z.unknown(), revision: z.number().int().min(0).max(2147483646) }).strict();
+export const editorSaveInput = z.object({ event: z.unknown(), revision: z.number().int().min(0).max(2147483646), scope: z.enum(["artworks", "stickers", "theme"]).optional() }).strict();
+
+// Call only with the current snapshot read under the campaign/editor write locks.
+// The global revision also protects writes to different sections from stale tabs.
+export function resolveEditorSave(input: z.infer<typeof editorSaveInput>, current: { config: EventConfig; revision: number } | undefined, campaign: CampaignIdentity, assets: readonly EditorAsset[]) {
+  if ((current?.revision ?? 0) !== input.revision) throw new CampaignEditorError(409, "O rascunho mudou. Recarregue antes de salvar");
+  let candidate = input.event;
+  if (input.scope !== undefined) {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate) || !Object.hasOwn(candidate, input.scope)) throw new CampaignEditorError(422, "Configuração inválida");
+    const base = current?.config ?? defaultCampaignEvent(campaign);
+    // Never spread the incoming event: other sections (and legacy color) are ignored.
+    candidate = { ...base, [input.scope]: (candidate as Record<string, unknown>)[input.scope] };
+  }
+  return { event: validateCampaignEvent(candidate, campaign, assets), revision: input.revision + 1 };
+}
 export function validateCampaignEvent(input: unknown, campaign: CampaignIdentity, assets: readonly EditorAsset[]): EventConfig {
   const result = eventInput.safeParse(input);
   if (!result.success) throw new CampaignEditorError(422, "Configuração inválida");

@@ -2,7 +2,10 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { campaigns, campaignEditor, campaignAssets } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
-import { assertEditable, assertMutationOrigin, CampaignEditorError, defaultCampaignEvent, deriveCampaignEvent, editorErrorResponse, editorSaveInput, readLimitedBody, requireUuid, validateCampaignEvent } from "@/lib/campaign-editor";
+import { assertEditable, assertMutationOrigin, CampaignEditorError, defaultCampaignEvent, deriveCampaignEvent, editorErrorResponse, editorSaveInput, readLimitedBody, requireUuid, resolveEditorSave } from "@/lib/campaign-editor";
+
+import { cleanupCampaignAssets } from "@/lib/asset-cleanup";
+import { CLEANUP_BATCH_LIMIT, removedAssetIds } from "@/lib/asset-cleanup-policy";
 
 export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
@@ -10,17 +13,17 @@ const json = (data: unknown) => Response.json(data, { headers: { "Cache-Control"
 
 export async function GET(request: Request, context: Context) {
   try {
-    await requireAdmin(request.headers);
+    const session = await requireAdmin(request.headers);
     const id = requireUuid((await context.params).id);
     const [row] = await db.select({ campaign: campaigns, editor: campaignEditor }).from(campaigns).leftJoin(campaignEditor, eq(campaignEditor.campaignId, campaigns.id)).where(eq(campaigns.id, id));
     if (!row) throw new CampaignEditorError(404, "Campanha não encontrada");
-    return json({ event: row.editor ? deriveCampaignEvent(row.editor.config, row.campaign) : defaultCampaignEvent(row.campaign), revision: row.editor?.revision ?? 0 });
+    return json({ event: row.editor ? deriveCampaignEvent(row.editor.config, row.campaign) : defaultCampaignEvent(row.campaign), revision: row.editor?.revision ?? 0, draftOwner: session.user.id });
   } catch (error) { return editorErrorResponse(error); }
 }
 
 export async function PUT(request: Request, context: Context) {
   try {
-    await requireAdmin(request.headers);
+    const session = await requireAdmin(request.headers);
     assertMutationOrigin(request.headers.get("origin"), process.env.BETTER_AUTH_URL, process.env.NODE_ENV === "development");
     const id = requireUuid((await context.params).id);
     if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) throw new CampaignEditorError(422, "JSON obrigatório");
@@ -35,14 +38,22 @@ export async function PUT(request: Request, context: Context) {
       if (!campaign) throw new CampaignEditorError(404, "Campanha não encontrada");
       assertEditable(campaign);
       const [current] = await tx.select().from(campaignEditor).where(eq(campaignEditor.campaignId, id)).for("update");
-      if ((current?.revision ?? 0) !== input.data.revision) throw new CampaignEditorError(409, "O rascunho mudou. Recarregue antes de salvar");
       const assets = await tx.select().from(campaignAssets).where(eq(campaignAssets.campaignId, id));
-      const event = validateCampaignEvent(input.data.event, campaign, assets);
-      const revision = input.data.revision + 1;
+      const { event, revision } = resolveEditorSave(input.data, current, campaign, assets);
       if (current) await tx.update(campaignEditor).set({ config: event, revision, updatedAt: new Date() }).where(eq(campaignEditor.campaignId, id));
       else await tx.insert(campaignEditor).values({ campaignId: id, config: event, revision });
-      return { event, revision };
+      return { event, revision, removedIds: current ? removedAssetIds(current.config, event) : [] };
     });
-    return json(saved);
+    const { removedIds, ...snapshot } = saved;
+    const cleanup = { deleted: [] as string[], failed: [] as string[] };
+    // The save is already committed. A cleanup failure must never turn it into a failed save.
+    for (let start = 0; start < removedIds.length; start += CLEANUP_BATCH_LIMIT) {
+      const ids = removedIds.slice(start, start + CLEANUP_BATCH_LIMIT);
+      try {
+        const result = await cleanupCampaignAssets(id, { ids, afterSave: true });
+        if ("deleted" in result) { cleanup.deleted.push(...result.deleted); cleanup.failed.push(...result.failed); }
+      } catch { cleanup.failed.push(...ids); }
+    }
+    return json({ ...snapshot, draftOwner: session.user.id, cleanup, ...(cleanup.failed.length ? { cleanupWarning: "Configuração salva; alguns materiais não puderam ser limpos" } : {}) });
   } catch (error) { return editorErrorResponse(error); }
 }

@@ -5,11 +5,12 @@ export function campaignSections(page: Page) {
 }
 
 export async function openStudio(page: Page) {
-  const tab = campaignSections(page).getByRole('tab', { name: 'Estúdio', exact: true });
+  const tab = page.getByRole('tablist', { name: 'Seções da campanha', exact: true, includeHidden: true }).getByRole('tab', { name: 'Estúdio', exact: true, includeHidden: true });
   if (await tab.getAttribute('aria-selected') !== 'true') await tab.click();
   await expect(tab).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('region', { name: 'Estúdio da campanha', exact: true })).toBeVisible();
-  await expect(page.getByRole('tablist', { name: 'Configuração do estúdio', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Estúdio da campanha', exact: true, includeHidden: true })).toBeVisible();
+  // Recovery is portaled and correctly hides the workspace from the accessibility tree.
+  await expect(page.locator('.ws-studio-root').getByRole('tablist', { name: 'Configuração do estúdio', exact: true, includeHidden: true })).toBeVisible();
 }
 
 // Compatibility helper for domain scenarios: leave the studio by selecting Dados.

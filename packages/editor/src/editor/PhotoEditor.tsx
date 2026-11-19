@@ -124,7 +124,7 @@ function EditorCanvas({ c, selected, select, selectionColor, blocked, start, pre
   </>
 }
 
-export function PhotoEditor({ event, assetBase, preferredArtworkId, onInitialLoading }: { event: EventConfig; assetBase?: string; preferredArtworkId?: string; onInitialLoading?: (label: string | null) => void }) {
+export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, onInitialLoading }: { event: EventConfig; assetBase?: string; assetUrls?: Record<string, string>; preferredArtworkId?: string; onInitialLoading?: (label: string | null) => void }) {
   const previousPreference = useRef<string | undefined>(undefined);
   const [panel, setPanel] = useState<EditorTool>('')
   const photoInput = useRef<HTMLInputElement>(null)
@@ -161,7 +161,7 @@ export function PhotoEditor({ event, assetBase, preferredArtworkId, onInitialLoa
   const [artError, setArtError] = useState<Artwork | null>(null)
   const request = useRef(0); const sequence = useRef(0)
   const stickerImages = useRef(new Map<string, HTMLImageElement>())
-  const asset = useCallback((file: string) => assetBase ? `${assetBase}/${encodeURIComponent(file.replace(/\.png$/, ''))}` : `/events/${event.slug}/${file}`, [assetBase, event.slug])
+  const asset = useCallback((file: string) => assetUrls && Object.hasOwn(assetUrls, file) ? assetUrls[file] : assetBase ? `${assetBase}/${encodeURIComponent(file.replace(/\.png$/, ''))}` : `/events/${event.slug}/${file}`, [assetUrls, assetBase, event.slug])
   const publish = (h: History<Composition>) => {
     if (h.present !== current.current?.present) setExportRevision((n) => n + 1)
     current.current = h; setHistory(h)

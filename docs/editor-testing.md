@@ -2,6 +2,16 @@
 
 Runner: `scripts/test-campaign-editor.ts`. Executar apenas em containers, banco descartável terminado em `_editor_test`, conta `editor-test@namarca.test`, origin `http://namarca-editor-test:3000`. O runner rejeita outro banco/origin/admin e banco com contas existentes. Não usa conta, cookies ou sessão do admin real. Não grava screenshots/traces, senhas, URI TOTP ou códigos de recuperação.
 
+## Salvamentos por aba
+
+`SECTION_SAVE_ONLY=1` aciona `scripts/editor-section-save-scenario.ts`: altera artes/figurinhas/tema simultaneamente, salva tema sem upload, confirma somente arte com figurinha ainda local, refresh/recuperação com revisão atualizada e salvamento da figurinha. Verifica persistência isolada e remoção sem afetar outra seção. Helpers de galeria salvam Artes e Figurinhas explicitamente. Testes unitários de escopo em `tests/editor-section-save.test.ts`, UI em `tests/studio-section-ui.test.ts`; igualdade de dirty ignora ordem de chaves JSONB mas preserva ordem de arrays.
+
+## Plano A — cenário vigente
+
+`PLAN_A_ONLY=1` no runner chama `scripts/editor-plan-a-scenario.ts` e encerra após essa fatia. Exercita seleção múltipla local sem POST, UUID/blob URLs, referência e prévia antes do upload, IndexedDB e recuperação após refresh, até três uploads reais em paralelo, perda de resposta após upload concluído e repetição idempotente, PUT somente após todos os envios, remoção antes de salvar sem upload e exclusão de material salvo somente depois do commit. Foto sintética permanece sem mutações de rede. Análise manual é verificada como não destrutiva.
+
+`tests/studio-draft.test.ts`, `tests/asset-upload.test.ts`, `tests/asset-cleanup.test.ts` e `tests/preview-local-assets.test.ts` cobrem fila, isolamento, idempotência e retenção/bridge. `scripts/test-asset-cleanup.ts` usa banco isolado e apenas chaves sintéticas próprias para integração de limpeza/retentores. As evidências históricas abaixo descrevem o comportamento antigo: materiais removidos **não** devem mais permanecer acessíveis quando não houver referência histórica; galeria foi atualizada para 404 após save.
+
 ## Provisionamento local isolado
 
 Com os serviços locais existentes ativos, sem instalar dependências e sem alterar `.env.local`:
