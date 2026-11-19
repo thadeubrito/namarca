@@ -1,6 +1,6 @@
 import { PNG } from "pngjs";
 import { z } from "zod";
-import { parseEvent, type EventConfig } from "@namarca/editor/events";
+import { themeDefaults, parseEvent, type EventConfig } from "@namarca/editor/events";
 
 export class CampaignEditorError extends Error {
   constructor(readonly status: number, message: string) { super(message); }
@@ -74,13 +74,13 @@ export function deriveCampaignEvent(event: EventConfig, campaign: CampaignIdenti
   return { ...event, name: campaign.name, slug: campaign.slug, endsAt: campaign.endsAt.toISOString().replace(/\.\d{3}Z$/, "Z") };
 }
 export function defaultCampaignEvent(campaign: CampaignIdentity): EventConfig {
-  return deriveCampaignEvent({ name: "", slug: "", endsAt: "", color: "#173f35", demo: false, artworks: [], stickers: [] }, campaign);
+  return deriveCampaignEvent({ name: "", slug: "", endsAt: "", color: "#173f35", demo: false, theme: { version: 1, ...themeDefaults }, artworks: [], stickers: [] }, campaign);
 }
 const material = z.object({ id: z.string().regex(UUID), name: z.string().trim().min(1).max(200), file: z.string().regex(/^[0-9a-f-]{36}\.png$/i) });
 const rectangle = z.object({ x: z.number().finite().nonnegative(), y: z.number().finite().nonnegative(), width: z.number().finite().positive(), height: z.number().finite().positive() }).strict();
 const eventInput = z.object({
   name: z.string(), slug: z.string(), endsAt: z.string(), color: z.string(), demo: z.boolean(),
-  theme: z.record(z.string(), z.string()).optional(),
+  theme: z.object({ version: z.literal(1), background: z.string(), surface: z.string(), accent: z.string(), text: z.string() }).strict().optional(),
   artworks: z.array(material.extend({ width: z.number().int().positive(), height: z.number().int().positive(), reference: rectangle }).strict()),
   stickers: z.array(material.extend({ width: z.number().int().positive().optional(), height: z.number().int().positive().optional() }).strict()),
 }).strict();

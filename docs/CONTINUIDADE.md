@@ -2,9 +2,29 @@
 
 > Documento de passagem de contexto para novas sessões de IA. Atualizado em 18/11/2026 ao final da sessão inicial. Descreve decisões do fundador, implementação existente, pendências e evidências; NÃO constitui aceite comercial ou declaração de prontidão de produção. O código e os serviços podem ter mudado depois: conferir antes de agir.
 
+## Estúdio — skeleton de carregamento (19/11/2026)
+
+Carregamento do bundle sob demanda e da configuração autenticada agora compartilham `studio-skeleton.tsx`, em vez de texto isolado. Esqueleto acompanha container/divisória, abas, dois cards de materiais, rodapé e área da prévia, com tokens claro/escuro e pulsação suave desativada em reduced-motion. Elementos decorativos sem controles focáveis, status acessível e aria-busy. Falha de GET substitui skeleton por alerta e Tentar novamente; salvamento/upload não substituem editor nem descartam rascunho. Prévia iframe mantém carregamento próprio, sem mudança no protocolo/runtime.
+
+Validação em containers: typecheck/lint/44 testes e build isolado aprovados. Teste novo é estático (contrato de montagem, erro, acessibilidade e reduced-motion), sem nova validação visual/browser. Schema/auth inalterados; migrations não repetidas nesta mudança exclusivamente visual. Sem commit/push/publicação.
+
 ## Header — densidade e indicador animado (19/11/2026)
 
 Refinamento pedido pelo fundador: altura mínima de 68px para 56px, espaço marca/menu de 24px para 48px no desktop (gap + margin), adaptado em telas estreitas. Linha ativa usa Motion layoutId com spring entre Campanhas/Clientes, em vez de duas linhas com scale independente; reduced-motion zera duração. Typecheck/lint/48 testes/build isolado aprovados. Sem nova validação browser ou migrations (schema/auth inalterados).
+
+## Aprovação visual removida do produto (19/11/2026)
+
+Pedido vigente do fundador: remover aprovação visual frontend/backend. Removidas aba/formulários ativos e legados, server action de aprovação, biblioteca/validações específicas, página e endpoint de snapshot histórico e componente exclusivo da prévia histórica. Prévia estática agora aceita apenas rascunho por bridge; query packageId é recusada, sem fetch histórico. Removido guard específico de aprovação; dirty de navegação/salvamento permanece. Estúdio, Dados, Cobrança e prévia viva preservados. Não confundir com publicação, que continua indisponível.
+
+Tabela campaign_packages e migration 0007 preservadas somente por retenção de dados, sem uso ativo, assim como registros comerciais legados; nenhuma exclusão de dados/DDL nesta tarefa. Enum preparation_status legado mantido: era independente da aprovação visual e não foi migrado. Documentação anterior de aprovação neste arquivo e campaign-packages.md é histórica, substituída por esta decisão.
+
+Validação: typecheck/lint/43 testes, migrations históricas em PostgreSQL descartável e build isolado aprovados em containers após remoção das rotas (cache de tipos dev regenerado/removido). Testes exclusivos da funcionalidade eliminados e scripts de integração adaptados sem executar nova regressão autenticada browser. Teste estático da prévia cobre ausência de fetch histórico e rejeição de packageId. Sem auth, PixGo real, publicação, push ou commit.
+
+## Tema versão 1 — quatro cores (19/11/2026)
+
+Fundador confirmou ausência de temas antigos salvos e autorizou primeiro formato versionado (version:1), sem compatibilidade com o formato antigo de oito cores. `EventTheme` completo: version/background/surface/accent/text. Parser compartilhado e validação servidor rejeitam versões desconhecidas, temas incompletos e campos antigos. Tema ausente usa exatamente os mesmos defaults da UI; novos rascunhos incluem tema v1 explícito. Aba Cores expõe apenas Fundo/Painéis/Destaque/Texto; Destaque alimenta ação e seleção/foco, Texto alimenta ícones/textos secundários. Texto sobre destaque e sobre fundo é calculado por luminância sRGB (preto/branco); bordas derivadas da superfície. Feedback usa superfície para texto legível. Campo legado event.color permanece no envelope do manifesto, sem controle nem papel visual próprio (variável deriva de accent). Sem migração de dados/DDL; JSONB já comporta versão. Sem reescrever campanhas/snapshots existentes.
+
+Validação em containers: typecheck/lint/50 testes, migrations existentes em PostgreSQL descartável e build isolado aprovados. Testes novos cobrem tema completo, rejeição de versão/campos inválidos, equivalência do fallback e contraste automático. Sem nova execução autenticada no navegador ou aceite visual; sem auth/financeiro/publicação, commit ou push.
 
 ## Estúdio — controles de cores organizados (19/11/2026)
 

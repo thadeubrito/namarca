@@ -1,3 +1,5 @@
+> **Funcionalidade removida em 19/11/2026 por decisão do fundador.** Não existem UI, actions ou endpoints de aprovação/prévia histórica. A tabela e migrations foram preservadas apenas para retenção; o conteúdo abaixo é histórico, não descreve o produto atual.
+
 # Aprovação visual de pacotes
 
 Aprovação visual é separada de cobrança e de aprovação comercial. Em detalhes da campanha, o administrador registra quem aprovou, canal e data, além de confirmar autorização de uso dos materiais. Não há login do cliente nem automação de aprovação externa.

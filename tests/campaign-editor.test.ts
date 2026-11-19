@@ -19,6 +19,8 @@ test("draft vazio é permitido; identidade sempre vem da campanha", () => {
   assert.equal(saved.slug, campaign.slug);
   assert.equal(saved.endsAt, "2030-01-01T12:00:00Z");
   assert.deepEqual(saved.artworks, []);
+  assert.equal(saved.theme?.version, 1);
+  assert.deepEqual(saved.theme, empty.theme);
   assert.equal(deriveCampaignEvent(saved, { ...campaign, name: "Novo" }).name, "Novo");
 });
 test("valida referência estrita, dimensões, tipo, propriedade e duplicatas globais", () => {

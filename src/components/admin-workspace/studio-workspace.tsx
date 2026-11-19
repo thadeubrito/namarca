@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { PanelRightClose, PanelRightOpen, ArrowUp, ArrowDown, Scan, Trash2, X } from 'lucide-react';
+import { PanelRightClose, PanelRightOpen, ArrowUp, ArrowDown, Scan, Trash2, Upload, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { useDarkTheme } from '@/components/theme-scope';
 import { type Artwork, type EventConfig, type Material } from '@namarca/editor/events';
 import { StudioColors } from './studio-colors';
+import { StudioSkeleton } from './studio-skeleton';
 import { clampReference, ReferenceCanvas } from '@/editor/reference-canvas';
 import { uploadFailureMessage } from '@/lib/upload-feedback';
-import { Action, Surface, Field, TextInput, Notice, EmptyState, Workspace, Pill, WorkspaceTabs } from './primitives';
+import { Action, Surface, TextInput, Notice, EmptyState, Workspace, Pill, WorkspaceTabs } from './primitives';
 import './studio.css';
 
 type Snapshot = { event: EventConfig; revision: number };
@@ -63,11 +64,6 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
     };
     const submit = (e: SubmitEvent) => {
       if (e.defaultPrevented || !(e.target instanceof HTMLFormElement)) return;
-      if (e.target.dataset.campaignApproval === 'true') {
-        e.preventDefault(); e.stopPropagation();
-        window.alert('Salve as alterações do estúdio e recarregue a página antes de registrar a aprovação. A prévia atual ainda não está salva.');
-        return;
-      }
       if (e.target.dataset.campaignNavigation !== 'true') return;
       if (!window.confirm('Você tem alterações não salvas no estúdio. Salvar os dados da campanha pode descartá-las. Continuar sem salvar o estúdio?')) { e.preventDefault(); e.stopPropagation(); }
     };
@@ -119,7 +115,10 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
     finally { setBusy(false); }
   };
 
-  if (!event) return <section className="campaign-editor ws-studio-root" aria-label="Estúdio da campanha"><Surface><p role="status">{message || 'Carregando estúdio…'}</p>{!busy && <Action type="button" onClick={() => void load()}>Tentar novamente</Action>}</Surface></section>;
+  if (!event) {
+    if (!failure) return <StudioSkeleton />;
+    return <section className="campaign-editor ws-studio-root" aria-label="Estúdio da campanha"><Surface><Notice tone="error" role="alert">{message}</Notice><Action type="button" onClick={() => void load()}>Tentar novamente</Action></Surface></section>;
+  }
 
   const artwork = event.artworks.find(a => a.id === selected) ?? event.artworks[0];
   const updateReference = (reference: Artwork['reference']) => {
@@ -133,8 +132,8 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
       change({ ...event, [key]: list });
     };
     return <div className="ws-studio-library">
-      <div className="ws-studio-library-bar"><div><h3>{kind === 'artwork' ? 'Biblioteca de artes' : 'Biblioteca de stickers'}</h3><span>{items.length} {items.length === 1 ? 'material' : 'materiais'}</span></div>
-        <Field label={kind === 'artwork' ? 'Adicionar arte PNG' : 'Adicionar sticker PNG'} hint="PNG · até 25 MiB"><TextInput type="file" accept="image/png" disabled={busy} onChange={e => { void upload(e.currentTarget.files?.[0], kind); e.currentTarget.value = ''; }} /></Field>
+      <div className="ws-studio-library-bar"><div className="ws-studio-library-title"><h3>{kind === 'artwork' ? 'Artes' : 'Figurinhas'}</h3><span className="ws-studio-library-count" aria-label={`${items.length} materiais`}>{items.length}</span></div>
+        <div className="ws-studio-upload-tools"><small>PNG · até 25 MiB</small><label className="ws-studio-upload" data-disabled={busy}><Upload aria-hidden /><span>{kind === 'artwork' ? 'Adicionar arte' : 'Adicionar figurinha'}</span><TextInput type="file" aria-label={kind === 'artwork' ? 'Adicionar arte PNG' : 'Adicionar sticker PNG'} accept="image/png" disabled={busy} onChange={e => { void upload(e.currentTarget.files?.[0], kind); e.currentTarget.value = ''; }} /></label></div>
       </div>
       {!items.length ? <EmptyState title={kind === 'artwork' ? 'Sua biblioteca de artes está vazia' : 'Nenhum sticker adicionado.'} description={kind === 'artwork' ? 'Adicione uma arte PNG para abrir a prévia.' : 'Adicione arquivos PNG para disponibilizá-los na composição.'} /> :
         <ol className="ws-studio-rail" aria-label={kind === 'artwork' ? 'Artes da campanha' : 'Stickers da campanha'}>{items.map((item, index) => <li key={item.id} className="ws-studio-asset" data-selected={kind === 'artwork' && artwork?.id === item.id}>
@@ -150,17 +149,18 @@ export function StudioWorkspace({ campaignId }: { campaignId: string }) {
   return <section className="campaign-editor ws-studio-root" data-preview-collapsed={previewCollapsed} aria-label="Estúdio da campanha"><div className="ws-studio-workspace"><Workspace>
     <div className="sr-only" role="status" aria-live="polite">{message || (dirty ? 'Alterações não salvas.' : 'Configuração salva.')}</div>
     <div className="ws-studio-columns"><div className="ws-studio-controls"><div className="ws-studio-library-panel"><fieldset className="ws-studio-fields" disabled={busy}><WorkspaceTabs label="Configuração do estúdio" items={[{ id: 'artes', label: 'Artes', content: library('artwork', event.artworks) }, { id: 'stickers', label: 'Figurinhas', content: library('sticker', event.stickers) }, { id: 'cores', label: 'Cores', content: colors }]} /></fieldset></div>
+    <footer className="ws-studio-footer">
+      {failure && <Notice tone="error" role="alert">{message}</Notice>}
+      <div className="ws-studio-footer-actions">{conflict && <Action type="button" variant="secondary" disabled={busy} onClick={() => { if (window.confirm('Descartar suas alterações e carregar a configuração salva?')) void load(); }}>Recarregar versão salva</Action>}<Action type="button" variant="primary" disabled={busy || !dirty || conflict} onClick={() => void save()}>{busy ? 'Aguarde…' : 'Salvar configuração'}</Action></div>
+    </footer>
       <Dialog.Root open={referenceOpen} onOpenChange={setReferenceOpen}><Dialog.Portal><Dialog.Overlay className="ws-client-dialog-overlay" /><Dialog.Content className={`ui-scope campaign-editor ws-studio-root ws-studio-reference-dialog ${dark ? 'dark' : ''}`} onInteractOutside={e => e.preventDefault()} onCloseAutoFocus={e => { e.preventDefault(); referenceTrigger.current?.focus(); }}><header className="ws-studio-dialog-heading"><Dialog.Title>Editar área da foto</Dialog.Title><Dialog.Close asChild><button type="button" className="ws-action ws-action-ghost" aria-label="Fechar ajuste da área da foto"><X aria-hidden /></button></Dialog.Close></header><Dialog.Description className="sr-only">Ajuste a área da foto arrastando o retângulo ou suas alças.</Dialog.Description>{referenceOpen && <div className="ws-studio-reference">{artwork ? <><fieldset className="ws-studio-fields" disabled={busy}><div className="ws-studio-reference-stage" style={{ '--artwork-ratio': artwork.width / artwork.height } as React.CSSProperties}><ReferenceCanvas key={artwork.id} artwork={artwork} assetURL={assetURL(artwork.file)} onChange={updateReference} /></div></fieldset></> : <EmptyState title="Selecione uma arte" description="A área da foto será definida aqui, separada da prévia do participante." />}</div>}<footer className="ws-studio-dialog-footer"><Dialog.Close asChild><button type="button" className="ws-action ws-action-primary">Concluir ajuste</button></Dialog.Close></footer></Dialog.Content></Dialog.Portal></Dialog.Root>
       </div><motion.aside id={`studio-preview-${campaignId}`} className="ws-studio-preview" aria-label="Prévia da campanha" initial={false} animate={{ opacity: 1 }} transition={{ duration: reducedMotion ? 0 : 0.18 }}>
         <div className="ws-studio-preview-bar"><Action variant="ghost" className="ws-studio-toggle-preview" aria-expanded={!previewCollapsed} aria-controls={`studio-preview-content-${campaignId}`} onClick={() => setPreviewCollapsed(value => !value)}>{previewCollapsed ? <PanelRightOpen aria-hidden /> : <PanelRightClose aria-hidden />}{previewCollapsed ? 'Mostrar prévia' : 'Ocultar prévia'}</Action></div>
         <div id={`studio-preview-content-${campaignId}`} className="ws-studio-preview-content" hidden={previewCollapsed}>
         <div className="ws-studio-device"><iframe ref={frame} src={`/event-runtime/preview.html?campaignId=${campaignId}`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></div>
-        <p className="ws-studio-privacy">Fotos e composições ficam no navegador.</p></div>
+        </div>
       </motion.aside>
     </div>
-    <footer className="ws-studio-footer">
-      {failure && <Notice tone="error" role="alert">{message}</Notice>}
-      <div className="ws-studio-footer-actions">{conflict && <Action type="button" variant="secondary" disabled={busy} onClick={() => { if (window.confirm('Descartar suas alterações e carregar a configuração salva?')) void load(); }}>Recarregar versão salva</Action>}<Action type="button" variant="primary" disabled={busy || !dirty || conflict} onClick={() => void save()}>{busy ? 'Aguarde…' : 'Salvar configuração'}</Action></div>
-    </footer>
+
   </Workspace></div></section>;
 }

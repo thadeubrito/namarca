@@ -1,3 +1,5 @@
+> Atualização 19/11/2026: aprovação visual também foi removida do fluxo ativo; referências a pacotes aprovados abaixo são históricas.
+
 # Clientes e dados comerciais — V1 leve
 
 ## Fluxo atual

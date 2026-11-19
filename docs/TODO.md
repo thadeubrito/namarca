@@ -10,15 +10,15 @@ Escopo confirmado em 18/11/2026: administrativo local, serviços Docker e pagame
 - [x] Seção Clientes com listagem/busca, cadastro/edição e campanhas vinculadas; guards servidor e integração Chromium focal aprovada.
 - [x] Estúdio privado, referências independentes, cores, múltiplas artes/stickers, ordenação e remoção.
 - [x] Prévia estática isolada e exportação local, sem upload de foto/composição nem telemetria; editor/estilos únicos para público local e prévia em `packages/editor`. Paridade Chromium local validada; público antigo não migrado (ver `editor-runtime.md`).
-- [x] Proteção do rascunho em links, unload, dados base e aprovação visual.
-- [x] Aprovação visual com snapshot versionado e prévia histórica autenticada.
+- [x] Proteção do rascunho em links, unload e dados base.
+- [x] Aprovação visual e prévia histórica removidas do frontend/backend por decisão de 19/11/2026; tabela legada preservada somente para retenção.
 - [x] Checkout mock com link opaco, nome/valor congelados e tentativas persistidas.
 - [x] Confirmação financeira síncrona, recuperação de criação incerta e consulta manual no mock.
 - [x] Copiar link e mensagem de cobrança sem API WhatsApp; feedback de sucesso/falha.
 - [x] Resumo financeiro por campanha e CSV protegido, sem dados do pagador.
 - [x] Mensagens seguras para upload rejeitado, sem alterar política de PNG.
 - [x] Validação desta entrega: typecheck, lint, 43 testes, migrations em banco descartável e build isolado.
-- [x] Regressão integral Chromium: uploads, cobrança emitida na UI, cópia, financeiro, dirty, galerias, exportação, snapshots e clientes.
+- [x] Regressão integral Chromium histórica: uploads, cobrança emitida na UI, cópia, financeiro, dirty, galerias, exportação e clientes. Ainda não repetida após remoção da aprovação visual.
 
 ## Pendências locais de cobertura / confiabilidade
 

@@ -143,7 +143,7 @@ export function PhotoEditor({ event, assetBase, preferredArtworkId, onInitialLoa
   const [draft, setDraft] = useState<Composition | null>(null)
   const draftRef = useRef<Composition | null>(null)
   const [selected, setSelected] = useState<number | null>(null)
-  const selectionColor = event.theme ? event.theme.accent ?? themeDefaults.accent : '#b94a00'
+  const selectionColor = event.theme?.accent ?? themeDefaults.accent
   useEffect(() => {
     const deselectOutsideCanvas = (e: globalThis.PointerEvent) => {
       // Dentro do canvas, o hit test decide a seleção. Gestos ativos mantêm seu alvo.

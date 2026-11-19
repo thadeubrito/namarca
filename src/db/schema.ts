@@ -41,7 +41,8 @@ export const campaignEditor = pgTable("campaign_editor", {
   updatedAt: updatedAt(),
 });
 
-// Immutable visual approval snapshots; administrative records stay private.
+// Legacy visual approval records preserved only for data retention. No active UI,
+// actions, reads or endpoints; keep historical migrations and private assets intact.
 export const campaignPackages = pgTable("campaign_packages", {
   id: uuid("id").defaultRandom().primaryKey(),
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "restrict" }),

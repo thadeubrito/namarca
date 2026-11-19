@@ -12,6 +12,6 @@ export default async function CampaignsPage() {
   return <Workspace>
     <PageIntro eyebrow="Área de trabalho" title="Campanhas" description="Encontre o evento e continue de onde parou." action={<ActionLink href="/admin/campanhas/nova" variant="primary"><Plus aria-hidden />Criar campanha</ActionLink>} />
     <CampaignDirectory campaigns={rows.map(({ campaign, clientName }) => ({ id: campaign.id, name: campaign.name, slug: campaign.slug, preparationStatus: campaign.preparationStatus, publicationStatus: campaign.publicationStatus, priceCents: campaign.priceCents, endDate: campaign.endsAt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }), clientName }))} />
-    <Notice role="note">Publicação indisponível. Aprovação e pagamento não publicam a campanha.</Notice>
+    <Notice role="note">Publicação indisponível. Pagamento não publica a campanha.</Notice>
   </Workspace>;
 }

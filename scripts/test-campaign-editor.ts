@@ -144,6 +144,15 @@ async function main() {
     await page.getByRole('button', { name: 'Salvar rascunho' }).click();
     await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
     campaignId = new URL(page.url()).pathname.split('/').pop()!;
+    stage = 'visual approval tab and snapshot routes are removed';
+    await expect(campaignSections(page).getByRole('tab', { name: 'Aprovação visual', exact: true, includeHidden: true })).toHaveCount(0);
+    const removedPackageId = randomUUID();
+    for (const path of [
+      `/admin/campanhas/${campaignId}/pacotes/${removedPackageId}`,
+      `/api/campaigns/${campaignId}/packages/${removedPackageId}/preview`,
+    ]) {
+      assert.equal((await context.request.get(`${base}${path}`, { maxRedirects: 0 })).status(), 404, `Removed snapshot route must return 404: ${path}`);
+    }
     stage = 'client directory linked campaigns and inherited options';
     await closeStudio(page);
     await page.getByRole('tab', { name: 'Dados da campanha', exact: true }).click();
@@ -180,17 +189,16 @@ async function main() {
       };
       page.on('request', trackRead);
       try {
-        await sections.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
         await sections.getByRole('tab', { name: 'Cobrança', exact: true }).click();
         await expect(page.locator('.ws-studio-root')).toHaveCount(0);
         expect(editorReads).toHaveLength(0);
         await openStudio(page);
         const root = await page.locator('.ws-studio-root').elementHandle();
         await expectStudioLayout(page);
-        const color = page.getByLabel('Cor da campanha', { exact: true });
+        const color = page.getByLabel('Destaque', { exact: true });
         await page.getByRole('tab', { name: 'Cores', exact: true }).click();
         await color.fill('#123456');
-        for (const name of ['Dados da campanha', 'Aprovação visual', 'Cobrança']) {
+        for (const name of ['Dados da campanha', 'Cobrança']) {
           await sections.getByRole('tab', { name, exact: true }).click();
           await expect(page.locator('.ws-studio-root')).toBeHidden();
           await openStudio(page);
@@ -236,11 +244,12 @@ async function main() {
     stage = 'dirty studio blocks cancelled base-data submit and permits confirmed submit';
     await page.getByRole('tab', { name: 'Cores', exact: true }).click();
     const studio = page.getByRole('region', { name: 'Estúdio da campanha' });
-    const color = studio.getByLabel('Cor da campanha', { exact: true });
+    const color = studio.getByLabel('Destaque', { exact: true });
     await expect(color).toBeVisible();
     const original = (await pool.query('select name,price_cents from campaigns where id=$1', [campaignId])).rows[0];
     const originalEditor = await (await context.request.get(`${base}/api/campaigns/${campaignId}/editor`)).json();
     assert.equal(originalEditor.event.artworks.length, 0);
+    assert.equal(originalEditor.event.theme.version, 1);
     const dirtyColor = (await color.inputValue()) === '#123456' ? '#654321' : '#123456';
     // Playwright fill on color inputs triggers React's real change path.
     await color.fill(dirtyColor);
@@ -282,14 +291,10 @@ async function main() {
       await expect(page.locator('input[name=price]')).toHaveValue('123,45');
       const unchangedEditor = await (await context.request.get(`${base}/api/campaigns/${campaignId}/editor`)).json();
       assert.equal(unchangedEditor.revision, originalEditor.revision);
-      assert.equal(unchangedEditor.event.color, originalEditor.event.color, 'Base-data submit must not save the dirty studio');
+      assert.equal(unchangedEditor.event.theme.accent, originalEditor.event.theme.accent, 'Base-data submit must not save the dirty studio accent');
     } finally { page.off('request', trackBaseMutation); }
     console.info('PASS dirty guard: real base-data submit dismissed with no mutation, DB name/price intact and dirty color preserved; second submit confirmed, DB and reload verified; studio not saved.');
-    if (process.env.DIRTY_GUARD_ONLY === '1') {
-      assert.equal(await page.locator('form[data-campaign-approval=true]').count(), 0);
-      console.info('LIMITATION: empty-draft focused run has no approval form; dirty approval alert not exercised.');
-      return;
-    }
+    if (process.env.DIRTY_GUARD_ONLY === '1') return;
     if (process.env.ADMIN_UI_SHOTS === '1') {
       for (const width of [1440, 390]) {
         await page.setViewportSize({ width, height: 900 });
@@ -484,122 +489,6 @@ async function main() {
     await testEditorRuntime({ page, context, base, campaignId, event: saved.event, photo: png(600, 'photo') });
     console.info('PASS static runtime: shared CSS, isolated preview, public fetch/PNG, rejected bridge messages and ended manifest.');
     if (process.env.EDITOR_RUNTIME_ONLY === '1') return;
-    stage = 'register visual approval v1 through UI';
-    await closeStudio(page);
-    await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
-    const approval = page.getByRole('region', { name: 'Aprovação visual', exact: true });
-    const approvalDate = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-    const fillApproval = async (target: typeof page) => {
-      await target.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
-      const region = target.getByRole('region', { name: 'Aprovação visual', exact: true });
-      await region.getByLabel('Responsável pela aprovação', { exact: true }).fill('Aprovador sintético');
-      await region.locator('select[name=channel]').selectOption('whatsapp');
-      await region.getByLabel('Data da aprovação', { exact: true }).fill(approvalDate);
-      await region.getByRole('checkbox', { name: 'Confirmo a autorização de uso dos materiais e a aprovação desta versão.', exact: true }).check();
-    };
-    const packages = async () => (await pool.query('select * from campaign_packages where campaign_id=$1 order by version', [campaignId])).rows;
-    await expect(approval.locator('input[name=revision]')).toHaveValue(String(saved.revision));
-    const identity = await approval.locator('input[name=identity]').inputValue();
-    assert.ok(identity.length > 0);
-    const stalePage = await context.newPage();
-    await stalePage.goto(`${base}/admin/campanhas/${campaignId}`);
-    await fillApproval(stalePage);
-    await fillApproval(page);
-    stage = 'dirty studio blocks approval of previously saved package';
-    await openStudio(page);
-    await page.getByLabel('Nome da arte 1', { exact: true }).fill('Rascunho não aprovado');
-    await expect(editor.getByRole('status')).toContainText('Alterações não salvas');
-    const approvalAlert = page.waitForEvent('dialog').then(async dialog => {
-      assert.equal(dialog.type(), 'alert');
-      assert.match(dialog.message(), /Salve as alterações do estúdio e recarregue/);
-      await dialog.dismiss();
-    });
-    await closeStudio(page);
-    await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
-    await Promise.all([approvalAlert, approval.getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click()]);
-    assert.equal((await packages()).length, 0, 'Dirty preview must not approve the older saved package');
-    await openStudio(page);
-    await expect(page.getByLabel('Nome da arte 1', { exact: true })).toHaveValue('Rascunho não aprovado');
-    await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura teste');
-    await expect(editor.getByRole('status')).toHaveText('Configuração salva.');
-    console.info('PASS dirty approval guard: real submit raises alert, no package created and dirty artwork preserved.');
-    stage = 'register visual approval v1 through UI';
-    await closeStudio(page);
-    await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
-    await approval.getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
-    await expect.poll(async () => {
-      const error = approval.getByRole('alert');
-      if (await error.count()) throw new Error(await error.innerText());
-      return (await packages()).length;
-    }, { timeout: 30_000 }).toBe(1);
-    const v1 = (await packages())[0];
-    assert.ok(v1); assert.equal((await packages()).length, 1);
-    assert.equal(v1.version, 1); assert.equal(v1.editor_revision, saved.revision);
-    assert.equal(v1.approved_by, 'Aprovador sintético'); assert.equal(v1.channel, 'whatsapp');
-    assert.equal(v1.recorded_by, id);
-    assert.equal(new Date(v1.approved_at).toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }), approvalDate);
-    assert.deepEqual(v1.config, saved.event);
-    const snapshotV1 = structuredClone(v1);
-    stage = 'duplicate visual approval is rejected';
-    await stalePage.getByRole('region', { name: 'Aprovação visual', exact: true }).getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
-    await stalePage.getByText('Este pacote já tem aprovação registrada.', { exact: true }).waitFor();
-    assert.equal((await packages()).length, 1);
-    try {
-      stage = 'editor save preserves approved snapshot';
-      await openStudio(page);
-      await page.getByLabel('Nome da arte 1', { exact: true }).fill('Moldura revisada v2');
-      await page.getByRole('button', { name: 'Salvar configuração', exact: true }).click();
-      await expect(editor.getByRole('status')).toHaveText('Configuração salva. A campanha não foi publicada.');
-      const changed = await (await context.request.get(endpoint)).json();
-      assert.ok(changed.revision > saved.revision);
-      assert.equal(changed.event.artworks[0].name, 'Moldura revisada v2');
-      assert.deepEqual(await packages(), [snapshotV1], 'Saving the draft must not mutate or create approval snapshots');
-      stage = 'stale visual approval revision is rejected';
-      // React resets uncontrolled fields after the previous server action.
-      // Refill the approval details without reloading the obsolete revision.
-      await fillApproval(stalePage);
-      await stalePage.getByRole('region', { name: 'Aprovação visual', exact: true }).getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
-      await stalePage.getByText('O pacote mudou. Recarregue a página e revise antes de aprovar.', { exact: true }).waitFor();
-      assert.deepEqual(await packages(), [snapshotV1]);
-      stage = 'register revised visual approval v2';
-      await page.reload();
-      await closeStudio(page);
-    await page.getByRole('tab', { name: 'Aprovação visual', exact: true }).click();
-      await expect(approval.locator('input[name=revision]')).toHaveValue(String(changed.revision));
-      await expect(approval.locator('input[name=identity]')).toHaveValue(identity);
-      await fillApproval(page);
-      await approval.getByRole('button', { name: 'Registrar aprovação do pacote', exact: true }).click();
-      await expect.poll(async () => (await packages()).length).toBe(2);
-      const versions = await packages();
-      assert.equal(versions.length, 2); assert.deepEqual(versions[0], snapshotV1);
-      assert.equal(versions[1].version, 2); assert.equal(versions[1].editor_revision, changed.revision);
-      assert.deepEqual(versions[1].config, changed.event);
-      assert.equal(versions[0].config.artworks[0].name, 'Moldura teste');
-      stage = 'approved snapshot remains private and unpublished';
-      const privateUrl = `${base}/admin/campanhas/${campaignId}/pacotes/${v1.id}`;
-      const anonymous = await playwrightRequest.newContext();
-      try {
-        const snapshotEndpoint = `${base}/api/campaigns/${campaignId}/packages/${v1.id}/preview`;
-        assert.equal((await anonymous.get(snapshotEndpoint)).status(), 403);
-        assert.equal((await context.request.get(`${base}/api/campaigns/${randomUUID()}/packages/${v1.id}/preview`)).status(), 404);
-        const response = await anonymous.get(privateUrl, { maxRedirects: 0 });
-        assert.ok([302, 303, 307, 308, 401, 403].includes(response.status()));
-        assert.ok(!(await response.text()).includes('Moldura teste'), 'Anonymous response must not expose the approved configuration');
-      } finally { await anonymous.dispose(); }
-      await stalePage.goto(privateUrl);
-      await stalePage.getByText('Prévia privada · pacote aprovado v1. Esta versão não é uma publicação pública.', { exact: true }).waitFor();
-      const snapshotFrame = stalePage.frameLocator('iframe[title="Prévia do pacote aprovado"]');
-      await expect(snapshotFrame.getByRole('img', { name: 'Composição com a arte Moldura teste, sem foto', exact: true })).toBeVisible({ timeout: 30_000 });
-      await snapshotFrame.locator('input[type=file]').setInputFiles({ name: 'snapshot-local.png', mimeType: 'image/png', buffer: png(600, 'photo') });
-      const snapshotImage = snapshotFrame.getByRole('img', { name: /Composição com a arte Moldura teste e sua foto/ });
-      await expect(snapshotImage).toBeVisible({ timeout: 30_000 });
-      await stalePage.locator('iframe').evaluate((el, { campaignId, event }) => (el as HTMLIFrameElement).contentWindow!.postMessage({ type: 'namarca:preview', campaignId, event }, window.location.origin), { campaignId, event: changed.event });
-      await expect(snapshotImage).toBeVisible();
-      assert.equal(await snapshotFrame.getByRole('img', { name: /Composição com a arte Moldura revisada v2 e sua foto/ }).count(), 0, 'Snapshot preview must ignore the live draft bridge');
-      assert.equal((await pool.query('select count(*)::int as n from publication_tasks where campaign_id=$1', [campaignId])).rows[0].n, 0);
-      const unpublished = (await pool.query('select preparation_status,publication_status from campaigns where id=$1', [campaignId])).rows[0];
-      assert.deepEqual(unpublished, { preparation_status: 'draft', publication_status: 'unpublished' });
-    } finally { await stalePage.close(); }
     stage = 'inline client registration and campaign link';
     await page.goto(`${base}/admin/campanhas/${campaignId}`);
     await closeStudio(page);
@@ -647,7 +536,7 @@ async function main() {
     const afterEdit = (await pool.query('select client_id,price_cents,preparation_status,publication_status from campaigns where id=$1', [campaignId])).rows[0];
     assert.equal(afterEdit.client_id, null); assert.equal(afterEdit.price_cents, 39500);
     assert.equal(afterEdit.preparation_status, 'draft'); assert.equal(afterEdit.publication_status, 'unpublished');
-    console.info('PASS editor + visual approval + clients: real password/TOTP; editor regression/local export; approval v1, duplicate and stale revision rejected, editor save preserves v1, explicit v2, private snapshot and no publication tasks; client creation/reload/reuse/unlink; draft/unpublished.');
+    console.info('PASS editor + clients: real password/TOTP; editor regression/local export; client creation/reload/reuse/unlink; draft/unpublished.');
   } finally {
     // Browser shutdown failures must not skip isolated DB/S3 fixture cleanup.
     await context.close().catch(() => {}); await browser.close().catch(() => {});
@@ -657,16 +546,15 @@ async function main() {
       if (privateKeys.length) await s3.send(new DeleteObjectsCommand({ Bucket: process.env.S3_BUCKET!, Delete: { Objects: privateKeys.map(Key => ({ Key })) } }));
       await pool.query('delete from payments where campaign_id=$1', [campaignId]);
       await pool.query('delete from checkout_links where campaign_id=$1', [campaignId]);
-      await pool.query('delete from campaign_packages where campaign_id=$1', [campaignId]);
       await pool.query('delete from campaigns where id=$1', [campaignId]);
     }
     if (secondCampaignId) await pool.query('delete from campaigns where id=$1', [secondCampaignId]);
     for (const clientId of clientIds) await pool.query('delete from clients where id=$1', [clientId]);
     await pool.query('delete from auth_user where id=$1', [id]);
-    for (const table of ['auth_user', 'campaigns', 'payments', 'checkout_links', 'campaign_assets', 'campaign_packages']) {
+    for (const table of ['auth_user', 'campaigns', 'payments', 'checkout_links', 'campaign_assets']) {
       assert.equal((await pool.query(`select count(*)::int as n from ${table}`)).rows[0].n, 0, 'Disposable fixtures must be removed');
     }
-    console.info('CLEANUP: disposable accounts, campaigns, payments, checkout links, assets and packages verified empty.');
+    console.info('CLEANUP: disposable accounts, campaigns, payments, checkout links and assets verified empty.');
   }
 }
 main().catch((error: unknown) => {

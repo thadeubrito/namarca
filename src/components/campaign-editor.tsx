@@ -11,7 +11,7 @@ import './campaign-editor.css';
 
 type Snapshot = { event: EventConfig; revision: number };
 type Kind = 'artwork' | 'sticker';
-const labels: Record<keyof typeof themeDefaults, string> = { background: 'Fundo', surface: 'Painéis', text: 'Texto', mutedText: 'Texto secundário', primary: 'Botões', onPrimary: 'Texto dos botões', accent: 'Destaque', border: 'Bordas' };
+const labels: Record<keyof typeof themeDefaults, string> = { background: 'Fundo', surface: 'Painéis', text: 'Texto', accent: 'Destaque' };
 
 export function CampaignEditor({ campaignId }: { campaignId: string }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -49,11 +49,6 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
     };
     const submit = (e: SubmitEvent) => {
       if (e.defaultPrevented || !(e.target instanceof HTMLFormElement)) return;
-      if (e.target.dataset.campaignApproval === 'true') {
-        e.preventDefault(); e.stopPropagation();
-        window.alert('Salve as alterações do estúdio e recarregue a página antes de registrar a aprovação. A prévia atual ainda não está salva.');
-        return;
-      }
       if (e.target.dataset.campaignNavigation !== 'true') return;
       if (!window.confirm('Você tem alterações não salvas no estúdio. Salvar os dados da campanha pode descartá-las. Continuar sem salvar o estúdio?')) {
         e.preventDefault(); e.stopPropagation();
@@ -132,7 +127,7 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
       {artwork && <section className="ce-section"><h3>Área da foto · {artwork.name}</h3><p className="ce-muted">Desenhe a área da foto. Arraste ou ajuste pelas alças.</p><ReferenceCanvas key={artwork.id} artwork={artwork} assetURL={assetURL(artwork.file)} onChange={updateReference} /></section>}
       </> },
       { id: 'stickers', label: 'Stickers', content: gallery('sticker', event.stickers) },
-      { id: 'cores', label: 'Cores', content: <section className="ce-section"><h3>Cores</h3><div className="ce-colors">{(Object.keys(themeDefaults) as Array<keyof typeof themeDefaults>).map(key => <label key={key}><input type="color" value={event.theme?.[key] ?? themeDefaults[key]} onChange={e => change({ ...event, theme: { ...event.theme, [key]: e.target.value } })} />{labels[key]}</label>)}<label><input type="color" value={event.color} onChange={e => change({ ...event, color: e.target.value })} />Cor da campanha</label></div></section> },
+      { id: 'cores', label: 'Cores', content: <section className="ce-section"><h3>Cores</h3><div className="ce-colors">{(Object.keys(themeDefaults) as Array<keyof typeof themeDefaults>).map(key => <label key={key}><input type="color" value={event.theme?.[key] ?? themeDefaults[key]} onChange={e => change({ ...event, theme: { version: 1, ...themeDefaults, ...event.theme, [key]: e.target.value } })} />{labels[key]}</label>)}</div></section> },
     ]} />
     </fieldset></div><aside className={`ce-preview${expanded ? ' ce-preview-expanded' : ''}`}><header><div><h3>Prévia</h3></div><Button type="button" className="secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? 'Recolher prévia' : 'Ampliar prévia'}</Button></header><p className="ce-muted" aria-live="polite">{previewReady ? 'Rascunho atual · foto local' : 'Carregando prévia…'}</p><div className="ce-preview-device"><iframe ref={frame} src={`/event-runtime/preview.html?campaignId=${campaignId}`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></div></aside></div>
   </section>;

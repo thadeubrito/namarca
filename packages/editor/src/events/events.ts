@@ -4,21 +4,33 @@ export interface Artwork extends Material {
   reference: { x: number; y: number; width: number; height: number }
 }
 export const themeDefaults = {
-  background: '#202522', surface: '#fafbf8', text: '#263b2e', mutedText: '#59645c',
-  primary: '#173f35', onPrimary: '#ffffff', accent: '#e7a15b', border: '#d8dfd7',
+  background: '#202522', surface: '#fafbf8', accent: '#173f35', text: '#263b2e',
 }
-export type EventTheme = typeof themeDefaults
+export type EventTheme = { version: 1 } & typeof themeDefaults
+export function contrastText(color: string): string {
+  const channels = color.slice(1).match(/../g)!.map(hex => {
+    const value = parseInt(hex, 16) / 255
+    return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4
+  })
+  const luminance = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722
+  return (luminance + .05) / .05 >= 1.05 / (luminance + .05) ? '#000000' : '#ffffff'
+}
 export function eventThemeStyle(event: EventConfig): Record<string, string> {
-  const variables: Record<string, string> = { '--event-color': event.color }
-  if (event.theme) for (const [key, value] of Object.entries({ ...themeDefaults, ...event.theme })) {
-    variables[`--theme-${key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`] = value
+  const { background, surface, accent, text } = event.theme ?? { version: 1, ...themeDefaults }
+  return {
+    '--event-color': accent,
+    '--theme-background': background, '--theme-surface': surface,
+    '--theme-text': text, '--theme-muted-text': text,
+    '--theme-primary': accent, '--theme-accent': accent,
+    '--theme-on-primary': contrastText(accent),
+    '--theme-on-background': contrastText(background),
+    '--theme-border': `color-mix(in srgb, ${surface} 80%, ${contrastText(surface)})`,
   }
-  return variables
 }
 
 export interface EventConfig {
   slug: string; name: string; color: string; demo: boolean; endsAt: string
-  artworks: Artwork[]; stickers: Material[]; theme?: Partial<EventTheme>
+  artworks: Artwork[]; stickers: Material[]; theme?: EventTheme
 }
 
 export function resolveSlug(path: string): string | null {
@@ -50,16 +62,15 @@ export function parseEvent(value: unknown, slug: string, options: { allowEmptyAr
   const color = text(o.color)
   const endsAt = text(o.endsAt)
   if (!/^#[0-9a-f]{6}$/i.test(color) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/.test(endsAt) || !Number.isFinite(Date.parse(endsAt))) return fail()
-  let theme: Partial<EventTheme> | undefined
+  let theme: EventTheme | undefined
   if (o.theme !== undefined) {
     const input = object(o.theme)
-    theme = {}
-    for (const key of Object.keys(input)) {
-      if (!(key in themeDefaults) || !Object.hasOwn(themeDefaults, key)) return fail()
+    if (input.version !== 1 || Object.keys(input).length !== 5) return fail('versão ou campos do tema inválidos')
+    for (const key of Object.keys(themeDefaults)) {
       const value = input[key]
-      if (typeof value !== 'string' || !/^#[0-9a-f]{6}$/i.test(value)) return fail()
-      theme[key as keyof EventTheme] = value
+      if (typeof value !== 'string' || !/^#[0-9a-f]{6}$/i.test(value)) return fail('cor inválida')
     }
+    theme = { version: 1, background: input.background as string, surface: input.surface as string, accent: input.accent as string, text: input.text as string }
   }
   const base = materials(o.artworks)
   const stickers = materials(o.stickers)

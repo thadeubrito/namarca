@@ -200,7 +200,7 @@ export async function testEditorRuntime({ page, context, base, campaignId, event
       await expect(iframe).toBeHidden();
       await expectCollapsedStudioPreview(page);
       await retainedFrame();
-      for (const name of ['Dados da campanha', 'Aprovação visual', 'Cobrança']) {
+      for (const name of ['Dados da campanha', 'Cobrança']) {
         await campaignSections(page).getByRole('tab', { name, exact: true }).click();
         await expect(page.getByRole('region', { name: 'Estúdio da campanha', includeHidden: true })).toBeHidden();
         await retainedFrame();

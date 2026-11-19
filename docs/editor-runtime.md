@@ -2,7 +2,7 @@
 
 ## Implementado localmente
 
-O Next.js permanece responsável por administração, sessão, uploads e snapshots. `apps/event` é um frontend React de navegador, compilado por esbuild: não depende de servidor Next, banco ou credenciais de bucket para executar o editor público.
+O Next.js permanece responsável por administração, sessão e uploads. `apps/event` é um frontend React de navegador, compilado por esbuild: não depende de servidor Next, banco ou credenciais de bucket para executar o editor público.
 
 Fonte única em `packages/editor/src`:
 
@@ -17,7 +17,6 @@ A pasta é um módulo interno de código-fonte, não pacote npm publicado. O adm
 
 - `apps/event/src/main.tsx`: resolve `/<slug>`, busca `/events/<slug>/event.json`, valida, carrega PNGs em `/events/<slug>/<file>`. Não recebe mensagens de configuração. Estado de encerramento conferido após leitura, a cada segundo e ao retornar à aba; ao encerrar desmonta o editor. Isso existe apenas no novo frontend local, não altera o público antigo.
 - `apps/event/src/preview.tsx`: mesma interface e CSS, mas configuração em memória via bridge de mesma origem. Aceita somente parent, origem e campaignId correspondentes, contrato válido e filenames privados UUID.png. Mensagem inválida preserva última configuração e informa pausa. Sem foto/composição no bridge.
-- Histórico: `preview.html?campaignId=...&packageId=...` busca snapshot por endpoint autenticado `/api/campaigns/:id/packages/:packageId/preview`, com requireAdmin, vínculo campanha/pacote e no-store. Não instala listener de configuração. O HTML/JS pode ser público; snapshots e PNGs continuam privados.
 
 O iframe aponta diretamente para HTML estático em `/event-runtime/preview.html`, sem layout/CSS/JS do Next. O caminho administrativo antigo de prévia foi mantido como redirect autenticado. Não há CORS externo nem afrouxamento de CSP.
 
@@ -41,7 +40,7 @@ Os caminhos dos assets de build são `/event-runtime/*`; preservar esse prefixo 
 
 ## Evidências e limites
 
-48 testes unitários/contratos, typecheck/lint, migrations completas em DB descartável e build Next isolado aprovados. Runner integral Chromium aprovado com galeria, sincronização de seleção, foto/PNG, ampliar/recolher, viewport 390px sem overflow, aprovação v1/v2, snapshot histórico imutável e endpoint protegido/vínculo 404, clientes e financeiro.
+48 testes unitários/contratos, typecheck/lint, migrations completas em DB descartável e build Next isolado aprovados. Runner integral Chromium aprovado com galeria, sincronização de seleção, foto/PNG, ampliar/recolher, viewport 390px sem overflow, clientes e financeiro.
 
 `scripts/editor-runtime-scenario.ts` compara estilos computados dos controles em repouso/hover e ausência de recursos Next na prévia; executa entrada pública com manifesto/PNGs sintéticos interceptados no navegador e bytes reais do build; exporta PNG em ambas. A interceptação contorna a classificação de address-space do Chromium para documento fixture, não contorna autenticação de produção. Testa rejeição de campanha/source e origem inválidos (origem inválida por MessageEvent sintético, não navegação cross-origin real), ausência de mutações e manifesto encerrado. `EDITOR_RUNTIME_ONLY=1` encerra após esse cenário, mantendo cenários anteriores. `EDITOR_RUNTIME_SHOTS=1` grava somente capturas sintéticas em /tmp; imagens observadas nesta sessão. Não comparar pixels entre composições diferentes: a prévia contém sticker e a pública não.
 
