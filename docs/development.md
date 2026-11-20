@@ -24,7 +24,7 @@ Não há botão de checkout/simulação na UI desta base. Exercícios de integra
 
 ## Confirmação de pagamentos
 
-O webhook consulta o gateway e atualiza a situação financeira na própria requisição, em transação com o registro idempotente do evento. Não há worker, cron ou `/api/tasks`. Erros temporários retornam 503, permitindo nova entrega do provedor; esta base não garante que o provedor reenvie notificações perdidas. Consulta manual no painel ainda não foi implementada. Nenhuma publicação de pacote real foi implementada.
+O webhook consulta o gateway e atualiza a situação financeira na própria requisição, em transação com o registro idempotente do evento. Não há worker, cron ou `/api/tasks`. Erros temporários retornam 503, permitindo nova entrega do provedor; esta base não garante que o provedor reenvie notificações perdidas. Consulta manual no painel disponível no mock. Falha/inconclusivo permite nova tentativa explícita do cliente no mesmo checkout, sem consultas automáticas ou liberação administrativa. Histórico e callbacks anteriores são preservados; risco de duplicidade após resposta perdida aceito na simplificação solicitada. Não cancela Pix anterior no provedor. Nenhuma publicação de pacote real foi implementada.
 
 ## Validações
 

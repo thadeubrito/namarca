@@ -26,9 +26,10 @@ export function csvCell(value: string) {
   const safe = /^[\s\uFEFF]*[=+\-@]/u.test(value) || /^[\t\r\n]/.test(value) ? `'${value}` : value;
   return `"${safe.replaceAll('"', '""')}"`;
 }
-export function financialCsv(rows: readonly ReportPayment[]) {
+export function financialCsv(rows: readonly ReportPayment[], campaignName?: (row: ReportPayment, index: number) => string) {
   summarizePayments(rows);
   const header = ['Referência', 'Situação', 'Valor (BRL)', 'Criada em (UTC)', 'Confirmação registrada em (UTC)', 'Atualizada em (UTC)'];
-  const data = rows.map(row => [row.externalId, paymentLabels[row.status], `${Math.floor(row.amountCents / 100)},${String(row.amountCents % 100).padStart(2, '0')}`, row.createdAt.toISOString(), row.paidAt?.toISOString() ?? '', row.updatedAt.toISOString()]);
+  if (campaignName) header.unshift('Campanha');
+  const data = rows.map((row, index) => [...(campaignName ? [campaignName(row, index)] : []), row.externalId, paymentLabels[row.status], `${Math.floor(row.amountCents / 100)},${String(row.amountCents % 100).padStart(2, '0')}`, row.createdAt.toISOString(), row.paidAt?.toISOString() ?? '', row.updatedAt.toISOString()]);
   return '\uFEFF' + [header, ...data].map(columns => columns.map(csvCell).join(';')).join('\r\n') + '\r\n';
 }

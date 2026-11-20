@@ -149,8 +149,10 @@
  .ui-scope .ce-heading { padding:16px; } .ui-scope .ce-feedback { padding-inline:16px; }
  .admin-footer span:last-child { display:none; }
 }
-@media(max-width:480px) {
- .admin-header-inner { padding-inline:12px; gap:10px; }
+@media(max-width:600px) {
+ .admin-header-inner { padding-inline:12px; gap:0 12px; flex-wrap:wrap; }
+ .admin-header-inner .admin-links { order:3; width:100%; margin-left:0; gap:24px; }
+ .admin-header-inner .admin-tools { margin-left:auto; }
  .admin-brand { font-size:18px; flex-shrink:0; }
  .admin-links { gap:10px; margin-left:6px; }
  .admin-links a { gap:0; font-size:12px; }

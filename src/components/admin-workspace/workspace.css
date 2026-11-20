@@ -78,8 +78,58 @@
 .ws-ledger { width:100%; border-collapse:collapse; font-size:13px; }
 .ws-ledger th,.ws-ledger td { padding:14px 12px; text-align:left; border-bottom:1px solid var(--line); }
 .ws-ledger th { text-transform:none; letter-spacing:0; color:var(--muted); font-size:12px; }
-.ws-scroll { overflow-x:auto; max-width:100%; }
+.ws-scroll { position:relative; overflow-x:auto; max-width:100%; }
 .ws-section-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
+.ws-financial-filters { display:grid; grid-template-columns: minmax(180px,2fr) minmax(150px,1fr) repeat(2,minmax(140px,1fr)); gap:16px; align-items:end; }
+.ws-financial-filters>.ws-billing-buttons { grid-column:1/-1; }
+.ws-financial-totals { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+.ws-financial-value { margin-top:14px; font-size:24px; font-weight:600; letter-spacing:-.5px; font-variant-numeric:tabular-nums; }
+.ws-financial .ws-ledger td:first-child .ws-action { white-space:normal; text-align:left; justify-content:flex-start; }
+@media(max-width:1000px) { .ws-financial-totals { grid-template-columns:repeat(3,minmax(0,1fr)); } .ws-financial-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .ws-financial-totals,.ws-financial-filters { grid-template-columns:minmax(0,1fr); } }
+/* Cobrança: emissão, compartilhamento e histórico. */
+.ws-billing { display:flex; flex-direction:column; gap:20px; min-width:0; }
+.ws-billing .ws-section-heading { margin-bottom:0; }
+.ws-billing-caption { color:var(--muted); font-size:12px; line-height:1.65; }
+.ws-billing .ws-section-heading .ws-billing-caption { margin-top:5px; }
+.ws-billing-overview { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; }
+.ws-billing-overview>div { min-width:0; overflow-wrap:anywhere; }
+.ws-billing-overview>.ws-pill { max-width:100%; white-space:normal; }
+.ws-billing-overview .ws-billing-caption { margin-top:6px; }
+.ws-billing-total { margin-top:8px; font-size:32px; line-height:1.2; font-weight:600; letter-spacing:-1px; font-variant-numeric:tabular-nums; }
+.ws-billing-issue { display:grid; grid-template-columns:minmax(0,1fr) 200px auto; align-items:end; gap:12px; }
+.ws-billing-issue-feedback { grid-column:1/-1; }
+.ws-billing-issue-feedback:empty { display:none; }
+.ws-billing-submit { align-self:end; }
+.ws-billing-ledger .ws-billing-description { min-width:160px; max-width:300px; overflow-wrap:anywhere; }
+.ws-billing-share-compact { gap:8px; }
+.ws-billing-share-compact .ws-billing-buttons { flex-wrap:nowrap; }
+.ui-scope .ws-billing-share-compact .ws-action { padding-inline:10px; }
+.ws-billing-main .ws-billing-policy { margin-top:12px; padding-top:0; border:0; }
+@media(max-width:900px) { .ws-billing-issue { grid-template-columns:minmax(0,1fr) 180px; } .ws-billing-submit { grid-column:1/-1; justify-self:start; } }
+@media(max-width:600px) { .ws-billing-issue { grid-template-columns:minmax(0,1fr); } .ui-scope .ws-billing-submit { width:100%; } }
+.ws-billing-amount { width:100%; max-width:360px; }
+.ui-scope .ws-billing-amount .ws-input { font-variant-numeric:tabular-nums; }
+.ws-billing-buttons { display:flex; flex-wrap:wrap; gap:8px; }
+.ws-billing-form-footer { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+.ws-billing-policy { margin-top:24px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; line-height:1.7; }
+.ws-billing-policy strong { color:var(--foreground); font-weight:500; }
+.ws-billing-share { display:flex; flex-direction:column; gap:16px; }
+.ws-billing-share h3 { margin-bottom:4px; }
+.ws-billing-link { display:flex; align-items:center; gap:12px; padding:8px 10px 8px 16px; border:1px solid var(--line); background:var(--background); border-radius:8px; min-width:0; }
+.ws-billing-link>svg { width:16px; height:16px; flex-shrink:0; color:var(--muted); }
+.ws-billing-link>span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+.ws-billing-history-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:16px; border-bottom:1px solid var(--line); }
+.ws-billing-empty { padding-block:28px 12px; }
+.ws-billing-empty>p { font-size:14px; font-weight:500; margin-bottom:4px; }
+@media(max-width:600px) {
+  .ws-billing .ws-section-heading { align-items:flex-start; flex-direction:column; gap:8px; }
+  .ws-billing-buttons,.ws-billing-form-footer { width:100%; }
+  .ui-scope .ws-billing-buttons>.ws-action { width:100%; white-space:normal; }
+  .ws-billing-link { flex-wrap:wrap; }
+  .ui-scope .ws-billing-link>.ws-action { width:100%; }
+  .ws-billing-link>span { flex-basis:calc(100% - 28px); }
+}
 @media(max-width:1000px) { .ws-project-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .workspace { gap:24px; } .ws-intro { align-items:flex-start; flex-direction:column; gap:16px; } .ui-scope .workspace h1 { font-size:24px; } .ws-project-grid { grid-template-columns:1fr; } .ui-scope .ws-surface { padding:18px; } .ws-directory-toolbar { align-items:stretch; flex-direction:column; } .ws-tabrail { gap:20px; } .ui-scope .ws-action { min-height:44px; } .ws-detail-overview { gap:20px; } }
 @media(prefers-reduced-motion:reduce) { .workspace *, .workspace *::before,.workspace *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }

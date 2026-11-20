@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const billingDescriptionInput = z.string().trim().min(1, 'Informe a descrição da cobrança.').max(120, 'Use até 120 caracteres na descrição.');
+
 export const billingAmountInput = z.string().trim()
   .regex(/^\d{1,4}(?:[,.]\d{1,2})?$/, 'Informe um valor como 395,00.')
   .transform(value => Math.round(Number(value.replace(',', '.')) * 100))

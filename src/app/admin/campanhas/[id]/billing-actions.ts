@@ -1,31 +1,32 @@
 'use server';
-import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/admin';
-import { issueCheckout, reconcilePayment, registerCheckoutPayment, requireMockCheckout } from '@/lib/checkout';
-import { db } from '@/db';
-import { checkoutAttempts } from '@/db/schema';
-import { createPixgoClient } from '@/lib/pixgo';
-import { billingAmountInput } from '@/lib/billing-input';
-export type BillingState = { error?: string; success?: string };
+import { issueCheckout, reconcilePayment, requireMockCheckout } from '@/lib/checkout';
+import { billingAmountInput, billingDescriptionInput } from '@/lib/billing-input';
+export type BillingState = { error?: string; success?: string; issuedId?: string };
 export async function billingAction(id: string, _state: BillingState, form: FormData): Promise<BillingState> {
   await requireAdmin();
   if (!z.uuid().safeParse(id).success) return { error: 'Identificador inválido.' };
+  const operation = form.get('operation');
   try {
     requireMockCheckout();
     if (form.get('operation') === 'issue') {
       const amount = billingAmountInput.safeParse(form.get('amount'));
       if (!amount.success) return { error: amount.error.issues[0].message };
-      await issueCheckout(id, amount.data);
-    } else if (form.get('operation') === 'recover') {
-      const [attempt] = await db.select().from(checkoutAttempts).where(eq(checkoutAttempts.id, id));
-      if (!attempt) return { error: 'Tentativa não encontrada.' };
-      if (Date.now() - attempt.createdAt.getTime() < 15000) return { error: 'Aguarde a criação em andamento antes de consultar.' };
-      await registerCheckoutPayment(id, await createPixgoClient().findMockPayment(attempt.externalId));
+      const description = billingDescriptionInput.safeParse(form.get('description'));
+      const requestId = z.uuid().safeParse(form.get('requestId'));
+      if (!description.success) return { error: 'Informe uma descrição de até 120 caracteres.' };
+      if (!requestId.success) return { error: 'Recarregue a página para emitir a cobrança.' };
+      const link = await issueCheckout(id, amount.data, description.data, requestId.data);
+      revalidatePath('/admin', 'layout');
+      return { issuedId: link.id };
     } else if (form.get('operation') === 'reconcile') await reconcilePayment(id);
     else return { error: 'Operação inválida.' };
-  } catch { return { error: 'Não foi possível concluir. Confira o valor (R$ 10–6.000) e tente consultar novamente. Se a criação estiver em verificação, não emita outra cobrança até confirmar o resultado na PixGo.' }; }
+  } catch {
+    if (operation === 'reconcile') return { error: 'Não foi possível atualizar a situação do pagamento. Tente consultar novamente em instantes.' };
+    return { error: 'Não foi possível emitir o link de cobrança. Tente novamente; o mesmo envio não cria uma cobrança duplicada.' };
+  }
   revalidatePath('/admin', 'layout');
-  return { success: 'Consulta ou emissão concluída.' };
+  return { success: 'Situação consultada.' };
 }

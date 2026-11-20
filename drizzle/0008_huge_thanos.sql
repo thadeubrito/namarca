@@ -1,0 +1,1 @@
+ALTER TABLE "checkout_links" ADD COLUMN "description" text DEFAULT 'Campanha' NOT NULL;

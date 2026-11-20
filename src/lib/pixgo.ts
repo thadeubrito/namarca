@@ -30,11 +30,24 @@ export function isValidCpf(value: string): boolean {
   }
   return true;
 }
+export function isValidCnpj(value: string): boolean {
+  // CNPJ numérico e alfanumérico: base ASCII−48, dígitos verificadores numéricos.
+  if (!/^[A-Z0-9]{12}\d{2}$/.test(value) || /^(.)\1+$/.test(value)) return false;
+  for (const length of [12, 13]) {
+    let sum = 0;
+    for (let i = 0; i < length; i++) sum += (value.charCodeAt(i) - 48) * (2 + ((length - 1 - i) % 8));
+    const remainder = sum % 11;
+    if ((remainder < 2 ? 0 : 11 - remainder) !== Number(value[length])) return false;
+  }
+  return true;
+}
+export const normalizePayerDocument = (value: string) => value.replace(/[.\/\-\s]/g, '').toUpperCase();
+export const isValidPayerDocument = (value: string) => isValidCpf(value) || isValidCnpj(value);
 const identifier = z.string().min(1).max(200).regex(/^[a-zA-Z0-9_.:-]+$/);
 export const createPaymentSchema = z.object({
   externalId: identifier.max(50),
   amountCents: z.number().int().min(1000).max(600000),
-  payerCpf: z.string().refine(isValidCpf, "Invalid payer document"),
+  payerCpf: z.string().refine(isValidPayerDocument, "Invalid payer document"),
 }).strict();
 const remoteStatus = z.enum(["pending", "completed", "expired", "cancelled", "canceled", "refunded"]);
 const remoteDataSchema = z.object({

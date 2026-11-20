@@ -9,7 +9,7 @@ import { useCampaignRecovery } from './campaign-recovery';
 import { Action, Notice } from './primitives';
 
 // Explicit allow-list: never serialize the form, hidden action metadata or files.
-const allowed = ['name', 'slug', 'endsAt', 'clientId', 'clientName', 'clientContact', 'notes', 'amount'] as const;
+const allowed = ['name', 'slug', 'endsAt', 'clientId', 'clientName', 'clientContact', 'notes', 'amount', 'description'] as const;
 type DraftField = typeof allowed[number];
 export type FormDraftValues = Partial<Record<DraftField, string>>;
 type LocalDraft = { version: 1; values: FormDraftValues };

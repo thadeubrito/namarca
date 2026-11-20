@@ -1,12 +1,14 @@
 'use client';
 
-import { useActionState, useState, type ReactNode } from 'react';
+import { useActionState, useEffect, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
+import { ArrowUpRight, Check, Copy, Link2, MessageSquare, Send } from 'lucide-react';
 import { billingAction, type BillingState } from '@/app/admin/campanhas/[id]/billing-actions';
 import { Action, ActionLink, Field, TextInput, Notice } from './primitives';
 import { useFormDraft } from './form-draft';
+import { localMaterialId } from '@/lib/studio-draft';
 
-const billingDraftFields = ['amount'] as const;
+const billingDraftFields = ['amount', 'description'] as const;
 
 // PaceUI references consulted via container fetch:
 // https://paceui.com/r/motion-alert.json and https://paceui.com/r/motion-spring-button.json.
@@ -35,24 +37,32 @@ export function PaymentAction({ id, operation, children }: { id: string; operati
 
 export function BillingIssueForm({ id, defaultAmount, draftKey }: { id: string; defaultAmount: string; draftKey?: string }) {
   const [state, action, pending] = useActionState<BillingState, FormData>(billingAction.bind(null, id), {});
-  const { formRef, feedback, saveLocal, dirty } = useFormDraft({ draftKey, section: 'cobranca', fields: billingDraftFields, submitting: pending });
-  return <form ref={formRef} action={action} aria-busy={pending} className="max-w-md space-y-4">
+  const { formRef, feedback, markSaved } = useFormDraft({ draftKey, section: 'cobranca', fields: billingDraftFields, submitting: pending });
+  const [requestId, setRequestId] = useState('');
+  useEffect(() => { queueMicrotask(() => setRequestId(localMaterialId())); }, []);
+  useEffect(() => {
+    if (!state.issuedId) return;
+    queueMicrotask(() => {
+      formRef.current?.reset();
+      markSaved({ amount: defaultAmount, description: '' });
+      setRequestId(localMaterialId());
+    });
+  }, [state.issuedId, formRef, markSaved, defaultAmount]);
+  return <form ref={formRef} action={action} aria-busy={pending} className="ws-billing-issue">
     <input type="hidden" name="operation" value="issue" />
-    <Field label="Valor da cobrança (R$)" hint="De R$ 10,00 a R$ 6.000,00. O valor fica fixo após emitir o link.">
-      <TextInput name="amount" type="text" inputMode="decimal" required maxLength={7} placeholder="395,00" defaultValue={defaultAmount} disabled={pending} />
-    </Field>
-    <p className="text-xs text-muted-foreground">Rascunho neste navegador. Salvar o rascunho não salva no servidor nem emite cobrança.</p>
-    {feedback}
-    <p className="text-xs text-muted-foreground" role="status">{dirty ? 'Cobrança com alterações locais. Nenhum link emitido por estas alterações.' : 'Cobrança sem alterações pendentes.'}</p>
-    <div className="flex flex-wrap gap-2">
-      <Action type="button" variant="secondary" disabled={pending || !draftKey} onClick={saveLocal}>Salvar rascunho da cobrança</Action>
-      <Action type="submit" disabled={pending}>{pending ? 'Emitindo…' : 'Emitir link de cobrança'}</Action>
+    <input type="hidden" name="requestId" value={requestId} />
+    <Field label="Descrição"><TextInput name="description" required maxLength={120} placeholder="Ex.: campanha inicial ou alteração adicional" disabled={pending} /></Field>
+    <div className="ws-billing-amount">
+      <Field label="Valor da cobrança (R$)" >
+        <TextInput name="amount" type="text" inputMode="decimal" required maxLength={7} placeholder="395,00" defaultValue={defaultAmount} disabled={pending} />
+      </Field>
     </div>
-    <Feedback error={state.error} success={state.success} />
+    <Action className="ws-billing-submit" type="submit" disabled={pending || !requestId}><Send aria-hidden />{pending ? 'Emitindo…' : 'Emitir link de cobrança'}</Action>
+    <div className="ws-billing-issue-feedback">{feedback}<Feedback error={state.error} success={state.success} /></div>
   </form>;
 }
 
-export function CheckoutShare({ path }: { path: string }) {
+export function CheckoutShare({ path, compact = false }: { path: string; compact?: boolean }) {
   const [copied, setCopied] = useState<'link' | 'message' | null>(null);
   const [error, setError] = useState(false);
   const copy = async (kind: 'link' | 'message') => {
@@ -65,12 +75,10 @@ export function CheckoutShare({ path }: { path: string }) {
     } catch { setError(true); }
   };
 
-  return <div className="min-w-0 space-y-4">
-    <div className="flex flex-col gap-3 border-l-2 border-border pl-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><h4 className="text-sm font-semibold">Compartilhar cobrança</h4><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Envie o link ou uma mensagem com as orientações de pagamento.</p></div>
-      <ActionLink href={path} target="_blank" rel="noreferrer" variant="ghost">Abrir checkout</ActionLink>
-    </div>
-    <div className="flex flex-col gap-2 sm:flex-row"><Action type="button" variant="secondary" onClick={() => void copy('link')}>Copiar link</Action><Action type="button" variant="secondary" onClick={() => void copy('message')}>Copiar mensagem</Action></div>
-    <Feedback error={error ? 'Não foi possível copiar. Abra o checkout e copie o endereço.' : undefined} success={copied ? (copied === 'link' ? 'Link copiado.' : 'Mensagem copiada.') : undefined} />
+  return <div className={`ws-billing-share${compact ? ' ws-billing-share-compact' : ''}`}>
+    {!compact && <><h3>Compartilhar cobrança</h3><div className="ws-billing-link"><Link2 aria-hidden /><span title={path}>{path}</span><ActionLink href={path} target="_blank" rel="noreferrer" variant="ghost">Abrir checkout<ArrowUpRight aria-hidden /></ActionLink></div></>}
+    <div className="ws-billing-buttons">{compact && <ActionLink href={path} target="_blank" rel="noreferrer" variant="ghost">Abrir checkout<ArrowUpRight aria-hidden /></ActionLink>}<Action type="button" variant={compact ? 'ghost' : 'primary'} onClick={() => void copy('link')}>{copied === 'link' ? <Check aria-hidden /> : <Copy aria-hidden />}{copied === 'link' ? 'Link copiado' : 'Copiar link'}</Action><Action type="button" variant="secondary" onClick={() => void copy('message')}>{copied === 'message' ? <Check aria-hidden /> : <MessageSquare aria-hidden />}{copied === 'message' ? 'Mensagem copiada' : 'Copiar mensagem'}</Action></div>
+    <span className="sr-only" role="status">{copied === 'link' ? 'Link copiado.' : copied === 'message' ? 'Mensagem copiada.' : ''}</span>
+    <Feedback error={error ? 'Não foi possível copiar. Abra o checkout e copie o endereço.' : undefined} />
   </div>;
 }

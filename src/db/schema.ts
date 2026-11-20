@@ -102,6 +102,7 @@ export const checkoutLinks = pgTable("checkout_links", {
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "restrict" }),
   token: text("token").notNull().unique(),
   campaignName: text("campaign_name").notNull(),
+  description: text("description").notNull().default("Campanha"),
   amountCents: integer("amount_cents").notNull(),
   createdAt: createdAt(),
 }, (t) => [check("checkout_amount_range", sql`${t.amountCents} BETWEEN 1000 AND 600000`)]);
@@ -112,10 +113,23 @@ export const checkoutAttempts = pgTable("checkout_attempts", {
   checkoutId: uuid("checkout_id").notNull().references(() => checkoutLinks.id, { onDelete: "restrict" }),
   externalId: text("external_id").notNull().unique(),
   state: text("state", { enum: ["creating", "unknown", "registered"] }).notNull(),
+  queryCount: integer("query_count").notNull().default(0),
+  lastQueriedAt: timestamp("last_queried_at", { withTimezone: true }),
+  retryReleasedAt: timestamp("retry_released_at", { withTimezone: true }),
+  retryReleasedBy: text("retry_released_by"),
   createdAt: createdAt(),
 }, (t) => [index("checkout_attempt_link_idx").on(t.checkoutId), check("checkout_attempt_state", sql`${t.state} IN ('creating', 'unknown', 'registered')`)]);
 
 // One row per payment attempt. No payer identity or raw gateway payload is stored.
+export const checkoutAttemptEvents = pgTable("checkout_attempt_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  attemptId: uuid("attempt_id").notNull().references(() => checkoutAttempts.id, { onDelete: "restrict" }),
+  kind: text("kind", { enum: ["query", "retry_released"] }).notNull(),
+  outcome: text("outcome").notNull(),
+  actor: text("actor").notNull(),
+  createdAt: createdAt(),
+});
+
 export const payments = pgTable("payments", {
   id: uuid("id").defaultRandom().primaryKey(),
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "restrict" }),

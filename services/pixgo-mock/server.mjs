@@ -31,7 +31,7 @@ export async function createMock({ apiKey, webhookSecret, devToken, dataFile, de
     const path = url.pathname.replace(/^\/api\/v1/, '');
     if (req.method === 'POST' && (path === '/payment/create' || path === '/payments')) {
       const input = await body(req);
-      if (!Number.isFinite(input.amount) || input.amount <= 0 || input.amount > 1000000 || !/^\d{11}$/.test(input.receiver_cpf || '') || typeof input.external_id !== 'string' || !input.external_id || input.external_id.length > 200 || input.webhook_url !== CALLBACK) return json(res, 400, { success: false, error: 'Invalid amount, receiver_cpf, external_id or webhook_url; only the local app callback is allowed' });
+      if (!Number.isFinite(input.amount) || input.amount <= 0 || input.amount > 1000000 || ! /^(?:\d{11}|[A-Z0-9]{12}\d{2})$/.test(input.receiver_cpf || '') || typeof input.external_id !== 'string' || !input.external_id || input.external_id.length > 200 || input.webhook_url !== CALLBACK) return json(res, 400, { success: false, error: 'Invalid amount, receiver_cpf, external_id or webhook_url; only the local app callback is allowed' });
       const payment = { payment_id: randomUUID(), amount: input.amount, external_id: input.external_id, webhook_url: CALLBACK, status: 'pending', qr_code: 'FAKE-PIX-SEM-VALOR', qr_image_url: null, created_at: new Date(now()).toISOString(), expires_at: new Date(now() + 30 * 60000).toISOString() };
       payments.push(payment); await save(); return json(res, 200, { success: true, data: payment });
     }
