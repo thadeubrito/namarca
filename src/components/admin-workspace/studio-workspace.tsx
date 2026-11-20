@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { PanelRightClose, PanelRightOpen, ArrowUp, ArrowDown, Scan, Trash2, Upload, X } from 'lucide-react';
+import { PanelRightClose, PanelRightOpen, Scan, Trash2, Upload, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { useDarkTheme } from '@/components/theme-scope';
 import { type Artwork, type EventConfig, type Material } from '@namarca/editor/events';
 import { StudioColors } from './studio-colors';
+import { SortableMaterial, SortableMaterialLibrary } from './sortable-material';
+import { reorderMaterials } from '@/lib/reorder-materials';
 import { SaveStatus } from './save-status';
 import { StudioSkeleton } from './studio-skeleton';
 import { StudioCleanup } from './studio-cleanup';
@@ -296,15 +298,18 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
   };
   const library = (kind: Kind, items: Material[]) => {
     const key = kind === 'artwork' ? 'artworks' : 'stickers';
-    const move = (index: number, delta: number) => {
-      const list = [...event[key]];
-      [list[index], list[index + delta]] = [list[index + delta], list[index]];
-      // Invoked only by the move button, never during library rendering.
+    const move = (index: number, target: number) => {
+      const list = reorderMaterials<Material>(event[key], index, target);
+      // Invoked only by an interaction, never during library rendering.
       // eslint-disable-next-line react-hooks/refs
       change({ ...event, [key]: list });
     };
+    const renderMaterial = (item: Material) => <>
+          {kind === 'artwork' ? <Action type="button" variant="ghost" className="ws-studio-thumbnail" disabled={busy} onClick={() => setSelected(item.id)} aria-pressed={artwork?.id === item.id} aria-label={`Selecionar arte: ${item.name}`}><img src={assetURL(item.file)} alt={item.name} /></Action> : <div className="ws-studio-thumbnail"><img src={assetURL(item.file)} alt={item.name} /></div>}
+          <div className="ws-studio-asset-actions"><TextInput className="ws-studio-asset-name" aria-label={`Nome ${kind === 'artwork' ? 'da arte' : 'da figurinha'}: ${item.name}`} title={item.name} value={item.name} disabled={busy} onChange={e => change({ ...event, [key]: event[key].map(material => material.id === item.id ? { ...material, name: e.target.value } : material) })} />{kind === 'artwork' && <Action type="button" variant="ghost" disabled={busy} aria-label={`Editar área da foto: ${item.name}`} title="Editar área da foto" onClick={e => { referenceTrigger.current = e.currentTarget; setSelected(item.id); setReferenceOpen(true); }}><Scan aria-hidden /></Action>}<Action type="button" variant="danger" disabled={busy} onClick={() => change({ ...event, [key]: event[key].filter(a => a.id !== item.id) })} aria-label={`Remover ${item.name}`}><Trash2 aria-hidden /></Action></div>
+        </>;
     const addMaterial = <label className="ws-studio-upload" data-disabled={busy || !!recovery}><Upload aria-hidden /><span>{kind === 'artwork' ? 'Adicionar arte' : 'Adicionar figurinha'}</span><TextInput type="file" aria-label={kind === 'artwork' ? 'Adicionar arte PNG' : 'Adicionar figurinha PNG'} accept="image/png" multiple disabled={busy || !!recovery} onChange={e => { void selectFiles(Array.from(e.currentTarget.files ?? []), kind); e.currentTarget.value = ''; }} /></label>;
-    return <div className="ws-studio-library">
+    return <div className="ws-studio-library" data-kind={kind}>
       <div className="ws-studio-library-bar"><div className="ws-studio-library-title"><h3>{kind === 'artwork' ? 'Artes' : 'Figurinhas'}</h3><span className="ws-studio-library-count" aria-label={`${items.length} materiais`}>{items.length}</span></div>
         {items.length > 0 && <div className="ws-studio-upload-tools"><small>PNG · até 25 MiB · envio ao salvar</small>{addMaterial}</div>}
       </div>
@@ -314,11 +319,9 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
         <p>PNG com transparência · até 25 MiB · envio ao salvar</p>
         {addMaterial}
       </div> :
-        <ol className="ws-studio-rail" aria-label={kind === 'artwork' ? 'Artes da campanha' : 'Figurinhas da campanha'}>{items.map((item, index) => <li key={item.id} className="ws-studio-asset" data-selected={kind === 'artwork' && artwork?.id === item.id}>
-          {kind === 'artwork' ? <Action type="button" variant="ghost" className="ws-studio-thumbnail" disabled={busy} onClick={() => setSelected(item.id)} aria-pressed={artwork?.id === item.id} aria-label={`Selecionar arte: ${item.name}`}><img src={assetURL(item.file)} alt={item.name} /></Action> : <div className="ws-studio-thumbnail"><img src={assetURL(item.file)} alt={item.name} /></div>}
-          <TextInput aria-label={`Nome ${kind === 'artwork' ? 'da arte' : 'da figurinha'} ${index + 1}`} value={item.name} disabled={busy} onChange={e => change({ ...event, [key]: event[key].map(a => a.id === item.id ? { ...a, name: e.target.value } : a) })} />
-          <div className="ws-studio-asset-actions"><Action type="button" variant="ghost" disabled={busy || !index} onClick={() => move(index, -1)} aria-label={`Mover ${item.name} para cima`}><ArrowUp aria-hidden /></Action><Action type="button" variant="ghost" disabled={busy || index === items.length - 1} onClick={() => move(index, 1)} aria-label={`Mover ${item.name} para baixo`}><ArrowDown aria-hidden /></Action>{kind === 'artwork' && <Action type="button" variant="ghost" disabled={busy} aria-label={`Editar área da foto: ${item.name}`} title="Editar área da foto" onClick={e => { referenceTrigger.current = e.currentTarget; setSelected(item.id); setReferenceOpen(true); }}><Scan aria-hidden /></Action>}<Action type="button" variant="danger" disabled={busy} onClick={() => change({ ...event, [key]: event[key].filter(a => a.id !== item.id) })} aria-label={`Remover ${item.name}`}><Trash2 aria-hidden /></Action></div>
-        </li>)}</ol>}
+        <SortableMaterialLibrary items={items} disabled={busy || !!recovery} onMove={move} renderMaterial={renderMaterial}><ol className="ws-studio-rail" aria-label={kind === 'artwork' ? 'Artes da campanha' : 'Figurinhas da campanha'}>{items.map(item => <SortableMaterial key={item.id} id={item.id} name={item.name} count={items.length} disabled={busy || !!recovery} selected={kind === 'artwork' && artwork?.id === item.id}>
+          {renderMaterial(item)}
+        </SortableMaterial>)}</ol></SortableMaterialLibrary>}
     </div>;
   };
   const colors = <StudioColors event={event} disabled={busy} onChange={change} />;

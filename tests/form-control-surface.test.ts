@@ -11,5 +11,5 @@ test('campos administrativos usam superfície de controle consistente', async ()
     assert.doesNotMatch(line, /background:var\(--control-secondary\)/);
   }
   const studio = await readFile('src/components/admin-workspace/studio.css', 'utf8');
-  assert.match(studio, /\.ui-scope \.ws-studio-asset \.ws-input \{ background:transparent/);
+  assert.match(studio, /\.ui-scope \.ws-studio-asset \.ws-input \{[^\n]*background:transparent/);
 });

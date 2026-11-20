@@ -98,10 +98,29 @@ export async function testEditorGallery(page: Page, endpoint: string, image: (si
   await reference(25, 30, 250, 260);
   for (const kind of ['Arte', 'Sticker']) {
     await section(kind === 'Arte' ? 'arte' : 'sticker');
-    await expect(studio.getByRole('button', { name: `Mover ${kind} 1 para cima`, exact: true })).toBeDisabled();
-    await expect(studio.getByRole('button', { name: `Mover ${kind} 3 para baixo`, exact: true })).toBeDisabled();
-    await studio.getByRole('button', { name: `Mover ${kind} 2 para cima`, exact: true }).click();
-    await studio.getByRole('button', { name: `Mover ${kind} 1 para baixo`, exact: true }).click();
+    const firstHandle = studio.getByRole('button', { name: `Reordenar ${kind} 1`, exact: true });
+    await firstHandle.focus();
+    await firstHandle.press('Space');
+    await firstHandle.press('Escape');
+    assert.equal((await names(kind === 'Arte' ? 'arte' : 'sticker'))[0], `${kind} 1`);
+    // Real pointer drag, not synthetic dispatchEvent/HTML drag-and-drop.
+    const secondHandle = studio.getByRole('button', { name: `Reordenar ${kind} 2`, exact: true });
+    await secondHandle.scrollIntoViewIfNeeded();
+    const source = await secondHandle.boundingBox();
+    const target = await firstHandle.boundingBox();
+    assert.ok(source && target);
+    await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 12 });
+    await page.mouse.up();
+    await firstHandle.focus();
+    await firstHandle.press('Space');
+    const cards = studio.locator('.ws-studio-rail:visible .ws-studio-asset');
+    const currentCard = await cards.nth(1).boundingBox();
+    const nextCard = await cards.nth(2).boundingBox();
+    assert.ok(currentCard && nextCard);
+    await firstHandle.press(Math.abs(nextCard.y - currentCard.y) > currentCard.height / 2 ? 'ArrowDown' : 'ArrowRight');
+    await firstHandle.press('Space');
   }
   assert.deepEqual(await names('arte'), ['Arte 2', 'Arte 3', 'Arte 1']);
   assert.deepEqual(await names('sticker'), ['Sticker 2', 'Sticker 3', 'Sticker 1']);

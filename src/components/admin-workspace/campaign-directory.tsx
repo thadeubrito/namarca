@@ -44,7 +44,7 @@ export function CampaignDirectory({ campaigns }: { campaigns: Campaign[] }) {
       {filtered.map(c => <article key={c.id} className="ws-campaign-directory-row">
         <div className="ws-campaign-directory-identity">
           <h2><Link href={`/admin/campanhas/${c.id}`}>{c.name}</Link></h2>
-          <p className="ws-campaign-directory-client">{c.clientName || 'Sem cliente vinculado'}</p>
+          {c.clientName && <p className="ws-campaign-directory-client">{c.clientName}</p>}
           <p className="ws-campaign-directory-slug">/{c.slug}</p>
         </div>
         <dl className="ws-campaign-directory-status">
