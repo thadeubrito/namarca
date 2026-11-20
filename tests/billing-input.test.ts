@@ -12,7 +12,7 @@ test('descrição de cobrança é obrigatória, normalizada e limitada', () => {
   for (const value of ['', '   ', 'x'.repeat(121), null]) assert.equal(billingDescriptionInput.safeParse(value).success, false);
 });
 test('valor da cobrança rejeita vazio, formatos inválidos e valores fora dos limites', () => {
-  for (const value of ['', '9,99', '6000,01', '-10', '1e3', '10,001', '1.000,00', 'NaN']) {
+  for (const value of ['', '9,99', '6000,01', '-10', '1e3', '10,001', '1.00,00', 'NaN']) {
     assert.equal(billingAmountInput.safeParse(value).success, false, value);
   }
 });

@@ -1,5 +1,17 @@
 # Namarca — continuidade de implementação da V1
 
+## Cobrança — máscara em reais (20/11/2026)
+
+Campo valor usa prefixoR$ separado/semântico no label e máscara por centavos (39500→395,00;600000→6.000,00), teclado numérico, vazio preservado. Defaults/rascunhos decimais antigos normalizados antes de recuperar; baseline pós-emissão usa mesmo display. Servidor aceita formato milhar brasileiro além do decimal legado, sem alterar limitesR$10–6000; rejeita agrupamento inválido. Helpers puros/testes de máscara/defaults/parse/limites adicionados; teste antigo adaptado para milhar agora válido. Typecheck/lint/88 testes/build produção isolado/diffcheck aprovados em containers. Sem browser/E2E de cursor/colar/recovery/emissão nesta rodada; sem schema/migrations novas/commit/push/publicação.
+
+## Cobrança — valor sem letras (20/11/2026)
+
+Fundador reportou letras no campo valor: inputMode decimal só sugeria teclado. Campo agora filtra caracteres fora0–9/vírgula/ponto em input (digitação/colar) e inclui pattern decimal com até4inteiros/2casas e title; validação servidor mantém regex/limitesR$10–6000. Typecheck/lint/86 testes/diffcheck aprovados em containers; sem novo build/browser/E2E financeiro/migrations nesta alteração pontual. Sem commit/push/publicação.
+
+## Formulários — superfície consistente dos campos (20/11/2026)
+
+Fundador apontou Detalhes com inputs brancos vs Cobrança cinza sobre cinza. Regra ws-input/select e wrapper shadcn select/data agora usam --control-surface, como primitives compartilhados; grupo endereço usa mesmo token. Branco no claro/superfície escura no dark, painéis e ações secundárias preservados; nomes inline de materiais seguem transparentes. Sem mudanças de submit/validação/backend. Typecheck/lint/86 testes/build produção isolado/diffcheck aprovados em containers; teste novo estrutural preserva exceção inline. Sem browser/E2E/migrations novas/commit/push/publicação.
+
 ## Cobrança — emissão alinhada aos campos (20/11/2026)
 
 Fundador apontou botão Emitir link maior que inputs. Override apenas ws-billing-submit desktop>760/pointerfine: minheight40/padding8x16/lineheight22, alinhando campos40; mobile/toque mantém alvo maior. Contrato atualizado. Typecheck/85 testes/diffcheck aprovados em containers; sem novo lint/build/browser/migrations nesta alteração CSS pontual. Sem commit/push/publicação.

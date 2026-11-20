@@ -9,6 +9,7 @@ import { billingAction, type BillingState } from '@/app/admin/campanhas/[id]/bil
 import { Action, ActionLink, Field, TextInput, Notice } from './primitives';
 import { useFormDraft } from './form-draft';
 import { localMaterialId } from '@/lib/studio-draft';
+import { displayBRL, maskBRL } from '@/lib/currency-input';
 
 const billingDraftFields = ['amount', 'description'] as const;
 
@@ -40,14 +41,14 @@ export function PaymentAction({ id, operation, children }: { id: string; operati
 
 export function BillingIssueForm({ id, defaultAmount, draftKey }: { id: string; defaultAmount: string; draftKey?: string }) {
   const [state, action, pending] = useActionState<BillingState, FormData>(billingAction.bind(null, id), {});
-  const { formRef, feedback, markSaved } = useFormDraft({ draftKey, section: 'cobranca', fields: billingDraftFields, submitting: pending });
+  const { formRef, feedback, markSaved } = useFormDraft({ draftKey, section: 'cobranca', fields: billingDraftFields, submitting: pending, resolveStoredValues: values => ({ ...values, amount: displayBRL(values.amount ?? '') }) });
   const [requestId, setRequestId] = useState('');
   useEffect(() => { queueMicrotask(() => setRequestId(localMaterialId())); }, []);
   useEffect(() => {
     if (!state.issuedId) return;
     queueMicrotask(() => {
       formRef.current?.reset();
-      markSaved({ amount: defaultAmount, description: '' });
+      markSaved({ amount: displayBRL(defaultAmount), description: '' });
       setRequestId(localMaterialId());
     });
   }, [state.issuedId, formRef, markSaved, defaultAmount]);
@@ -57,7 +58,7 @@ export function BillingIssueForm({ id, defaultAmount, draftKey }: { id: string; 
     <Field label="Descrição"><TextInput name="description" required maxLength={120} placeholder="Ex.: campanha inicial ou alteração adicional" disabled={pending} /></Field>
     <div className="ws-billing-amount">
       <Field label="Valor da cobrança (R$)" >
-        <TextInput name="amount" type="text" inputMode="decimal" required maxLength={7} placeholder="395,00" defaultValue={defaultAmount} disabled={pending} />
+        <div className="ws-input-prefix-group"><span className="ws-input-prefix" aria-hidden="true">R$</span><TextInput name="amount" type="text" inputMode="numeric" pattern="[0-9]{1,3}(\\.[0-9]{3})*,[0-9]{2}" title="Informe um valor entre R$ 10,00 e R$ 6.000,00." onInput={e => { e.currentTarget.value = maskBRL(e.currentTarget.value); }} required maxLength={8} placeholder="0,00" defaultValue={displayBRL(defaultAmount)} disabled={pending} /></div>
       </Field>
     </div>
     <Action className="ws-billing-submit" type="submit" disabled={pending || !requestId}><Send aria-hidden />{pending ? 'Emitindo…' : 'Emitir link de cobrança'}</Action>

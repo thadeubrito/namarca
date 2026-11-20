@@ -22,9 +22,9 @@
 .ui-scope .ws-action:disabled { opacity:.45; cursor:not-allowed; transform:none; }
 .ui-scope .ws-field { display:flex; flex-direction:column; gap:8px; font-size:13px; font-weight:500; min-width:0; }
 .ui-scope .ws-field small { font-size:12px; font-weight:400; line-height:1.6; color:var(--muted); }
-.ui-scope .ws-input,.ui-scope .workspace select { width:100%; min-width:0; min-height:40px; height:40px; padding:9px 12px; border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--control-secondary); color:var(--foreground); font:inherit; font-size:14px; line-height:1.5; box-shadow:none; }
+.ui-scope .ws-input,.ui-scope .workspace select { width:100%; min-width:0; min-height:40px; height:40px; padding:9px 12px; border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--control-surface); color:var(--foreground); font:inherit; font-size:14px; line-height:1.5; box-shadow:none; }
 .ui-scope .ws-input::placeholder { color:var(--muted); }
-.ui-scope .ws-input-prefix-group { display:flex; align-items:center; min-width:0; height:40px; border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--surface); overflow:hidden; }
+.ui-scope .ws-input-prefix-group { display:flex; align-items:center; min-width:0; height:40px; border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--control-surface); overflow:hidden; }
 .ws-input-prefix { display:flex; align-items:center; align-self:stretch; flex-shrink:0; white-space:nowrap; padding-inline:12px; border-right:1px solid var(--input-border); color:var(--muted); background:var(--control-secondary); font-size:14px; font-weight:400; }
 .ui-scope .ws-input-prefix-group>.ws-input { flex:1; width:0; min-width:0; height:38px; min-height:38px; border:0; border-radius:0; background:transparent; outline:none; }
 .ui-scope .ws-input-prefix-group:focus-within { outline:2px solid var(--ring); outline-offset:2px; }
@@ -249,7 +249,7 @@
 @media(prefers-reduced-motion:reduce) { .workspace *, .workspace *::before,.workspace *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
 
 /* Shared shadcn controls: portals must carry their own administrative theme. */
-.ui-scope .ws-shadcn-control { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; min-width:0; min-height:40px; height:40px; padding:9px 12px; border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--control-secondary); color:var(--foreground); font:inherit; font-size:14px; font-weight:400; line-height:1.5; box-shadow:none; transform:none; }
+.ui-scope .ws-shadcn-control { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; min-width:0; min-height:40px; height:40px; padding:9px 12px; border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--control-surface); color:var(--foreground); font:inherit; font-size:14px; font-weight:400; line-height:1.5; box-shadow:none; transform:none; }
 .ui-scope .ws-shadcn-control:focus-visible { outline:2px solid var(--ring); outline-offset:2px; }
 .ui-scope .ws-form-group .ws-shadcn-control { background:var(--surface); }
 .ui-scope.ws-select-popover,.ui-scope.ws-date-popover { min-height:0; z-index:85; border:1px solid var(--line); border-radius:var(--radius-control); background:var(--popover); color:var(--foreground); box-shadow:none; max-width:calc(100vw - 24px); }
