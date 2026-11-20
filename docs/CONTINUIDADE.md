@@ -1,5 +1,9 @@
 # Namarca — continuidade de implementação da V1
 
+## Cobrança — emissão alinhada aos campos (20/11/2026)
+
+Fundador apontou botão Emitir link maior que inputs. Override apenas ws-billing-submit desktop>760/pointerfine: minheight40/padding8x16/lineheight22, alinhando campos40; mobile/toque mantém alvo maior. Contrato atualizado. Typecheck/85 testes/diffcheck aprovados em containers; sem novo lint/build/browser/migrations nesta alteração CSS pontual. Sem commit/push/publicação.
+
 ## Cores — painel de ajustes Revolut (20/11/2026)
 
 Fundador pediu refazer aba Cores segundo referência. Mosaico de swatches112px substituído por superfície tonal20px/linhas: amostra circular48px44mobile com pipeta discreta, nome/descrição/HEX12px; header20px500+descrição curta e Restaurar padrão pill. Mobile HEX abaixo da descrição, sem espremer conteúdo. Tokens compartilhados, nenhum texto sobre cor arbitrária. Quatro cores/defaults/preview/save scoped/confirmação restore/HEX válido/reversão blur/disabled preservados; useId associa hint ao HEX. Typecheck/lint/85 testes/build produção isolado/diffcheck aprovados em containers; teste novo estrutural, sem browser/E2E/aceite visual nesta rodada, sem migrations novas/commit/push/publicação.

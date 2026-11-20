@@ -183,6 +183,7 @@
 .ws-billing-issue-feedback { grid-column:1/-1; }
 .ws-billing-issue-feedback:empty { display:none; }
 .ws-billing-submit { align-self:end; }
+@media(min-width:761px) and (pointer:fine) { .ui-scope .ws-billing-submit { min-height:40px;padding:8px 16px;line-height:22px; } }
 .ws-billing-description { overflow-wrap:anywhere; }
 .ws-billing-share-compact { gap:8px; }
 .ws-billing-share-compact .ws-billing-buttons { flex-wrap:nowrap; align-items:center; width:max-content; }
