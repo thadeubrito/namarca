@@ -1,4 +1,4 @@
-.ws-studio-root { min-width:0;color:var(--foreground,#172327); }
+.ws-studio-root { min-width:0;color:var(--foreground); }
 .ws-studio-root *, .ws-studio-root *::before, .ws-studio-root *::after { box-sizing:border-box; }
 .ws-studio-root h2,.ws-studio-root h3,.ws-studio-root p { margin:0; }
 .ws-studio-root h2 { font-size:1.1rem;font-weight:650; }
@@ -77,7 +77,7 @@
 .ws-color-value { display:grid;gap:0;min-width:0;width:100%;padding:8px 12px 0; }
 .ws-color-value>span { font-size:.7rem;color:var(--muted);line-height:1.5; }
 .ws-studio-root .ws-color-value input { width:100%;min-width:0;min-height:44px;border:0;border-radius:3px;padding:2px 4px;background:transparent;color:var(--muted);font-family:monospace;font-size:.8rem; }
-.ws-color-value input[aria-invalid=true] { text-decoration:underline wavy var(--destructive,#b42318);text-underline-offset:4px; }
+.ws-color-value input[aria-invalid=true] { text-decoration:underline wavy var(--error);text-underline-offset:4px; }
 .ws-studio-root .ws-colors-hint { padding-top:4px; }
 @media(max-width:600px) { .ws-color-picker { height:96px;padding:12px; } .ws-color-value { padding-inline:10px; } }
 @media(max-width:600px) { .ws-color-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ws-color-brand .ws-color-control { flex-basis:140px; } }
@@ -87,13 +87,13 @@
 .ws-studio-panel-heading p { color:var(--muted);font-size:.8rem; }
 .ws-studio-kicker { display:block;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;opacity:.65; }
 .ws-studio-instruction { color:var(--muted);font-size:.78rem;line-height:1.6;padding:12px 0 20px; }
-.ws-studio-reference-stage { display:flex;align-items:center;justify-content:center;min-height:240px;padding:24px;background:var(--control-secondary,#edf1f1);border-radius:8px; }
+.ws-studio-reference-stage { display:flex;align-items:center;justify-content:center;min-height:240px;padding:24px;background:var(--control-secondary);border-radius:8px; }
 /* Preserve the reference canvas pointer geometry, independently of admin controls. */
 .ws-studio-root .local-reference-canvas { position:relative;touch-action:none;overflow:hidden;background:repeating-conic-gradient(var(--line) 0% 25%,var(--surface) 0% 50%) 0 / 16px 16px;width:100%;max-width:520px;margin:auto; }
 .ws-studio-root .local-reference-canvas>img { width:100%;height:100%;display:block;object-fit:fill;pointer-events:none;user-select:none; }
-.ws-studio-root .local-reference-box { position:absolute;outline:2px solid #e17827;background:#e1782722;cursor:move;touch-action:none; }
-.ws-studio-root .local-reference-box>span { position:absolute;top:4px;left:4px;background:#172f26;color:white;padding:3px 6px;font-size:10px;pointer-events:none;white-space:nowrap; }
-.ws-studio-root .local-reference-canvas .local-reference-handle { position:absolute;display:block;min-width:0;min-height:0;width:16px;height:16px;padding:0;margin:0;border:2px solid white;border-radius:50%;background:#bf5b11;transform:translate(-50%,-50%);box-shadow:none;touch-action:none;transition:none; }
+.ws-studio-root .local-reference-box { position:absolute;outline:2px solid var(--brand);background:color-mix(in srgb,var(--brand) 14%,transparent);cursor:move;touch-action:none; }
+.ws-studio-root .local-reference-box>span { position:absolute;top:4px;left:4px;background:var(--brand);color:var(--on-brand);padding:3px 6px;font-size:10px;pointer-events:none;white-space:nowrap; }
+.ws-studio-root .local-reference-canvas .local-reference-handle { position:absolute;display:block;min-width:0;min-height:0;width:16px;height:16px;padding:0;margin:0;border:2px solid var(--on-brand);border-radius:50%;background:var(--brand);transform:translate(-50%,-50%);box-shadow:none;touch-action:none;transition:none; }
 .ws-studio-root .local-reference-canvas .local-reference-handle:hover,.ws-studio-root .local-reference-canvas .local-reference-handle:active { transform:translate(-50%,-50%); }
 .ws-studio-root .handle-nw { left:0;top:0;cursor:nw-resize; }
 .ws-studio-root .handle-n { left:50%;top:0;cursor:n-resize; }

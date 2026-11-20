@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { createCampaign, type CreateState } from '@/app/admin/campanhas/nova/actions';
-import { Action, ActionLink, Field, Notice, Surface, TextArea, TextInput } from './primitives';
+import { Action, ActionLink, Field, Notice, TextArea, TextInput } from './primitives';
 import { useFormDraft } from './form-draft';
 
 const draftFields = ['name', 'slug', 'endsAt', 'clientId', 'clientName', 'clientContact', 'notes'] as const;
@@ -20,7 +20,7 @@ export type CampaignDataFormProps = {
 };
 
 function FormSection({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="min-w-0 space-y-6 border-b border-border pb-8 last:border-0 last:pb-0">
+  return <section className="ws-form-group">
     <h3 className="text-base font-semibold">{title}</h3>
     <div className="space-y-5">{children}</div>
   </section>;
@@ -61,7 +61,7 @@ export function CampaignDataForm({ defaults, clients = [], save = createCampaign
   }, [state.saved, markSaved, formRef]);
 
   return <form ref={formRef} action={action} data-campaign-save={defaults ? 'details' : undefined} data-campaign-navigation="true" aria-busy={pending} className="ws-campaign-form min-w-0">
-    <Surface className="min-w-0 space-y-8 p-5 sm:p-8">
+    <div className="ws-form-groups">
       <FormSection title="Evento">
         <Field label="Nome do evento"><TextInput type="text" name="name" defaultValue={defaults?.name} required minLength={2} maxLength={160} placeholder="Ex.: Corrida Horizonte" /></Field>
         <Field label="Endereço da campanha" hint="Letras minúsculas, números e hífens."><TextInput type="text" name="slug" defaultValue={defaults?.slug} required minLength={2} maxLength={80} pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="corrida-horizonte" /></Field>
@@ -84,8 +84,8 @@ export function CampaignDataForm({ defaults, clients = [], save = createCampaign
         {selected && <p className="text-sm text-muted-foreground">{selected.contact || 'Cliente sem contato cadastrado.'}</p>}
         <Field label="Observações do combinado" hint="Opcional"><TextArea name="notes" defaultValue={defaults?.notes} maxLength={3000} rows={5} /></Field>
       </FormSection>
-      <p className="text-xs leading-relaxed text-muted-foreground">Dados internos. Não inclua CPF, credenciais ou dados de participantes.</p>
-    </Surface>
+    </div>
+    <p className="ws-form-privacy">Dados internos. Não inclua CPF, credenciais ou dados de participantes.</p>
     <footer className="ws-campaign-form-footer">
       {feedback}
       <p className="text-xs text-muted-foreground" role="status">{dirty ? 'Detalhes com alterações não salvas no servidor.' : 'Detalhes sem alterações pendentes.'}</p>

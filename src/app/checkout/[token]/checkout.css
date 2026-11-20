@@ -1,18 +1,18 @@
-.checkout-shell { --paper:#000; --surface:#fff; --ink:#191c1f; --muted:#505a63; --line:#e2e2e7; --accent:#494fdf; padding:32px 16px; align-items:safe center; background:var(--paper); color:var(--ink); font-family:Inter,'Inter Display',ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-size:14px; line-height:1.5; color-scheme:light; }
+.checkout-shell { --paper:#000; --surface:#fff; --ink:#191c1f; --muted:#505a63; --line:#e2e2e7; --accent:#494fdf; --soft:#f4f4f4; --error:#b42332; --error-surface:#fff1f3; --error-line:#e8a9b0; --button:#000; --on-button:#fff; --button-hover:#191c1f; padding:32px 16px; align-items:safe center; background:var(--paper); color:var(--ink); font-family:Inter,'Inter Display',ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-size:14px; line-height:1.5; color-scheme:light; }
 .checkout-card.panel { position:relative; margin-top:24px; max-width:500px; padding:40px 28px 28px; border-radius:20px; background:var(--surface); border-color:var(--line); box-shadow:none; animation:checkout-enter 320ms cubic-bezier(.2,.7,.2,1) both; }
 .checkout-card.stack { gap:16px; }
 .checkout-brand-shape { position:absolute; top:0; left:50%; transform:translate(-50%,-50%); height:48px; padding:0 22px; display:flex; align-items:center; justify-content:center; background:var(--surface); border:1px solid var(--line); border-radius:9999px; box-shadow:none; }
 .checkout-brand-shape .checkout-brand { min-height:44px; }
 .checkout-payment-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
-.checkout-countdown { position:relative; display:flex; align-items:center; gap:5px; min-height:28px; padding:4px 8px; white-space:nowrap; flex-shrink:0; border:1px solid var(--line); border-radius:9999px; background:#f4f4f4; font-size:11px; color:var(--muted); }
+.checkout-countdown { position:relative; display:flex; align-items:center; gap:5px; min-height:28px; padding:4px 8px; white-space:nowrap; flex-shrink:0; border:1px solid var(--line); border-radius:9999px; background:var(--soft); font-size:11px; color:var(--muted); }
 .checkout-countdown-value { color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
 .checkout-countdown[data-ended=true] { color:var(--ink); }
 .checkout-card .checkout-brand { font-size:20px; font-weight:600; letter-spacing:-.6px; }
 .checkout-card label { font-size:13px; font-weight:500; }
 .checkout-card input,.checkout-card textarea { border-color:var(--line); border-radius:12px; font-weight:400; }
-.checkout-card :is(input,button,a,textarea,summary):focus-visible { outline:2px solid var(--ink); outline-offset:3px; }
-.checkout-card button,.checkout-card .button { font-size:14px; font-weight:600; border-radius:9999px; background:#000; border-color:#000; color:#fff; transition:background 160ms,transform 160ms,box-shadow 160ms; }
-.checkout-card button:hover,.checkout-card .button:hover { background:#303030; }
+.checkout-card :is(input,button,a,textarea,summary):focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.checkout-card button,.checkout-card .button { font-size:14px; font-weight:600; border-radius:9999px; background:var(--button); border-color:var(--button); color:var(--on-button); transition:background 160ms,transform 160ms,box-shadow 160ms; }
+.checkout-card button:hover,.checkout-card .button:hover { background:var(--button-hover); }
 @media(hover:hover) { .checkout-card button:not(:disabled):hover,.checkout-card .button:hover { transform:translateY(-1px); } }
 .checkout-card button:not(:disabled):active,.checkout-card .button:active { transform:scale(.985); }
 .checkout-card input,.checkout-card textarea { transition:border-color 160ms,box-shadow 160ms; }
@@ -22,7 +22,7 @@
 @keyframes checkout-reveal { from { opacity:0; } to { opacity:1; } }
 @media(prefers-reduced-motion:reduce) { .checkout-card.panel,.checkout-card details[open]>p,.checkout-card details[open]>label,.checkout-copy .button svg { animation:none; } .checkout-card button,.checkout-card .button,.checkout-card input,.checkout-card textarea { transition:none; transform:none!important; } }
 .checkout-card .button.secondary { background:var(--surface); border-color:var(--line); color:var(--ink); }
-.checkout-card .button.secondary:hover { background:#f5f5f5; }
+.checkout-card .button.secondary:hover { background:var(--soft); }
 .checkout-card header .eyebrow { margin:16px 0 6px; font-size:12px; font-weight:400; text-transform:none; letter-spacing:0; }
 .checkout-card header h1 { margin-top:8px; font-size:24px; font-weight:500; line-height:1.2; letter-spacing:-.48px; }
 .checkout-card header>p:last-child { margin-top:6px; color:var(--muted); font-size:14px; overflow-wrap:anywhere; }
@@ -41,7 +41,8 @@
 .checkout-code textarea { margin-top:0; height:56px; min-height:56px; padding:8px 10px; resize:vertical; font-family:ui-monospace,monospace; font-size:11px; line-height:1.5; overflow-wrap:anywhere; word-break:break-all; }
 .checkout-card label.checkout-code { gap:5px; font-size:12px; }
 .checkout-qr { width:176px; background:#fff; padding:4px; }
-.checkout-card .notice { background:#f5f5f5; border-color:var(--line); color:var(--ink); font-size:13px; }
+.checkout-card .notice { background:var(--soft); border-color:var(--line); color:var(--ink); font-size:13px; }
+.checkout-card .error { color:var(--error);background:var(--error-surface);border:1px solid var(--error-line); }
 .checkout-card .notice p+p { margin-top:8px; font-size:13px; }
 .checkout-card .checkout-footer { gap:0; padding-top:8px; font-size:11px; }
 .checkout-footer details p { padding-top:4px; }

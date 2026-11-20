@@ -16,7 +16,7 @@
 }
 @layer components {
 .ui-scope {
- --brand:#494fdf; --brand-bright:#4f55f1; --brand-deep:#3a40c4;
+ --brand:#494fdf; --brand-bright:#4f55f1; --brand-deep:#3a40c4; --brand-text:#494fdf; --on-brand:#fff; --focus-on-brand:#fff; --scrim:#0008;
  --paper:#fff; --background:#fff; --surface:#fff; --card:#fff; --ink:#191c1f; --foreground:#191c1f;
  --muted:#505a63; --line:#e2e2e7; --accent:#191c1f; --primary:#000; --primary-foreground:#fff;
  --secondary:#f4f4f4; --control-secondary:#f4f4f4; --muted-surface:#f4f4f4; --interaction:#e2e2e7; --input-border:#e2e2e7; --popover:#fff;
@@ -31,7 +31,7 @@
  --paper:#000; --background:#000; --surface:#16181a; --card:#16181a; --ink:#fff; --foreground:#fff;
  --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.12); --accent:#fff; --primary:#fff; --primary-foreground:#000;
  --secondary:#16181a; --control-secondary:#24272a; --muted-surface:#16181a; --interaction:#303438; --input-border:rgba(255,255,255,.24); --popover:#16181a;
- --error:#ff8994; --ring:#c9c9cd; color-scheme:dark;
+ --brand-text:#a4a8ff; --error:#ff8994; --ring:#c9c9cd; color-scheme:dark;
 }
 /* Reset only legacy element defaults. Component geometry comes from shadcn utilities. */
 .ui-scope *, .ui-scope *::before, .ui-scope *::after { border-style:solid; border-width:0; border-color:var(--line); }
@@ -118,7 +118,7 @@
 .ui-scope .ce-preview .ce-muted { margin-bottom:16px; }
 .ui-scope .ce-colors label { background:var(--secondary);border-radius:8px;padding:8px;font-size:12px; }
 .ui-scope .ce-colors input { min-height:32px; }
-.ui-scope .campaign-editor .local-reference-handle { min-height:0;width:16px;height:16px;padding:0;border:2px solid white;border-radius:50%;background:#bf5b11;transform:translate(-50%,-50%);box-shadow:none; }
+.ui-scope .campaign-editor .local-reference-handle { min-height:0;width:16px;height:16px;padding:0;border:2px solid white;border-radius:50%;background:var(--brand);transform:translate(-50%,-50%);box-shadow:none; }
 .ui-scope .campaign-editor .local-reference-handle:hover { transform:translate(-50%,-50%); }
 .ui-scope .ce-preview-expanded { background:var(--background); }
 .auth-scope { position:relative;display:grid;place-items:center;padding:80px 20px 40px; }

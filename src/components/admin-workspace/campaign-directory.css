@@ -1,0 +1,303 @@
+.ui-scope .ws-campaign-directory {
+  min-width: 0;
+  color: var(--foreground);
+}
+
+.ui-scope .ws-campaign-directory-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 24px;
+  margin-bottom: 24px;
+}
+
+.ui-scope .ws-campaign-directory-search {
+  position: relative;
+  display: block;
+  flex: 1 1 280px;
+  min-width: 0;
+  max-width: 440px;
+}
+
+.ui-scope .ws-campaign-directory-search > svg {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted);
+}
+
+.ui-scope .ws-campaign-directory-search .ws-input {
+  height: 48px;
+  padding-left: 44px;
+  border-color: transparent;
+  border-radius: 999px;
+  background: var(--control-secondary);
+}
+
+.ui-scope .ws-campaign-directory-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-scope .ws-campaign-directory-filters button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms, color 150ms;
+}
+
+.ui-scope .ws-campaign-directory-filters button:hover {
+  background: var(--control-secondary);
+  color: var(--foreground);
+}
+
+.ui-scope .ws-campaign-directory-filters button[aria-pressed="true"] {
+  background: var(--brand);
+  /* White keeps contrast on the brand surface in both themes. */
+  color: #fff;
+}
+
+.ui-scope .ws-campaign-directory-filter-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-scope .ws-campaign-directory-list {
+  min-width: 0;
+  border-top: 1px solid var(--line);
+}
+
+.ui-scope .ws-campaign-directory-columns,
+.ui-scope .ws-campaign-directory-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, .6fr) minmax(120px, .32fr) 44px;
+  align-items: center;
+  gap: 24px;
+  padding-inline: 16px;
+}
+
+.ui-scope .ws-campaign-directory-columns {
+  padding-block: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ui-scope .ws-campaign-directory-columns > :last-child {
+  text-align: center;
+}
+
+.ui-scope .ws-campaign-directory-row {
+  min-width: 0;
+  padding-block: 22px;
+  border-top: 1px solid var(--line);
+  transition: background 150ms;
+}
+
+.ui-scope .ws-campaign-directory-row:hover,
+.ui-scope .ws-campaign-directory-row:focus-within {
+  background: color-mix(in srgb, var(--control-secondary) 45%, var(--background));
+}
+
+.ui-scope .ws-campaign-directory-row > * {
+  min-width: 0;
+}
+
+.ui-scope .ws-campaign-directory-identity h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -.35px;
+}
+
+.ui-scope .ws-campaign-directory-identity h2 a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  color: var(--foreground);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.ui-scope .ws-campaign-directory-identity h2 a:hover {
+  color: var(--brand-text);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.ui-scope .ws-campaign-directory-client,
+.ui-scope .ws-campaign-directory-slug {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ui-scope .ws-campaign-directory-slug {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ui-scope .ws-campaign-directory-status {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.ui-scope .ws-campaign-directory-status > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  overflow-wrap: anywhere;
+}
+
+.ui-scope .ws-campaign-directory-status dt {
+  color: var(--muted);
+}
+
+.ui-scope .ws-campaign-directory-status dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.ui-scope .ws-campaign-directory-end {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.ui-scope .ws-campaign-directory-mobile-label {
+  display: none;
+}
+
+.ui-scope .ws-campaign-directory-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--control-secondary);
+  color: var(--foreground);
+  text-decoration: none;
+  transition: background 150ms, color 150ms;
+}
+
+.ui-scope .ws-campaign-directory-open:hover {
+  background: var(--brand);
+  color: #fff;
+}
+
+.ui-scope .ws-campaign-directory a:focus-visible,
+.ui-scope .ws-campaign-directory button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.ui-scope .ws-campaign-directory-count {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .ui-scope .ws-campaign-directory-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .ui-scope .ws-campaign-directory-search {
+    flex: none;
+    max-width: none;
+  }
+
+  .ui-scope .ws-campaign-directory-filters {
+    gap: 4px;
+  }
+
+  .ui-scope .ws-campaign-directory-filters button {
+    padding-inline: 12px;
+    font-size: 13px;
+  }
+
+  .ui-scope .ws-campaign-directory-columns {
+    display: none;
+  }
+
+  .ui-scope .ws-campaign-directory-row {
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 14px 12px;
+    padding: 16px 0;
+  }
+
+  .ui-scope .ws-campaign-directory-row:first-of-type {
+    border-top: 0;
+  }
+
+  .ui-scope .ws-campaign-directory-identity {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ui-scope .ws-campaign-directory-identity h2 {
+    font-size: 18px;
+  }
+
+  .ui-scope .ws-campaign-directory-status {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: 6px;
+  }
+
+  .ui-scope .ws-campaign-directory-end {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  .ui-scope .ws-campaign-directory-mobile-label {
+    display: inline;
+    color: var(--muted);
+  }
+
+  .ui-scope .ws-campaign-directory-open {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-scope .ws-campaign-directory *,
+  .ui-scope .ws-campaign-directory *::before,
+  .ui-scope .ws-campaign-directory *::after {
+    transition: none;
+    animation: none;
+  }
+}

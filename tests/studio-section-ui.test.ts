@@ -10,7 +10,7 @@ test('UI salva escopo explícito e mantém pendências das outras seções', asy
   assert.match(source, /scope === 'theme' \? \[\] : event\[scope\].map/);
   const sections = await readFile('src/components/admin-workspace/campaign-sections.tsx', 'utf8');
   assert.match(sections, /export function CampaignSections/);
-  assert.match(sections, /label="Seções da campanha" initialId="dados" activeId=\{active\}/);
+  assert.match(sections, /label="Seções da campanha" initialId="dados" layout="workbench" activeId=\{active\}/);
   assert.match(sections, /<CampaignStudio[^>]*activeSection=\{active\}[^>]*onPendingChange=\{report\}/);
   for (const [id, label, scope, dirty] of [
     ['artes', 'Artes', 'artworks', 'artworksDirty'],

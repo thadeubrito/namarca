@@ -15,7 +15,7 @@ export function CampaignSections({ campaignId, editable, details, billing, billi
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const report = useCallback((section: string, value: boolean) => setPending(current => current[section] === value ? current : { ...current, [section]: value }), []);
   const studio = <CampaignStudio campaignId={campaignId} activeSection={active} onPendingChange={report} />;
-  return <SectionStatus.Provider value={report}><ActiveSection.Provider value={active}><CampaignRecovery expected={[...(editable ? ['dados', 'studio'] : []), ...(billingDraft ? ['cobranca'] : [])]}><WorkspaceTabs label="Seções da campanha" initialId="dados" activeId={active} onActiveChange={setActive} items={[
+  return <SectionStatus.Provider value={report}><ActiveSection.Provider value={active}><CampaignRecovery expected={[...(editable ? ['dados', 'studio'] : []), ...(billingDraft ? ['cobranca'] : [])]}><div className="ws-campaign-workbench" data-section={active}><div className="ws-campaign-task"><WorkspaceTabs label="Seções da campanha" initialId="dados" layout="workbench" activeId={active} onActiveChange={setActive} items={[
     { id: 'dados', label: 'Detalhes', pending: pending.dados, content: details },
     ...(editable ? [
       { id: 'artes', label: 'Artes', panelKey: 'visual', lazy: false, pending: pending.artes, content: studio },
@@ -23,5 +23,5 @@ export function CampaignSections({ campaignId, editable, details, billing, billi
       { id: 'cores', label: 'Cores', panelKey: 'visual', lazy: true, pending: pending.cores, content: studio },
     ] : []),
     { id: 'cobranca', label: 'Cobrança', pending: pending.cobranca, content: billing },
-  ]} /></CampaignRecovery></ActiveSection.Provider></SectionStatus.Provider>;
+  ]} /></div></div></CampaignRecovery></ActiveSection.Provider></SectionStatus.Provider>;
 }
