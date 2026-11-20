@@ -23,8 +23,8 @@ export function EditorIcon({ name }: { name: string }) {
 }
 
 // Ferramentas sobrepostas não participam do dimensionamento da composição.
-export function EditorWorkspace({ event, panel, open, blocked, tools, canvas, history, feedback, fileInput, choosePhoto, trash, dragging, overTrash }: {
-  event: EventConfig; panel: EditorTool; open: (tool: EditorTool) => void; blocked: boolean
+export function EditorWorkspace({ event, panel, open, blocked, compositionReady = true, tools, canvas, history, feedback, fileInput, choosePhoto, trash, dragging, overTrash }: {
+  event: EventConfig; panel: EditorTool; open: (tool: EditorTool) => void; blocked: boolean; compositionReady?: boolean
   tools: ReactNode; canvas: ReactNode; history: ReactNode; feedback: ReactNode; fileInput: ReactNode
   choosePhoto: () => void; trash: RefObject<HTMLDivElement | null>; dragging: boolean; overTrash: boolean
 }) {
@@ -91,7 +91,7 @@ export function EditorWorkspace({ event, panel, open, blocked, tools, canvas, hi
     </div>
     </div>
     <footer className="editor-footer">
-      <nav className="editor-tabs" aria-label="Ferramentas" hidden={dragging}>{(['Foto', 'Artes', 'Stickers', 'Salvar'] as const).map((name) => <button key={name} aria-label={name} title={name} disabled={blocked} aria-expanded={name === 'Foto' || name === 'Salvar' ? undefined : panel === name} aria-controls={name === 'Foto' || name === 'Salvar' ? undefined : 'editor-tool-panel'} onClick={(e) => {
+      <nav className="editor-tabs" aria-label="Ferramentas" hidden={dragging}>{(['Foto', 'Artes', 'Stickers', 'Salvar'] as const).map((name) => <button key={name} aria-label={name} title={name} disabled={blocked || (!compositionReady && (name === 'Foto' || name === 'Salvar'))} aria-expanded={name === 'Foto' || name === 'Salvar' ? undefined : panel === name} aria-controls={name === 'Foto' || name === 'Salvar' ? undefined : 'editor-tool-panel'} onClick={(e) => {
         if (name === 'Foto') { trigger.current = e.currentTarget; open(''); choosePhoto() }
         else if (name === 'Salvar') { trigger.current = e.currentTarget; open('Salvar') }
         else toggle(name, e.currentTarget)

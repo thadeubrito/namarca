@@ -158,8 +158,8 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
   }, [event, snapshot, materials, draftStorageKey, recovery, dirty, persist]);
 
   const sendPreview = useCallback(() => {
-    if (event) frame.current?.contentWindow?.postMessage({ type: 'namarca:preview', campaignId, event, localAssets, selectedArtworkId: event.artworks.some(art => art.id === selected) ? selected : event.artworks[0]?.id }, window.location.origin);
-  }, [campaignId, event, selected, localAssets]);
+    if (event) frame.current?.contentWindow?.postMessage({ type: 'namarca:preview', campaignId, event, localAssets, adminTheme: dark ? 'dark' : 'light', selectedArtworkId: event.artworks.some(art => art.id === selected) ? selected : event.artworks[0]?.id }, window.location.origin);
+  }, [campaignId, event, selected, localAssets, dark]);
   useEffect(() => {
     sendPreview();
     const ready = (e: MessageEvent) => {
@@ -303,14 +303,20 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
       // eslint-disable-next-line react-hooks/refs
       change({ ...event, [key]: list });
     };
+    const addMaterial = <label className="ws-studio-upload" data-disabled={busy || !!recovery}><Upload aria-hidden /><span>{kind === 'artwork' ? 'Adicionar arte' : 'Adicionar figurinha'}</span><TextInput type="file" aria-label={kind === 'artwork' ? 'Adicionar arte PNG' : 'Adicionar figurinha PNG'} accept="image/png" multiple disabled={busy || !!recovery} onChange={e => { void selectFiles(Array.from(e.currentTarget.files ?? []), kind); e.currentTarget.value = ''; }} /></label>;
     return <div className="ws-studio-library">
       <div className="ws-studio-library-bar"><div className="ws-studio-library-title"><h3>{kind === 'artwork' ? 'Artes' : 'Figurinhas'}</h3><span className="ws-studio-library-count" aria-label={`${items.length} materiais`}>{items.length}</span></div>
-        <div className="ws-studio-upload-tools"><small>PNG · até 25 MiB · envio ao salvar</small><label className="ws-studio-upload" data-disabled={busy}><Upload aria-hidden /><span>{kind === 'artwork' ? 'Adicionar arte' : 'Adicionar figurinha'}</span><TextInput type="file" aria-label={kind === 'artwork' ? 'Adicionar arte PNG' : 'Adicionar sticker PNG'} accept="image/png" multiple disabled={busy || !!recovery} onChange={e => { void selectFiles(Array.from(e.currentTarget.files ?? []), kind); e.currentTarget.value = ''; }} /></label></div>
+        {items.length > 0 && <div className="ws-studio-upload-tools"><small>PNG · até 25 MiB · envio ao salvar</small>{addMaterial}</div>}
       </div>
-      {!items.length ? <EmptyState title={kind === 'artwork' ? 'Sua biblioteca de artes está vazia' : 'Nenhum sticker adicionado.'} description={kind === 'artwork' ? 'Adicione uma arte PNG para abrir a prévia.' : 'Adicione arquivos PNG para disponibilizá-los na composição.'} /> :
-        <ol className="ws-studio-rail" aria-label={kind === 'artwork' ? 'Artes da campanha' : 'Stickers da campanha'}>{items.map((item, index) => <li key={item.id} className="ws-studio-asset" data-selected={kind === 'artwork' && artwork?.id === item.id}>
+      {!items.length ? <div className="ws-studio-library-empty">
+        <h3>{kind === 'artwork' ? 'Adicione a primeira arte' : 'Adicione figurinhas à campanha'}</h3>
+        {kind === 'sticker' && <p>Elas são opcionais e ficam disponíveis na composição.</p>}
+        <p>PNG com transparência · até 25 MiB · envio ao salvar</p>
+        {addMaterial}
+      </div> :
+        <ol className="ws-studio-rail" aria-label={kind === 'artwork' ? 'Artes da campanha' : 'Figurinhas da campanha'}>{items.map((item, index) => <li key={item.id} className="ws-studio-asset" data-selected={kind === 'artwork' && artwork?.id === item.id}>
           {kind === 'artwork' ? <Action type="button" variant="ghost" className="ws-studio-thumbnail" disabled={busy} onClick={() => setSelected(item.id)} aria-pressed={artwork?.id === item.id} aria-label={`Selecionar arte: ${item.name}`}><img src={assetURL(item.file)} alt={item.name} /></Action> : <div className="ws-studio-thumbnail"><img src={assetURL(item.file)} alt={item.name} /></div>}
-          <TextInput aria-label={`Nome ${kind === 'artwork' ? 'da arte' : 'do sticker'} ${index + 1}`} value={item.name} disabled={busy} onChange={e => change({ ...event, [key]: event[key].map(a => a.id === item.id ? { ...a, name: e.target.value } : a) })} />
+          <TextInput aria-label={`Nome ${kind === 'artwork' ? 'da arte' : 'da figurinha'} ${index + 1}`} value={item.name} disabled={busy} onChange={e => change({ ...event, [key]: event[key].map(a => a.id === item.id ? { ...a, name: e.target.value } : a) })} />
           <div className="ws-studio-asset-actions"><Action type="button" variant="ghost" disabled={busy || !index} onClick={() => move(index, -1)} aria-label={`Mover ${item.name} para cima`}><ArrowUp aria-hidden /></Action><Action type="button" variant="ghost" disabled={busy || index === items.length - 1} onClick={() => move(index, 1)} aria-label={`Mover ${item.name} para baixo`}><ArrowDown aria-hidden /></Action>{kind === 'artwork' && <Action type="button" variant="ghost" disabled={busy} aria-label={`Editar área da foto: ${item.name}`} title="Editar área da foto" onClick={e => { referenceTrigger.current = e.currentTarget; setSelected(item.id); setReferenceOpen(true); }}><Scan aria-hidden /></Action>}<Action type="button" variant="danger" disabled={busy} onClick={() => change({ ...event, [key]: event[key].filter(a => a.id !== item.id) })} aria-label={`Remover ${item.name}`}><Trash2 aria-hidden /></Action></div>
         </li>)}</ol>}
     </div>;

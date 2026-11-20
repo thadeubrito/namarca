@@ -74,7 +74,7 @@ export function deriveCampaignEvent(event: EventConfig, campaign: CampaignIdenti
   return { ...event, name: campaign.name, slug: campaign.slug, endsAt: campaign.endsAt.toISOString().replace(/\.\d{3}Z$/, "Z") };
 }
 export function defaultCampaignEvent(campaign: CampaignIdentity): EventConfig {
-  return deriveCampaignEvent({ name: "", slug: "", endsAt: "", color: "#173f35", demo: false, theme: { version: 1, ...themeDefaults }, artworks: [], stickers: [] }, campaign);
+  return deriveCampaignEvent({ name: "", slug: "", endsAt: "", color: themeDefaults.accent, demo: false, theme: { version: 1, ...themeDefaults }, artworks: [], stickers: [] }, campaign);
 }
 const material = z.object({ id: z.string().regex(UUID), name: z.string().trim().min(1).max(200), file: z.string().regex(/^[0-9a-f-]{36}\.png$/i) });
 const rectangle = z.object({ x: z.number().finite().nonnegative(), y: z.number().finite().nonnegative(), width: z.number().finite().positive(), height: z.number().finite().positive() }).strict();

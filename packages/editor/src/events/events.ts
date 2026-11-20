@@ -4,7 +4,7 @@ export interface Artwork extends Material {
   reference: { x: number; y: number; width: number; height: number }
 }
 export const themeDefaults = {
-  background: '#202522', surface: '#fafbf8', accent: '#173f35', text: '#263b2e',
+  background: '#ffffff', surface: '#dedede', accent: '#494fdf', text: '#191c1f',
 }
 export type EventTheme = { version: 1 } & typeof themeDefaults
 export function contrastText(color: string): string {

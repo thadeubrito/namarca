@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { PhotoEditor } from '../../../packages/editor/src/editor/PhotoEditor'
 import { eventThemeStyle, parseEvent, type EventConfig } from '../../../packages/editor/src/events/events'
 import '../../../packages/editor/src/styles.css'
+import './preview.css'
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const privateFile = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.png$/i
@@ -31,7 +32,7 @@ function validateLocalAssets(value: unknown, event: EventConfig): Record<string,
 }
 
 function Preview() {
-  const [config, setConfig] = useState<{ event: EventConfig; selectedArtworkId?: string; assetUrls: Record<string, string> } | null>(null)
+  const [config, setConfig] = useState<{ event: EventConfig; selectedArtworkId?: string; assetUrls: Record<string, string>; adminTheme: 'dark' | 'light' } | null>(null)
   const [warning, setWarning] = useState(false)
   const failed = !validQuery
 
@@ -46,7 +47,7 @@ function Preview() {
         const selectedArtworkId: unknown = data.selectedArtworkId
         if (selectedArtworkId !== undefined && (typeof selectedArtworkId !== 'string' || !event.artworks.some(artwork => artwork.id === selectedArtworkId))) throw new Error('Invalid selection')
         const assetUrls = validateLocalAssets(data.localAssets, event)
-        setConfig({ event, selectedArtworkId: selectedArtworkId as string | undefined, assetUrls })
+        setConfig({ event, selectedArtworkId: selectedArtworkId as string | undefined, assetUrls, adminTheme: data.adminTheme === 'dark' ? 'dark' : 'light' })
         setWarning(false)
       } catch { setWarning(true) }
     }
@@ -59,8 +60,8 @@ function Preview() {
   return <>
     {warning && <p className="preview-warning" role="alert">Prévia pausada: corrija os campos inválidos. A última configuração válida permanece visível.</p>}
     {!config ? <p role="status">Aguardando configuração da prévia…</p> :
-      <div className="editor-page" style={eventThemeStyle(config.event) as CSSProperties}>
-        {config.event.artworks.length ? <PhotoEditor event={config.event} assetUrls={config.assetUrls} assetBase={`/api/campaigns/${campaignId}/assets`} preferredArtworkId={config.selectedArtworkId} /> : <p>Adicione uma arte PNG para experimentar o editor.</p>}
+      <div className="editor-page" data-admin-theme={config.adminTheme} style={eventThemeStyle(config.event) as CSSProperties}>
+        <PhotoEditor event={config.event} assetUrls={config.assetUrls} assetBase={`/api/campaigns/${campaignId}/assets`} preferredArtworkId={config.selectedArtworkId} />
       </div>}
   </>
 }

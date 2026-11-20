@@ -34,7 +34,7 @@ test('bridge rejeita schemes, hosts, portas e valores inválidos sem normalizar 
 });
 
 test('mapa é validado antes da atualização atômica e não remonta editor nem recebe foto', () => {
-  assert.match(preview, /const assetUrls = validateLocalAssets\(data.localAssets, event\)\s+setConfig\(\{ event, selectedArtworkId: selectedArtworkId as string \| undefined, assetUrls \}\)/);
+  assert.match(preview, /const assetUrls = validateLocalAssets\(data.localAssets, event\)\s+setConfig\(\{ event, selectedArtworkId: selectedArtworkId as string \| undefined, assetUrls, adminTheme: data.adminTheme === 'dark' \? 'dark' : 'light' \}\)/);
   assert.match(preview, /message.origin !== window.location.origin \|\| message.source !== window.parent/);
   assert.match(preview, /<PhotoEditor event=\{config.event\} assetUrls=\{config.assetUrls\}/);
   assert.doesNotMatch(preview, /<PhotoEditor[^>]*\bkey=|data\.photo|revokeObjectURL|createObjectURL/);

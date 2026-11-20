@@ -40,6 +40,22 @@ A cópia de referência permanece integral; decisões específicas da Namarca fi
 
 Abas indicam pendência com ponto6px em currentColor e aria-describedby “Alterações não salvas”, sem selo textual largo. No painel, Detalhes/Artes/Figurinhas/Cores exibem estado junto de Salvar: Alterações não salvas / Salvando… / check+Salvo por3,5s após confirmação real do servidor. Área textual reservada evita mudança de altura; estado limpo não repete mensagem. Cada seção limpa somente sua pendência; navegação, recuperação, guard de saída e erros existentes permanecem. Cobrança sinaliza rascunho na aba, mas continua tendo emissão explícita em vez de botão fictício de salvar.
 
+## Aba Cores
+
+Painel de ajustes em linhas, não mosaico de grandes cartões coloridos. Cabeçalho20px/500 com descrição curta e Restaurar padrão secundário pill. Superfície tonal única20px, linhas separadas por hairline: amostra circular48px (44mobile), nome/uso e HEX em campo12px. Mobile HEX abaixo da descrição, sem comprimir nome/amostra. Cor configurável aparece apenas na amostra e na prévia; textos/controles usam tokens administrativos e não dependem do contraste da cor selecionada. Seletor nativo e HEX mantêm teclado/foco/disabled/aria-invalid, entrada incompleta reverte ao blur; restaurar exige confirmação e salvar continua explícito no rodapé.
+
+## Tema inicial das campanhas
+
+Defaults compartilhados do editor: Fundo #ffffff, Painéis #dedede, Destaque #494fdf, Texto #191c1f, alinhados à identidade Namarca. Valem para nova configuração, tema ausente e Restaurar padrão; temas explícitos já salvos não são migrados nem sobrescritos. Preferência claro/escuro administrativa não troca automaticamente as cores da campanha.
+
+## Prévia vazia
+
+Sem arte, a prévia privada mantém PhotoEditor/EditorWorkspace reais: menu, ajuda, histórico (desabilitado), Artes e Stickers visíveis. Apenas a área da composição mostra quadriculado12px neutro, sem instrução textual; Foto/Salvar e adicionar sticker ficam desabilitados sem composição. Cores do shell continuam da campanha. Bridge envia adminTheme como enum light/dark para o quadriculado usar os neutros das thumbs (#e2e2e7/#fff ou branco12%/#16181a); não aceita CSS arbitrário. Ao remover última arte, limpa composição/histórico e invalida leitura pendente; ao adicionar a primeira, carrega normalmente sem remontar iframe/PhotoEditor. CSS do vazio é exclusivo da entrada privada; contrato público continua exigindo arte.
+
+## Bibliotecas vazias
+
+Artes/Figurinhas vazias usam bloco centralizado, com título/descrição/ação centralizados, largura máxima420px e respiro vertical40px, sem caixa tracejada, Inbox ou altura mínima decorativa. Cabeçalho permanece à esquerda e salvamento no rodapé. Artes convida à primeira arte; Figurinhas informa que é opcional. PNG/transparência/25MiB/envio ao salvar permanecem explícitos. Uma única ação de adicionar no vazio; após primeiro material, ação volta ao cabeçalho. Mesmo input múltiplo/disabled/foco/fluxo local existente; não sugere drag-and-drop.
+
 ## Feedback de envio de materiais
 
 Artes e Figurinhas usam feedback integrado ao rodapé, sem cartão aninhado, brilho, percentual por arquivo ou trilho de etapas. Preparação e confirmação final mostram um status textual; durante upload, contagem real de arquivos processados e barra fina (não representa bytes nem sucesso). Envio sequencial (um arquivo por vez), com nome e situação do arquivo atual sempre visíveis, sem details/expansão. Falhas também permanecem visíveis enquanto a fila continua. Nomes longos truncados com title, rolagem interna focável. Falhas preservam detalhes e envios concluídos; Tentar novamente usa o salvamento existente, sem reenviar sucessos confirmados. Erros específicos e conflitos permanecem visíveis. Sucesso remove o progresso e usa apenas SaveStatus junto ao botão após confirmação do servidor. Seleção local não mostra progresso de upload. Movimento reduzido desativa spinner/transições; tokens compartilhados nos dois temas.

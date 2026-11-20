@@ -15,6 +15,14 @@ test('contrato compartilhado preserva dimensões, referência e tema sem mutar c
   assert.equal(resolveSlug('/admin/campanhas/id'), null);
 });
 
+test('padrão do editor usa identidade Namarca e preserva paletas explícitas', () => {
+  assert.deepEqual(themeDefaults, { background: '#ffffff', surface: '#dedede', accent: '#494fdf', text: '#191c1f' });
+  assert.equal(contrastText(themeDefaults.accent), '#ffffff');
+  const custom = { version: 1 as const, background: '#202522', surface: '#fafbf8', accent: '#173f35', text: '#263b2e' };
+  assert.deepEqual(parseEvent({ ...event, theme: custom }, event.slug).theme, custom);
+  assert.equal(eventThemeStyle({ ...event, theme: custom })['--theme-accent'], custom.accent);
+});
+
 test('tema v1 exige quatro cores completas e rejeita versões e campos antigos', () => {
   const theme = { version: 1 as const, ...themeDefaults };
   assert.deepEqual(parseEvent({ ...event, theme }, event.slug).theme, theme);
@@ -55,4 +63,21 @@ test('duas entradas importam uma única implementação e CSS, sem depender de N
   assert.match(previewSource, /!query\.has\('packageId'\)/);
   const publicSource = await readFile('apps/event/src/main.tsx', 'utf8');
   assert.doesNotMatch(publicSource, /postMessage|addEventListener\(['"]message/);
+});
+
+
+test('prévia sem arte mantém shell real e quadriculado apenas na composição', async () => {
+  const preview = await readFile('apps/event/src/preview.tsx', 'utf8');
+  const css = await readFile('apps/event/src/preview.css', 'utf8');
+  const editor = await readFile('packages/editor/src/editor/PhotoEditor.tsx', 'utf8');
+  const workspace = await readFile('packages/editor/src/editor/EditorWorkspace.tsx', 'utf8');
+  assert.match(preview, /<PhotoEditor event=/);
+  assert.doesNotMatch(preview, /artworks.length \?|Adicione uma arte PNG para experimentar/);
+  assert.match(editor, /if \(!event.artworks.length\)/);
+  assert.match(editor, /!hasArtwork && <div className="preview-empty-artwork" role="img"/);
+  assert.match(editor, /compositionReady=\{!!c\}/);
+  assert.match(workspace, /!compositionReady && \(name === 'Foto' \|\| name === 'Salvar'\)/);
+  assert.match(css, /repeating-conic-gradient/);
+  assert.match(css, /data-admin-theme=dark/);
+  assert.doesNotMatch(css, /--theme-border|--theme-surface|background: transparent/);
 });

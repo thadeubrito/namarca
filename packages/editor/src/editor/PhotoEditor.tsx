@@ -204,6 +204,16 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
   useEffect(() => {
     let active = true
     const existing = current.current
+    if (!event.artworks.length) {
+      request.current++
+      current.current = null; baseline.current = null; draftRef.current = null
+      loading.current = false
+      // The private bridge can remove the last artwork; discard its stale composition.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHistory(null); setDraft(null); setSelected(null); showDrag(null)
+      setBusy(false); setLoadingArt(false); setArtError(null); setOperation(''); setMessage('')
+      return () => { active = false }
+    }
     const preferred = event.artworks.find(art => art.id === preferredArtworkId)
     const selectionChanged = previousPreference.current !== preferredArtworkId
     if (existing && preferred && selectionChanged && existing.present.art.id !== preferred.id && !baseline.current) {
@@ -289,10 +299,11 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
     } catch { if (request.current === id) setMessage(`Não foi possível carregar o sticker ${material.name}. Tente adicioná-lo novamente.`) }
     finally { if (request.current === id) { loading.current = false; setBusy(false); setOperation('') } }
   }
-  const c = draft ?? history?.present
+  const hasArtwork = event.artworks.length > 0
+  const c = hasArtwork ? draft ?? history?.present : undefined
   useEffect(() => {
-    onInitialLoading?.(!c && !artError ? 'Preparando arte…' : null)
-  }, [c, artError, onInitialLoading])
+    onInitialLoading?.(hasArtwork && !c && !artError ? 'Preparando arte…' : null)
+  }, [hasArtwork, c, artError, onInitialLoading])
   const s = c?.stickers.find((s) => s.id === selected)
   const dirty = !!(c?.photo || c?.stickers.length)
   useEffect(() => {
@@ -303,6 +314,7 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
   }, [dirty])
   const blocked = busy || !!draft || !!dragVisual?.returning || exportWorking
   const open = (tool: EditorTool) => {
+    if ((tool === 'Salvar' || tool === 'Foto') && !c) return
     if (tool === 'Salvar') {
       setPanel('')
       exportAction.current?.save()
@@ -324,13 +336,13 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
   const feedback = <>
     {artError && <div role="alert"><p>Não foi possível preparar a arte {artError.name}. Escolha outra arte ou tente novamente. Sua composição foi preservada.</p><button disabled={!!draft || (busy && !loadingArt)} onClick={() => { void loadArt(artError) }}>Tentar carregar arte novamente</button></div>}
     <p className="editor-message" role="status" aria-live="polite">{message}</p>
-    {history && <ExportPanel key={exportRevision} actionRef={exportAction} onWorking={setExportWorking} composition={history.present} slug={event.slug} blocked={blocked} />}
+    {hasArtwork && history && <ExportPanel key={exportRevision} actionRef={exportAction} onWorking={setExportWorking} composition={history.present} slug={event.slug} blocked={blocked} />}
   </>
-  const historyControls = c && <div className="direction-controls history-controls" aria-label="Histórico">
-        <button aria-label="Desfazer" title="Desfazer" disabled={blocked || !history?.past.length} onClick={() => { publish(undo(current.current!)); setSelected(null) }}><EditorIcon name="Desfazer" /></button>
-        <button aria-label="Refazer" title="Refazer" disabled={blocked || !history?.future.length} onClick={() => { publish(redo(current.current!)); setSelected(null) }}><EditorIcon name="Refazer" /></button>
+  const historyControls = <div className="direction-controls history-controls" aria-label="Histórico">
+        <button aria-label="Desfazer" title="Desfazer" disabled={!c || blocked || !history?.past.length} onClick={() => { publish(undo(current.current!)); setSelected(null) }}><EditorIcon name="Desfazer" /></button>
+        <button aria-label="Refazer" title="Refazer" disabled={!c || blocked || !history?.future.length} onClick={() => { publish(redo(current.current!)); setSelected(null) }}><EditorIcon name="Refazer" /></button>
       </div>
-  const canvas = <>{exportWorking && <LoadingIndicator label="Salvando sua imagem…" />}{((!onInitialLoading && !c && !artError) || (busy && (!!c || !!artError))) && <LoadingIndicator label={operation || 'Preparando arte…'} />}{c && <div className="canvas-space"><EditorCanvas c={c} selected={s?.id ?? null} select={setSelected} selectionColor={selectionColor} blocked={blocked} start={start} preview={preview} finish={finish} cancel={cancel} trash={trash} drag={drag} dragVisual={dragVisual} showDrag={showDrag} /></div>}</>
+  const canvas = <>{exportWorking && <LoadingIndicator label="Salvando sua imagem…" />}{!hasArtwork && <div className="preview-empty-artwork" role="img" aria-label="Prévia sem arte, fundo quadriculado de transparência" />}{(hasArtwork && ((!onInitialLoading && !c && !artError) || (busy && (!!c || !!artError)))) && <LoadingIndicator label={operation || 'Preparando arte…'} />}{c && <div className="canvas-space"><EditorCanvas c={c} selected={s?.id ?? null} select={setSelected} selectionColor={selectionColor} blocked={blocked} start={start} preview={preview} finish={finish} cancel={cancel} trash={trash} drag={drag} dragVisual={dragVisual} showDrag={showDrag} /></div>}</>
   const stickerTools = <div className="tool-panel sticker-tools" hidden={panel !== 'Stickers'}><h3 id="stickers-title">Stickers</h3>
     <p>Toque para adicionar. Stickers ficam sobre a arte, inclusive logos.</p>
     {event.stickers.length ? <ul className="stickers material-grid" aria-labelledby="stickers-title">{event.stickers.map((item) => <li key={item.id}>
@@ -339,7 +351,7 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
       </button>
     </li>)}</ul> : <p>Este evento não possui stickers.</p>}
     </div>
-  return <>{dragVisual && <StickerDragPreview visual={dragVisual} overTrash={overTrash} trash={trash} onReturnComplete={() => showDrag((currentVisual) => currentVisual?.returning ? null : currentVisual)} />}<EditorWorkspace event={event} panel={panel} open={open} blocked={blocked}
+  return <>{dragVisual && <StickerDragPreview visual={dragVisual} overTrash={overTrash} trash={trash} onReturnComplete={() => showDrag((currentVisual) => currentVisual?.returning ? null : currentVisual)} />}<EditorWorkspace event={event} panel={panel} open={open} blocked={blocked} compositionReady={!!c}
     canvas={canvas} history={historyControls} feedback={feedback} fileInput={fileInput} trash={trash} dragging={dragging} overTrash={overTrash}
     choosePhoto={() => photoInput.current?.click()}
     tools={<>{artTools}{stickerTools}<div className="tool-panel help-tools" hidden={panel !== 'Ajuda'}>

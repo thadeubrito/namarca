@@ -1,5 +1,47 @@
 # Namarca — continuidade de implementação da V1
 
+## Cores — painel de ajustes Revolut (20/11/2026)
+
+Fundador pediu refazer aba Cores segundo referência. Mosaico de swatches112px substituído por superfície tonal20px/linhas: amostra circular48px44mobile com pipeta discreta, nome/descrição/HEX12px; header20px500+descrição curta e Restaurar padrão pill. Mobile HEX abaixo da descrição, sem espremer conteúdo. Tokens compartilhados, nenhum texto sobre cor arbitrária. Quatro cores/defaults/preview/save scoped/confirmação restore/HEX válido/reversão blur/disabled preservados; useId associa hint ao HEX. Typecheck/lint/85 testes/build produção isolado/diffcheck aprovados em containers; teste novo estrutural, sem browser/E2E/aceite visual nesta rodada, sem migrations novas/commit/push/publicação.
+
+## Bibliotecas vazias — composição centralizada (20/11/2026)
+
+Fundador rejeitou texto solto à esquerda; bloco vazio agora centraliza título/descrição/ação, largura máxima420px, margin auto e padding40px16px. Header/grade preenchida/save preservados, sem tracejado/ícone decorativo. Contrato/teste estrutural atualizados. Typecheck/84 testes/diffcheck aprovados em containers; sem novo lint/build/browser/migrations nesta alteração CSS pontual. Sem commit/push/publicação.
+
+## Estúdio — bibliotecas vazias compactas (20/11/2026)
+
+Fundador aprovou trocar EmptyState genérico em Artes/Figurinhas por orientação compacta sem tracejado/Inbox/minheight280, alinhada esquerda. Uma ação adicionar no conteúdo vazio, volta cabeçalho após primeiro material; PNG transparência/25MiB/envio ao salvar explícitos, Figurinhas opcional. Input múltiplo compartilhado mantém seleção local/disabled/foco; seletor CSS agora cobre botão fora do header. Rótulos do fluxo ativo padronizados para Figurinhas (inclusive nome acessível). Typecheck/lint/84 testes/build produção isolado/diffcheck aprovados em containers. Teste novo estrutural; sem browser/E2E/migrations novas/commit/push/publicação.
+
+## Estúdio — rodapés sem divisória (20/11/2026)
+
+Fundador aprovou retirar linha acima de Salvar em Artes/Figurinhas/Cores. Override scoped ws-studio-section-footer border-top0 preserva padding20/status/progresso e demais rodapés. Typecheck em container/diffcheck aprovados; sem novos testes/build/browser/migrations nesta alteração CSS pontual. Sem commit/push/publicação.
+
+## Editor — painéis padrão #DEDEDE (20/11/2026)
+
+Pedido fundador: surface padrão passa de#f4f4f4 para#dedede; fundo branco/destaque cobalto/texto escuro mantidos. Teste e contrato atualizados; temas salvos preservados. Typecheck/83 testes/diffcheck aprovados em containers; sem novo lint/build/browser/migrations nesta mudança pontual, sem commit/push/publicação.
+
+## Editor — padrão claro (20/11/2026)
+
+Fundador preferiu fundo/painéis light. Defaults finais: fundo#ffffff/painéis#f4f4f4/destaque#494fdf/texto#191c1f para contraste; substitui padrão escuro anterior, sem alterar temas explícitos salvos. Typecheck/lint/83 testes/build produção isolado (inclui build:event)/diffcheck aprovados em containers; sem browser/E2E/migrations novas/commit/push/publicação.
+
+## Editor — paleta inicial Namarca (20/11/2026)
+
+Fundador pediu cores padrão com identidade do app. themeDefaults compartilhado passa a fundo#000000/painéis#16181a/destaque#494fdf/texto#ffffff; configuração inicial usa accent também no campo color legado. Aplica nova configuração/tema ausente/Restaurar padrão, sem sobrescrever temas explícitos existentes, migrar dados ou vincular cores à preferência administrativa. Teste de defaults/contraste/preservação da paleta antiga explícita adicionado. Typecheck/lint/83 testes/build produção isolado (inclui build:event)/diffcheck aprovados em containers; sem browser/E2E/migrations (schema inalterado), commit/push/publicação.
+
+## Prévia — editor real mesmo sem arte (20/11/2026)
+
+Pedido vigente substitui vazio integral: preview sempre monta PhotoEditor, mantém menu/ajuda/Artes/Stickers e histórico visíveis; Foto/Salvar/histórico/addsticker desabilitados sem composição. Só workspace-stage fica quadriculado12px, sem texto, CSS privado. Bridge adminTheme enum light/dark controla neutros iguais às thumbs, shell segue tema campanha; removida transparência/quadriculado no dispositivo pai. PhotoEditor trata zeroart antes de ler art.file, invalida requests e limpa composição/histórico/gesto/erro antigos ao remover última arte, evita spinner infinito/export antigo; primeira arte carrega sem remontar iframe/editor. Validação pública continua exigindo arte.
+
+Typecheck/lint/82 testes/build produção isolado (inclui build:event)/diffcheck aprovados em containers. Testes novos/atualizados estruturais, sem browser/E2E nesta rodada: interação menu, transição vazio→arte→vazio e aparência ainda precisam validação real. Sem migrations/schema/auth/gateway/commit/push/publicação.
+
+## Prévia vazia — neutros do administrativo (20/11/2026)
+
+Refinamento aprovado: quadriculado vazio agora no dispositivo pai com --line/--surface e12px iguais às thumbs; iframe/documento ficam transparentes apenas sem arte. Acompanha tema administrativo automaticamente, sem enviar cores pelo bridge ou remontar iframe; mantém warnings/erros e editor com arte/tema campanha/runtime público. Substitui dependência das cores da campanha da entrada anterior. Typecheck/lint/82 testes/build produção isolado (inclui build:event)/diffcheck aprovados em containers. Sem nova inspeção browser/E2E/migrations (schema inalterado), sem commit/push/publicação.
+
+## Prévia — vazio com quadriculado (20/11/2026)
+
+Pedido fundador: prévia privada sem arte deixa de exibir Adicione uma arte PNG e mostra apenas quadriculado12px, preenchendo iframe; descrição acessível sem texto visível. CSS exclusivo apps/event/src/preview.css usa superfície/borda do tema da campanha (iframe independente), sem mudar editor com arte, thumbs ou runtime público. Typecheck/lint/82 testes/build:event/build produção isolado/diffcheck aprovados em containers. Sem nova inspeção browser/E2E/migrations (sem schema alterado). Sem commit/push/publicação.
+
 ## Estúdio — envio sequencial e arquivo atual visível (20/11/2026)
 
 Fundador rejeitou detalhes recolhidos e aprovou envio de um arquivo por vez. Save usa uploadPool com concorrência1 (helper genérico conserva default3); próximo arquivo inicia após término do anterior, inclusive falha. Feedback mostra nome/situação do upload atual sem expansão e mantém falhas visíveis durante/fim da fila; contagem/barra por arquivos processados, confirmação final e SaveStatus preservados. Removidos details e CSS exclusivo. Retry/idempotência/preservação dos sucessos e saves scoped mantidos.
