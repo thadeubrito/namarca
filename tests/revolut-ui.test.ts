@@ -14,6 +14,13 @@ test('referência Revolut mantém tokens sem alterar o tema do runtime', async (
   assert.match(ui, /\[data-slot=button\] \{[^}]*border-radius:var\(--radius-button\)/);
   assert.match(workspace, /\.ws-action \{[^}]*min-height:48px[^}]*border-radius:var\(--radius-button\)/);
   assert.match(workspace, /\.ws-input,[^{]+\{[^}]*border-radius:var\(--radius-control\)/);
+  assert.match(workspace, /\.ws-tabrail \{[^}]*border-radius:9999px/);
+  assert.match(workspace, /button\[aria-selected=true\] \{ color:#fff; background:var\(--brand\)/);
+  assert.match(workspace, /\.ws-tab-indicator \{[^}]*inset:0;[^}]*background:var\(--brand\)/);
+  assert.match(workspace, /\.ws-financial-featured \{ background:var\(--brand\)/);
+  const primitives = await readFile('src/components/admin-workspace/primitives.tsx', 'utf8');
+  assert.match(primitives, /const sectionIcons/);
+  assert.match(primitives, /Icon && <Icon aria-hidden className="ws-tab-icon"/);
   assert.match(studio, /\.ws-studio-upload \{[^}]*border-radius:var\(--radius-button\)/);
   assert.match(checkout, /\.checkout-shell \{ --paper:#000; --surface:#fff;/);
   assert.match(checkout, /\.checkout-card button,[^{]+\{[^}]*border-radius:9999px/);

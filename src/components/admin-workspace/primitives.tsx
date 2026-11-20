@@ -4,12 +4,13 @@ import { useId, useState, type ReactNode, type ComponentProps, type KeyboardEven
 import { flushSync } from 'react-dom';
 import Link from 'next/link';
 import { motion, MotionConfig, useReducedMotion } from 'motion/react';
-import { Inbox } from 'lucide-react';
+import { Inbox, FileText, Image, Smile, Palette, Wallet } from 'lucide-react';
 import './workspace.css';
 
-/** New PaceUI-based content system. References: motion-empty, motion-spring-button,
- * motion-alert and motion-tabs from paceui.com/r. Adapted for server actions,
- * reduced motion and persistent panels; no old administrative UI imports. */
+const sectionIcons: Record<string, typeof Inbox> = { dados: FileText, artes: Image, stickers: Smile, cores: Palette, cobranca: Wallet };
+
+/** Operational components with Revolut-inspired hierarchy and segmented navigation.
+ * Persistent panels, server actions and reduced-motion behavior are preserved. */
 export function Workspace({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <MotionConfig reducedMotion="user"><div className={`workspace ${className}`}>{children}</div></MotionConfig>;
 }
@@ -71,5 +72,5 @@ export function WorkspaceTabs({ label, items, initialId, activeId, onActiveChang
     tab?.focus({ preventScroll: true });
     tab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
-  return <div className="ws-tabs"><div className="ws-tabrail" role="tablist" aria-label={label}>{items.map((item, index) => <button type="button" role="tab" key={item.id} id={`${id}-${item.id}-tab`} aria-selected={active === item.id} aria-describedby={item.pending ? `${id}-${item.id}-pending` : undefined} aria-controls={`${id}-${panelKey(item)}-panel`} tabIndex={active === item.id ? 0 : -1} onClick={() => activate(item.id)} onKeyDown={e => keydown(e, index)}>{active === item.id && <motion.span aria-hidden layoutId={`${id}-indicator`} className="ws-tab-indicator" transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }} />}<span>{item.label}</span>{item.pending && <><span className="ws-tab-pending" aria-hidden="true">Não salvo</span><span id={`${id}-${item.id}-pending`} hidden>Alterações não salvas</span></>}</button>)}</div>{panels.map(item => { const group = items.filter(other => panelKey(other) === panelKey(item)); const selected = group.find(other => other.id === active); return <div key={panelKey(item)} role="tabpanel" id={`${id}-${panelKey(item)}-panel`} aria-labelledby={`${id}-${selected?.id ?? item.id}-tab`} hidden={!selected} tabIndex={0} onInvalidCapture={() => flushSync(() => activate(item.id))}>{!item.lazy || group.some(other => visited.includes(other.id)) ? item.content : null}</div>; })}</div>;
+  return <div className="ws-tabs"><div className="ws-tabrail" role="tablist" aria-label={label}>{items.map((item, index) => { const Icon = sectionIcons[item.id]; return <button type="button" role="tab" key={item.id} id={`${id}-${item.id}-tab`} aria-selected={active === item.id} aria-describedby={item.pending ? `${id}-${item.id}-pending` : undefined} aria-controls={`${id}-${panelKey(item)}-panel`} tabIndex={active === item.id ? 0 : -1} onClick={() => activate(item.id)} onKeyDown={e => keydown(e, index)}>{active === item.id && <motion.span aria-hidden layoutId={`${id}-indicator`} className="ws-tab-indicator" transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }} />}{Icon && <Icon aria-hidden className="ws-tab-icon" />}<span>{item.label}</span>{item.pending && <><span className="ws-tab-pending" aria-hidden="true">Não salvo</span><span id={`${id}-${item.id}-pending`} hidden>Alterações não salvas</span></>}</button>; })}</div>{panels.map(item => { const group = items.filter(other => panelKey(other) === panelKey(item)); const selected = group.find(other => other.id === active); return <div key={panelKey(item)} role="tabpanel" id={`${id}-${panelKey(item)}-panel`} aria-labelledby={`${id}-${selected?.id ?? item.id}-tab`} hidden={!selected} tabIndex={0} onInvalidCapture={() => flushSync(() => activate(item.id))}>{!item.lazy || group.some(other => visited.includes(other.id)) ? item.content : null}</div>; })}</div>;
 }
