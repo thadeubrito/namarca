@@ -7,6 +7,7 @@ import { Dialog } from 'radix-ui';
 import { useDarkTheme } from '@/components/theme-scope';
 import { type Artwork, type EventConfig, type Material } from '@namarca/editor/events';
 import { StudioColors } from './studio-colors';
+import { SaveStatus } from './save-status';
 import { StudioSkeleton } from './studio-skeleton';
 import { StudioCleanup } from './studio-cleanup';
 import { StudioRecoveryDialog } from './studio-recovery-dialog';
@@ -49,6 +50,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
   const [storageWarning, setStorageWarning] = useState('');
   const [progress, setProgress] = useState<SaveProgress | null>(null);
   const [operationScope, setOperationScope] = useState<SaveScope>('artworks');
+  const [savedTokens, setSavedTokens] = useState<Partial<Record<SaveScope, string>>>({});
   const storageQueue = useRef(Promise.resolve());
   const tabClaim = useRef<Promise<{ token: string; release: () => void }> | null>(null);
   const changeMaterials = (next: LocalMaterial[]) => {
@@ -227,6 +229,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
       // This code runs only after the section save request, never while rendering.
       // eslint-disable-next-line react-hooks/purity
       if (draftStorageKey) await persist(draftStorageKey, stillDirty ? { event: merged, revision: value.revision, materials: remaining, updatedAt: Date.now() } : null);
+      setSavedTokens(current => ({ ...current, [scope]: localMaterialId() }));
       setMessage(value.cleanupWarning || `${scopeLabels[scope][0].toUpperCase()}${scopeLabels[scope].slice(1)} salvas. A campanha não foi publicada.`);
       if (value.cleanupWarning) setFailure(true);
       setProgress({ phase: 'success', completed: pending.length, total: pending.length, files: uploadItems.map(item => ({ ...item })) });
@@ -313,7 +316,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
   const section = (scope: SaveScope, content: React.ReactNode) => <>{content}<footer className="ws-studio-footer ws-studio-section-footer">
     {operationScope === scope && failure && <Notice tone="error" role="alert">{message}</Notice>}
     <AnimatePresence initial={false}>{operationScope === scope && progress && <motion.div key="save-progress" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reducedMotion ? 0 : .28, ease: 'easeInOut' }} style={{ overflow: 'hidden' }}><StudioSaveProgress progress={{ ...progress, sectionLabel: `${scopeLabels[scope][0].toUpperCase()}${scopeLabels[scope].slice(1)}` }} onClose={() => setProgress(null)} /></motion.div>}</AnimatePresence>
-    <div className="ws-studio-footer-actions"><small className="ws-studio-section-status">{sectionDirty(scope) ? 'Alterações não salvas' : 'Sem alterações pendentes'}</small><Action type="button" disabled={busy || !sectionDirty(scope) || conflict || !!recovery} onClick={() => void save(scope)}>{busy && operationScope === scope ? 'Aguarde…' : `Salvar ${scopeLabels[scope]}`}</Action></div>
+    <div className="ws-studio-footer-actions"><SaveStatus dirty={sectionDirty(scope)} saving={busy && operationScope === scope} successToken={savedTokens[scope]} /><Action type="button" disabled={busy || !sectionDirty(scope) || conflict || !!recovery} onClick={() => void save(scope)}>{busy && operationScope === scope ? 'Salvando…' : `Salvar ${scopeLabels[scope]}`}</Action></div>
   </footer></>;
 
   return <section ref={studioRoot} tabIndex={-1} className="campaign-editor ws-studio-root" data-preview-collapsed={previewCollapsed} aria-label="Estúdio da campanha"><div className="ws-studio-workspace"><Workspace>

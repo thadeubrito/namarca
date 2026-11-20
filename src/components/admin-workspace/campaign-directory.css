@@ -105,7 +105,7 @@
 
 .ui-scope .ws-campaign-directory-row {
   min-width: 0;
-  padding-block: 22px;
+  padding-block: 10px;
   border-top: 1px solid var(--line);
   transition: background 150ms;
 }
@@ -121,7 +121,7 @@
 
 .ui-scope .ws-campaign-directory-identity h2 {
   margin: 0;
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.35;
   letter-spacing: -.35px;
@@ -130,7 +130,7 @@
 .ui-scope .ws-campaign-directory-identity h2 a {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  min-height: 32px;
   max-width: 100%;
   color: var(--foreground);
   text-decoration: none;
@@ -159,7 +159,7 @@
 
 .ui-scope .ws-campaign-directory-status {
   display: grid;
-  gap: 8px;
+  gap: 4px;
   margin: 0;
   font-size: 13px;
   line-height: 1.4;
@@ -250,8 +250,8 @@
 
   .ui-scope .ws-campaign-directory-row {
     grid-template-columns: minmax(0, 1fr) 44px;
-    gap: 14px 12px;
-    padding: 16px 0;
+    gap: 8px 12px;
+    padding: 12px 0;
   }
 
   .ui-scope .ws-campaign-directory-row:first-of-type {
@@ -264,7 +264,11 @@
   }
 
   .ui-scope .ws-campaign-directory-identity h2 {
-    font-size: 18px;
+    font-size: 16px;
+  }
+
+  .ui-scope .ws-campaign-directory-identity h2 a {
+    min-height: 44px;
   }
 
   .ui-scope .ws-campaign-directory-status {

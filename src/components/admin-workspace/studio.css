@@ -10,7 +10,7 @@
 .ws-studio-section-footer { margin-top:auto;padding-top:20px; }
 .ws-studio-library-panel .ws-studio-library,.ws-studio-library-panel .ws-studio-palette { margin-bottom:20px; }
 .ws-studio-section-status { margin-right:auto;font-size:.7rem;color:var(--muted); }
-.ws-tab-pending { display:inline-flex;align-items:center;flex:none;padding:3px 5px;border:1px solid var(--line);border-radius:4px;background:var(--secondary);color:var(--foreground);font-size:.6rem;font-weight:500;line-height:1.2;white-space:nowrap; }
+.ws-tab-pending { display:inline-block;flex:none;width:6px;height:6px;border-radius:50%;background:currentColor; }
 .ws-studio-library-panel .ws-tabrail { flex-shrink:0; }
 @media(max-width:600px) { .ws-studio-library-panel .ws-tabrail { gap:2px; } .ws-studio-library-panel .ws-tabrail button { gap:4px;padding-inline:6px; } }
 .ws-studio-footer-actions { display:flex;justify-content:flex-end;align-items:center;gap:12px;flex-wrap:wrap; }

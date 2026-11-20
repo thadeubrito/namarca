@@ -2,7 +2,9 @@
 
 import { useActionState, useEffect, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowUpRight, Check, Copy, Link2, MessageSquare, Send } from 'lucide-react';
+import { ArrowUpRight, Check, Copy, Link2, MessageSquare, MoreHorizontal, Send } from 'lucide-react';
+import { DropdownMenu } from 'radix-ui';
+import { useDarkTheme } from '@/components/theme-scope';
 import { billingAction, type BillingState } from '@/app/admin/campanhas/[id]/billing-actions';
 import { Action, ActionLink, Field, TextInput, Notice } from './primitives';
 import { useFormDraft } from './form-draft';
@@ -26,12 +28,13 @@ function Feedback({ error, success }: { error?: string; success?: string }) {
 export function PaymentAction({ id, operation, children }: { id: string; operation: string; children: ReactNode }) {
   const [state, action, pending] = useActionState<BillingState, FormData>(billingAction.bind(null, id), {});
   const reducedMotion = useReducedMotion();
-  return <form action={action} aria-busy={pending} className="space-y-3">
+  return <form action={action} aria-busy={pending} className="ws-payment-action">
     <input type="hidden" name="operation" value={operation} />
     <motion.div className="inline-flex max-sm:w-full" whileTap={reducedMotion || pending ? undefined : { scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 24 }}>
-      <Action className="max-sm:w-full" type="submit" variant="secondary" disabled={pending}>{pending ? 'Processando…' : children}</Action>
+      <Action className="max-sm:w-full" type="submit" variant="secondary" disabled={pending} title={state.success}>{pending ? 'Consultando…' : state.success ? <><Check aria-hidden />Consultado</> : children}</Action>
     </motion.div>
-    <Feedback error={state.error} success={state.success} />
+    <span className="sr-only" role="status">{state.success}</span>
+    <Feedback error={state.error} />
   </form>;
 }
 
@@ -63,6 +66,7 @@ export function BillingIssueForm({ id, defaultAmount, draftKey }: { id: string; 
 }
 
 export function CheckoutShare({ path, compact = false }: { path: string; compact?: boolean }) {
+  const dark = useDarkTheme();
   const [copied, setCopied] = useState<'link' | 'message' | null>(null);
   const [error, setError] = useState(false);
   const copy = async (kind: 'link' | 'message') => {
@@ -77,7 +81,7 @@ export function CheckoutShare({ path, compact = false }: { path: string; compact
 
   return <div className={`ws-billing-share${compact ? ' ws-billing-share-compact' : ''}`}>
     {!compact && <><h3>Compartilhar cobrança</h3><div className="ws-billing-link"><Link2 aria-hidden /><span title={path}>{path}</span><ActionLink href={path} target="_blank" rel="noreferrer" variant="ghost">Abrir checkout<ArrowUpRight aria-hidden /></ActionLink></div></>}
-    <div className="ws-billing-buttons"><Action type="button" variant={compact ? 'secondary' : 'primary'} onClick={() => void copy('link')}>{copied === 'link' ? <Check aria-hidden /> : <Copy aria-hidden />}{copied === 'link' ? 'Link copiado' : 'Copiar link'}</Action>{compact ? <details className="ws-share-options"><summary>Mais opções</summary><div className="ws-share-options-body"><ActionLink href={path} target="_blank" rel="noreferrer" variant="ghost">Abrir checkout<ArrowUpRight aria-hidden /></ActionLink><Action type="button" variant="ghost" onClick={() => void copy('message')}>{copied === 'message' ? <Check aria-hidden /> : <MessageSquare aria-hidden />}{copied === 'message' ? 'Mensagem copiada' : 'Copiar mensagem'}</Action></div></details> : <Action type="button" variant="secondary" onClick={() => void copy('message')}>{copied === 'message' ? <Check aria-hidden /> : <MessageSquare aria-hidden />}{copied === 'message' ? 'Mensagem copiada' : 'Copiar mensagem'}</Action>}</div>
+    <div className="ws-billing-buttons"><Action type="button" variant={compact ? 'secondary' : 'primary'} onClick={() => void copy('link')}>{copied === 'link' ? <Check aria-hidden /> : <Copy aria-hidden />}{copied === 'link' ? 'Link copiado' : 'Copiar link'}</Action>{compact ? <DropdownMenu.Root><DropdownMenu.Trigger asChild><Action type="button" variant="ghost" aria-label="Mais opções de compartilhamento"><MoreHorizontal aria-hidden /></Action></DropdownMenu.Trigger><DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={6} className={`ui-scope ws-share-menu${dark ? ' dark' : ''}`}><DropdownMenu.Item asChild><a href={path} target="_blank" rel="noreferrer"><ArrowUpRight aria-hidden />Abrir checkout</a></DropdownMenu.Item><DropdownMenu.Item onSelect={() => void copy('message')}><MessageSquare aria-hidden />Copiar mensagem</DropdownMenu.Item></DropdownMenu.Content></DropdownMenu.Portal></DropdownMenu.Root> : <Action type="button" variant="secondary" onClick={() => void copy('message')}>{copied === 'message' ? <Check aria-hidden /> : <MessageSquare aria-hidden />}{copied === 'message' ? 'Mensagem copiada' : 'Copiar mensagem'}</Action>}</div>
     <span className="sr-only" role="status">{copied === 'link' ? 'Link copiado.' : copied === 'message' ? 'Mensagem copiada.' : ''}</span>
     <Feedback error={error ? 'Não foi possível copiar. Abra o checkout e copie o endereço.' : undefined} />
   </div>;

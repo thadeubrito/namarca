@@ -28,7 +28,14 @@ test('UI salva escopo explícito e mantém pendências das outras seções', asy
   assert.doesNotMatch(source, /Salvar configuração/);
   const tabs = await readFile('src/components/admin-workspace/primitives.tsx', 'utf8');
   const css = await readFile('src/components/admin-workspace/studio.css', 'utf8');
-  assert.match(tabs, /ws-tab-pending[^>]*>Não salvo/);
+  assert.match(tabs, /ws-tab-pending[^>]*title="Alterações não salvas"/);
+  assert.doesNotMatch(tabs, />Não salvo<\/span>/);
+  assert.ok(tabs.includes('aria-describedby={item.pending'));
+  assert.ok(source.includes('<SaveStatus dirty={sectionDirty(scope)}'));
+  const status = await readFile('src/components/admin-workspace/save-status.tsx', 'utf8');
+  assert.ok(status.includes('3500'));
+  assert.ok(status.includes('role="status"'));
+  assert.ok(status.includes('shownToken.current === successToken'));
   assert.match(css, /ws-studio-section-footer \{ margin-top:auto/);
   assert.doesNotMatch(source, /phase: 'ready'/);
   assert.doesNotMatch(source, /Material adicionado neste navegador/);

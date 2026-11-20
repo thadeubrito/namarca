@@ -8,7 +8,8 @@ test('workbench separa contexto e ferramentas sem substituir painéis persistent
   const form = await readFile('src/components/admin-workspace/campaign-form.tsx', 'utf8');
   const page = await readFile('src/app/admin/campanhas/[id]/page.tsx', 'utf8');
   assert.ok(page.includes('className="ws-campaign-heading-content"'));
-  assert.ok(page.includes('className="ws-campaign-address"'));
+  assert.doesNotMatch(page, /className="ws-campaign-address"|className="ws-campaign-meta"|Publicação indisponível/);
+  assert.ok(page.includes('<h1>{campaign.name}</h1>'));
   assert.doesNotMatch(sections, /ws-campaign-context/);
   assert.ok(page.includes('<th>Cobrança / referência</th>'));
   assert.ok(page.includes('className="ws-payment-reference"'));
@@ -32,7 +33,11 @@ test('financeiro não apresenta totais zerados de filtros inválidos e compartil
   assert.ok(financial.indexOf('className="ws-financial-totals"') < financial.indexOf('className="ws-financial-filter-panel"'));
   assert.ok(financial.includes('open={Object.values(filters).some(Boolean) || !parsed.success}'));
   assert.ok(financial.includes('method="get"'));
-  assert.ok(billing.includes('<details className="ws-share-options"><summary>Mais opções</summary>'));
+  assert.ok(billing.includes('<DropdownMenu.Portal>'));
+  assert.ok(billing.includes('aria-label="Mais opções de compartilhamento"'));
+  assert.ok(billing.includes('className="ws-payment-action"'));
+  assert.ok(billing.includes('<Feedback error={state.error} />'));
+  assert.ok(billing.includes('<span className="sr-only" role="status">{state.success}</span>'));
   assert.ok(billing.includes('await navigator.clipboard.writeText'));
   assert.ok(billing.includes('setCopied(null)'));
 });

@@ -6,7 +6,9 @@ import { requireAdmin } from '@/lib/admin';
 import { financialFiltersSchema, financialFilterQuery } from '@/lib/financial-filters';
 import { globalFinancialRows } from '@/lib/global-financial-report';
 import { formatMoney, paymentLabels, summarizePayments } from '@/lib/financial-report';
-import { Workspace, PageIntro, Action, ActionLink, Surface, Field, TextInput, Notice, Pill } from '@/components/admin-workspace/primitives';
+import { Workspace, PageIntro, Action, ActionLink, Surface, Field, Notice, Pill } from '@/components/admin-workspace/primitives';
+
+import { DatePickerField, SelectField } from '@/components/admin-workspace/form-controls';
 
 export const dynamic = 'force-dynamic';
 export default async function FinancialPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -22,10 +24,10 @@ export default async function FinancialPage({ searchParams }: { searchParams: Pr
     <div className="ws-financial-dashboard">
     {parsed.success && <div className="ws-financial-totals" aria-label="Resumo das tentativas">{(['paid', 'pending', 'expired', 'cancelled', 'refunded'] as const).map(status => <Surface key={status} className={status === 'paid' ? 'ws-financial-featured' : undefined}><section aria-label={paymentLabels[status]}><Pill tone={status === 'paid' ? 'success' : status === 'pending' ? 'warning' : 'neutral'}>{paymentLabels[status]}</Pill><p className="ws-financial-value">{formatMoney(totals[status].amountCents)}</p><p className="ws-billing-caption">{totals[status].count} {totals[status].count === 1 ? 'tentativa' : 'tentativas'}</p></section></Surface>)}</div>}
     <Surface className="ws-financial-filter-panel"><details open={Object.values(filters).some(Boolean) || !parsed.success}><summary className="ws-financial-filter-toggle">Filtrar pagamentos<span>Campanha, situação e período</span></summary><form action="/admin/financeiro" method="get" className="ws-financial-filters">
-      <Field label="Campanha"><select className="ws-input" name="campaign" defaultValue={filters.campaign ?? ''}><option value="">Todas as campanhas</option>{options.map(campaign => <option key={campaign.id} value={campaign.id}>{campaign.name}</option>)}</select></Field>
-      <Field label="Situação"><select className="ws-input" name="status" defaultValue={filters.status ?? ''}><option value="">Todas as situações</option>{Object.entries(paymentLabels).map(([status, label]) => <option key={status} value={status}>{label}</option>)}</select></Field>
-      <Field label="Criada a partir de"><TextInput type="date" name="from" defaultValue={filters.from} /></Field>
-      <Field label="Criada até"><TextInput type="date" name="to" defaultValue={filters.to} /></Field>
+      <Field label="Campanha"><SelectField key={filters.campaign ?? ''} name="campaign" label="Campanha" defaultValue={filters.campaign} options={[{ value: '', label: 'Todas as campanhas' }, ...options.map(campaign => ({ value: campaign.id, label: campaign.name }))]} /></Field>
+      <Field label="Situação"><SelectField key={filters.status ?? ''} name="status" label="Situação" defaultValue={filters.status} options={[{ value: '', label: 'Todas as situações' }, ...Object.entries(paymentLabels).map(([value, label]) => ({ value, label }))]} /></Field>
+      <Field label="Criada a partir de"><DatePickerField key={filters.from ?? ''} name="from" label="Criada a partir de" defaultValue={filters.from} /></Field>
+      <Field label="Criada até"><DatePickerField key={filters.to ?? ''} name="to" label="Criada até" defaultValue={filters.to} /></Field>
       <div className="ws-billing-buttons"><Action type="submit">Aplicar filtros</Action><ActionLink href="/admin/financeiro" variant="ghost">Limpar</ActionLink></div>
     </form><p className="ws-billing-caption mt-3">Período pela criação da tentativa, incluindo os dias inicial e final, no horário de São Paulo. Situação atual, não histórica.</p></details></Surface>
     {!parsed.success && <Notice tone="error">Filtros inválidos. Confira a campanha, a situação e as datas; a data final não pode ser anterior à inicial.</Notice>}
