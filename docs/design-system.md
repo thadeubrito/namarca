@@ -1,6 +1,16 @@
 # UI Namarca — referência Revolut
 
-Referência fornecida pelo fundador: `~/Desktop/revolut.design.md` (alpha, 12/05/2026). Aplicação ao administrativo, autenticação e checkout; não é uma reprodução da marca Revolut nem uma migração do editor público.
+Referência visual de toda a aplicação: [`revolut.design.md`](revolut.design.md) (alpha, 12/05/2026), copiada integralmente do arquivo fornecido pelo fundador. Este documento registra a adaptação à Namarca, não uma reprodução da marca Revolut.
+
+## Como usar o guia
+
+1. Leia a referência original e este contrato antes de criar ou alterar telas, componentes e estados.
+2. Use a referência para cores, tipografia, formas, contraste e hierarquia; use os tokens/componentes compartilhados da aplicação para implementá-los de modo consistente.
+3. A referência descreve marketing e não especifica um app administrativo completo. As adaptações operacionais documentadas aqui prevalecem nesses casos: densidade, navegação, formulários, acessibilidade e persistência de estado.
+4. Novas exceções devem ter motivo funcional e ser registradas aqui; não inventar uma identidade independente por tela.
+5. A direção vale para toda a aplicação, mas não autoriza sobrescrever as cores escolhidas para campanhas, comprometer QR/transparência, alterar regras de negócio ou migrar/publicar o editor público anterior. A implementação existente foi aplicada ao administrativo, autenticação e checkout; outras superfícies devem ser avaliadas explicitamente ao serem trabalhadas.
+
+A cópia de referência permanece integral; decisões específicas da Namarca ficam neste documento.
 
 ## Sistema
 
@@ -29,6 +39,10 @@ Referência fornecida pelo fundador: `~/Desktop/revolut.design.md` (alpha, 12/05
 ## Pendência de salvamento
 
 Abas indicam pendência com ponto6px em currentColor e aria-describedby “Alterações não salvas”, sem selo textual largo. No painel, Detalhes/Artes/Figurinhas/Cores exibem estado junto de Salvar: Alterações não salvas / Salvando… / check+Salvo por3,5s após confirmação real do servidor. Área textual reservada evita mudança de altura; estado limpo não repete mensagem. Cada seção limpa somente sua pendência; navegação, recuperação, guard de saída e erros existentes permanecem. Cobrança sinaliza rascunho na aba, mas continua tendo emissão explícita em vez de botão fictício de salvar.
+
+## Feedback de envio de materiais
+
+Artes e Figurinhas usam feedback integrado ao rodapé, sem cartão aninhado, brilho, percentual por arquivo ou trilho de etapas. Preparação e confirmação final mostram um status textual; durante upload, contagem real de arquivos processados e barra fina (não representa bytes nem sucesso). Envio sequencial (um arquivo por vez), com nome e situação do arquivo atual sempre visíveis, sem details/expansão. Falhas também permanecem visíveis enquanto a fila continua. Nomes longos truncados com title, rolagem interna focável. Falhas preservam detalhes e envios concluídos; Tentar novamente usa o salvamento existente, sem reenviar sucessos confirmados. Erros específicos e conflitos permanecem visíveis. Sucesso remove o progresso e usa apenas SaveStatus junto ao botão após confirmação do servidor. Seleção local não mostra progresso de upload. Movimento reduzido desativa spinner/transições; tokens compartilhados nos dois temas.
 
 ## Selects e datas
 

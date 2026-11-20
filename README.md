@@ -60,6 +60,10 @@ Migrations em `drizzle/` são versionadas. `db:push` existe somente para explora
 
 **Ainda não é o SaaS comercial completo.** O estúdio e a prévia foram integrados, há checkout local, mas não há checkout real homologado nem publicação pública. Uma confirmação de pagamento não publica a campanha. Registro de data não implementa sozinho o encerramento do editor antigo.
 
+## Guia de design
+
+A referência visual de toda a aplicação está em [`docs/revolut.design.md`](docs/revolut.design.md). Consulte também [`docs/design-system.md`](docs/design-system.md), que define sua aplicação à Namarca, os componentes compartilhados e as exceções operacionais. Toda mudança de UI/UX deve seguir ambos para manter consistência entre telas e estados.
+
 ## Lista vigente e limites
 
 Veja [docs/TODO.md](docs/TODO.md) para concluídos, pendências locais e decisões externas. Deploy/implantação em produção está fora do escopo ativo por pedido do fundador; o histórico abaixo não é uma lista de tarefas autorizadas.

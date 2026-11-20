@@ -173,7 +173,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
     const ids = new Set([...next.artworks, ...next.stickers].map(item => item.id));
     const retained = materials.filter(item => ids.has(item.id));
     if (retained.length !== materials.length) changeMaterials(retained);
-    setEvent(next); setMessage(''); setFailure(false);
+    setEvent(next); setMessage(''); setFailure(false); setProgress(null);
   };
   const save = async (scope: SaveScope) => {
     if (!event || !snapshot || busy || conflict || recovery) return;
@@ -215,7 +215,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
           errors.push(`${material.name}: ${error instanceof Error ? error.message : 'Falha no envio.'}`);
           throw error;
         } finally { completed++; reportUpload(item.id, succeeded ? 'done' : 'failed'); }
-      }).catch(() => { throw new Error(errors.join(' ')); });
+      }, 1).catch(() => { throw new Error(errors.join(' ')); });
       setProgress({ phase: 'saving', completed: pending.length, total: pending.length, files: uploadItems.map(item => ({ ...item })) });
       const response = await fetch(`/api/campaigns/${campaignId}/editor`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event, revision: snapshot.revision, scope }) });
       if (response.status === 409) { setConflict(true); throw new Error('Outra sessão alterou esta configuração. Seu rascunho foi preservado. Recarregue a versão salva antes de continuar.'); }
@@ -232,8 +232,11 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
       setSavedTokens(current => ({ ...current, [scope]: localMaterialId() }));
       setMessage(value.cleanupWarning || `${scopeLabels[scope][0].toUpperCase()}${scopeLabels[scope].slice(1)} salvas. A campanha não foi publicada.`);
       if (value.cleanupWarning) setFailure(true);
-      setProgress({ phase: 'success', completed: pending.length, total: pending.length, files: uploadItems.map(item => ({ ...item })) });
-    } catch (error) { setProgress(null); setFailure(true); setMessage(error instanceof Error ? error.message : 'Falha ao salvar.'); }
+      setProgress(null);
+    } catch (error) {
+      setProgress(current => current && ({ ...current, phase: 'failed', failureStage: current.phase === 'saving' ? 'saving' : 'uploading' }));
+      setFailure(true); setMessage(error instanceof Error ? error.message : 'Falha ao salvar.');
+    }
     finally { setBusy(false); }
   };
   const upload = async (file: File | undefined, kind: Kind) => {
@@ -315,8 +318,8 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
   const colors = <StudioColors event={event} disabled={busy} onChange={change} />;
   const section = (scope: SaveScope, content: React.ReactNode) => <>{content}<footer className="ws-studio-footer ws-studio-section-footer">
     {operationScope === scope && failure && <Notice tone="error" role="alert">{message}</Notice>}
-    <AnimatePresence initial={false}>{operationScope === scope && progress && <motion.div key="save-progress" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reducedMotion ? 0 : .28, ease: 'easeInOut' }} style={{ overflow: 'hidden' }}><StudioSaveProgress progress={{ ...progress, sectionLabel: `${scopeLabels[scope][0].toUpperCase()}${scopeLabels[scope].slice(1)}` }} onClose={() => setProgress(null)} /></motion.div>}</AnimatePresence>
-    <div className="ws-studio-footer-actions"><SaveStatus dirty={sectionDirty(scope)} saving={busy && operationScope === scope} successToken={savedTokens[scope]} /><Action type="button" disabled={busy || !sectionDirty(scope) || conflict || !!recovery} onClick={() => void save(scope)}>{busy && operationScope === scope ? 'Salvando…' : `Salvar ${scopeLabels[scope]}`}</Action></div>
+    <AnimatePresence initial={false}>{operationScope === scope && progress && <motion.div key="save-progress" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reducedMotion ? 0 : .28, ease: 'easeInOut' }} style={{ overflow: 'hidden' }}><StudioSaveProgress progress={{ ...progress, sectionLabel: scopeLabels[scope] }} /></motion.div>}</AnimatePresence>
+    <div className="ws-studio-footer-actions"><SaveStatus dirty={sectionDirty(scope)} saving={busy && operationScope === scope} successToken={savedTokens[scope]} /><Action type="button" disabled={busy || !sectionDirty(scope) || conflict || !!recovery} onClick={() => void save(scope)}>{busy && operationScope === scope ? 'Salvando…' : operationScope === scope && progress?.phase === 'failed' && !conflict ? 'Tentar novamente' : `Salvar ${scopeLabels[scope]}`}</Action></div>
   </footer></>;
 
   return <section ref={studioRoot} tabIndex={-1} className="campaign-editor ws-studio-root" data-preview-collapsed={previewCollapsed} aria-label="Estúdio da campanha"><div className="ws-studio-workspace"><Workspace>

@@ -17,6 +17,23 @@ test('fila limita concorrência a três e aguarda sucessos após falha parcial',
   assert.equal(finished.length, 7);
 });
 
+test('fila sequencial mantém ordem, apenas um envio ativo e continua após falha', async () => {
+  let active = 0;
+  let maximum = 0;
+  const finished: number[] = [];
+  await assert.rejects(uploadPool([1, 2, 3], async item => {
+    active++;
+    maximum = Math.max(maximum, active);
+    await new Promise(resolve => setTimeout(resolve, 5));
+    active--;
+    finished.push(item);
+    if (item === 2) throw new Error('falha');
+  }, 1));
+  assert.equal(maximum, 1);
+  assert.equal(active, 0);
+  assert.deepEqual(finished, [1, 2, 3]);
+});
+
 test('ID local usa UUIDv4 aleatório sem depender de contexto seguro', () => {
   const values = Array.from({ length: 100 }, localMaterialId);
   assert.equal(new Set(values).size, 100);

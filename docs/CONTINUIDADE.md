@@ -1,5 +1,17 @@
 # Namarca — continuidade de implementação da V1
 
+## Estúdio — envio sequencial e arquivo atual visível (20/11/2026)
+
+Fundador rejeitou detalhes recolhidos e aprovou envio de um arquivo por vez. Save usa uploadPool com concorrência1 (helper genérico conserva default3); próximo arquivo inicia após término do anterior, inclusive falha. Feedback mostra nome/situação do upload atual sem expansão e mantém falhas visíveis durante/fim da fila; contagem/barra por arquivos processados, confirmação final e SaveStatus preservados. Removidos details e CSS exclusivo. Retry/idempotência/preservação dos sucessos e saves scoped mantidos.
+
+Typecheck/lint/81 testes/build produção isolado/diffcheck aprovados em containers; novo teste executa fila sequencial com falha intermediária, ordem preservada e máximo1 ativo. Sem nova validação browser ou E2E HTTP de upload; sem schema/migrations novas/commit/push/publicação.
+
+## Estúdio — upload integrado ao rodapé (20/11/2026)
+
+Fundador aprovou substituir caixa de uploads: status14px/500, contagem arquivos processados/total e barra3px apenas durante envio; preparação/save textual sem percentual fictício. Removidos ShinyText/ícone grande/etapas/numeração/resumo persistente/X do progresso. Details Ver arquivos recolhido, abre ao falhar; linhas simples/nome truncado/title/status/check enviado/scroll focável. Falha mantém fila e mensagem segura; distingue envio vs confirmação final, botão Tentar novamente reutiliza save/fila/idempotência existentes, sem reenviar sucessos. Sucesso confirmado limpa progresso e conserva SaveStatus3,5s junto botão; seleção local silenciosa. Cores/tema/iframe/regras auth/backend/schema preservados.
+
+Typecheck/lint/80 testes e build produção isolado aprovados em containers; diffcheck aprovado. Sem nova validação browser, E2E de upload/retry ou migrations (nenhum schema alterado); teste estrutural não comprova aparência/interação real. Serviços principais estavam parados e não foram iniciados; volumes/dados preservados. Sem commit/push/publicação.
+
 ## Campanha — prefixo visual no endereço (20/11/2026)
 
 Campo Endereço da campanha agora agrupa prefixo namarca.com/ não editável e input slug, com borda/foco/tokens compartilhados. Domínio e barra não participam do valor enviado nem alteram validação/rascunho. Typecheck em container/diffcheck aprovados; sem browser/build/testes/migrations novos. Sem commit/push/publicação.
@@ -47,6 +59,10 @@ Fundador reportou bege ao forçar scroll para cima. Body global ainda usa paper 
 ## Header — menu centralizado (20/11/2026)
 
 Pedido do fundador: centralizar menu administrativo. Header usa grid com colunas laterais iguais e menu no centro, preservando marca à esquerda e ações à direita; até600px menu centralizado na segunda linha. Alteração somente CSS e contrato visual, sem lógica de navegação/auth/schema. Typecheck e79 testes aprovados em container; diffcheck aprovado. Sem nova inspeção browser, build ou migrations nesta alteração pontual; sem commit/push/publicação.
+
+## Design — referência versionada no projeto (20/11/2026)
+
+Por pedido do fundador, `~/Desktop/revolut.design.md` foi copiado integralmente para `docs/revolut.design.md`, com igualdade de bytes conferida por cmp. Referência visual para toda a aplicação; AGENTS.md exige sua leitura junto com docs/design-system.md em mudanças UI/UX, e README aponta ambos. Sistema local documenta adaptações operacionais/exceções, preservando cores configuráveis de campanhas, acessibilidade e regras de negócio. Não implica migração/publicação do editor anterior nem aplicação visual automática a superfícies ainda não trabalhadas. Mudança somente documental, diffcheck aprovado; testes/build/migrations não repetidos. Sem commit/push/publicação.
 
 ## Modais — backdrop fora do ThemeScope (20/11/2026)
 
