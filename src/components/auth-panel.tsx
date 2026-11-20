@@ -7,6 +7,7 @@ const serverSnapshot = () => false;
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Brand } from '@/components/brand';
 import { ThemeScope, ThemeToggle } from '@/components/theme-scope';
 
 export function AuthPanel({ mode }: { mode: 'login' | 'verify' | 'setup' }) {
@@ -46,9 +47,9 @@ export function AuthPanel({ mode }: { mode: 'login' | 'verify' | 'setup' }) {
   }
 
   return <ThemeScope className="auth-scope"><div className="auth-toolbar"><ThemeToggle /></div><div className="auth-layout">
-    <aside className="auth-brand"><span className="wordmark">namarca</span><div><p className="eyebrow">Administração de campanhas</p><h2>O evento começa<br />antes da largada.</h2><p>Prepare a ativação. Organize a entrega. Acompanhe cada campanha em um só lugar.</p></div><small>Acesso exclusivo da equipe Namarca.</small></aside>
+    <aside className="auth-brand"><Brand href="/login" /><div><p className="eyebrow">Administração de campanhas</p><h2>O evento começa<br />antes da largada.</h2><p>Prepare a ativação. Organize a entrega. Acompanhe cada campanha em um só lugar.</p></div><small>Acesso exclusivo da equipe Namarca.</small></aside>
     <main className="auth-form" id="conteudo"><div className="auth-card">
-      <span className="wordmark login-mark">namarca</span>
+      <div className="auth-logo"><Brand href="/login" /></div>
       <p className="eyebrow">Área administrativa</p>
       <h1>{mode === 'login' ? 'Entre na sua conta' : mode === 'setup' ? 'Proteja seu acesso' : 'Confirme seu acesso'}</h1>
       <p className="muted">{mode === 'login' ? 'Use as credenciais da conta provisionada para você.' : mode === 'setup' ? 'Configure um aplicativo autenticador. O segundo fator é obrigatório.' : 'Informe o código do seu autenticador para concluir o login.'}</p>
