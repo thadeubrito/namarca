@@ -1,5 +1,13 @@
 # Namarca — continuidade de implementação da V1
 
+## Administrativo — fundo do scroll elástico (20/11/2026)
+
+Fundador reportou bege ao forçar scroll para cima. Body global ainda usa paper legado #f6f5f0; CSS administrativo agora aplica preto ao canvas html/body somente quando contém admin-shell, acompanhando header sem alterar conteúdo claro/escuro nem checkout/auth. Typecheck e79 testes aprovados em container, diffcheck aprovado; sem reprodução em Safari/celular físico, build ou migrations novos. Sem commit/push/publicação.
+
+## Header — menu centralizado (20/11/2026)
+
+Pedido do fundador: centralizar menu administrativo. Header usa grid com colunas laterais iguais e menu no centro, preservando marca à esquerda e ações à direita; até600px menu centralizado na segunda linha. Alteração somente CSS e contrato visual, sem lógica de navegação/auth/schema. Typecheck e79 testes aprovados em container; diffcheck aprovado. Sem nova inspeção browser, build ou migrations nesta alteração pontual; sem commit/push/publicação.
+
 ## Modais — backdrop fora do ThemeScope (20/11/2026)
 
 Fundador reportou falta de destaque dos dialogs. Causa: overlay Radix em portal fora ui-scope usava var(--scrim) sem herança/fallback, ficando transparente. Corrigido compartilhado ws-client-dialog-overlay para rgba(0,0,0,.72)+blur4px explícitos independentes do tema; atende cliente/referência/recuperação sem mudar lógica foco/fechamento/geometria. Teste estático cobre ausência de dependência do token no portal. Typecheck/lint/79testes/build produção isolado/diffcheck aprovados em containers. Focal real Chromium1440/390 claro/escuro Cliente/Referência/Recuperaçãoglobal/confirmação:16medições bg72%/blur4, overlay fora ui-scope/tokenausente seminterferência, z70<conteúdo71/90. Escape/restaurafoco cliente/referência; recuperação inicial bloqueiaEscape/fora e confirmaçãoEscape preserva rascunho; descarteexplícito sem mutação servidor. Reducedmotionnone/0s, modaisviewport/zerooverflow/pageerror;15warningshydration persistem. Dez migrations/loginTOTP sintéticos em appDBtmpfs/rede próprios, fixtures vazias/recursos encerrados semapagarvolumes/principal preservado. Evidências `/tmp/namarca-modal-backdrop-review/RESULTADO.md`; principal observou Cliente390escuro. Limites semtrapTabdedicado/authintegral/financeiro/recuperaçãoIDBestúdio/Safari/Firefox/celularfísico. Sem auth/schema/backend/financeiro/commit/push/publicação.
