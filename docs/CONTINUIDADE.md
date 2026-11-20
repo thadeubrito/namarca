@@ -1,5 +1,45 @@
 # Namarca — continuidade de implementação da V1
 
+## Campanha — prefixo visual no endereço (20/11/2026)
+
+Campo Endereço da campanha agora agrupa prefixo namarca.com/ não editável e input slug, com borda/foco/tokens compartilhados. Domínio e barra não participam do valor enviado nem alteram validação/rascunho. Typecheck em container/diffcheck aprovados; sem browser/build/testes/migrations novos. Sem commit/push/publicação.
+
+## Campanha — cabeçalho sem resumo repetido (20/11/2026)
+
+Fundador considerou resumo superior desnecessário. Header agora apenas voltar/nome/situação; removidos cliente/data/slug e aviso de publicação do topo, preservando formulário Detalhes e regras de negócio. Typecheck/80 testes/diffcheck aprovados em container; teste estrutural atualizado para ausência do resumo. Sem browser/build/migrations novos, sem commit/push/publicação.
+
+## Abas — pendência discreta e estado junto de Salvar (20/11/2026)
+
+Fundador aprovou ponto na tab+estado junto de Salvar. WorkspaceTabs troca selo Não salvo por ponto6px currentColor, mantendo aria-describedby/texto acessível. SaveStatus compartilhado em Detalhes/Artes/Figurinhas/Cores: Alterações não salvas, Salvando…, check+Salvo3,5s só com token de confirmação servidor, área reservada/limpo vazio; não reapresenta sucesso antigo após editar/reverter. Estúdio gera token por escopo só após save confirmado; mantém progresso/erros/guards/recovery/saves independentes, sem backend/auth/schema novos. Typecheck/lint/80 testes/build produção isolado/diffcheck aprovados em containers; teste estrutural adaptado à decisão vigente, sem browser/E2E de salvamento/recuperação nesta rodada. Sem migrations novas/commit/push/publicação.
+
+## Administrativo — selects e datepicker shadcn (20/11/2026)
+
+Pedido fundador: selects/datas shadcn. Instalados via CLI em container Select/Popover/Calendar, preservando Button existente; imports cn adaptados ao utilitário local/removida dependência cn redundante. Adicionadas date-fns/react-day-picker. Wrappers compartilhados migram cliente/data da campanha e campanha/situação/de-até no Financeiro ativo. Datas locais YYYY-MM-DD, ptBR, limpeza opcional, FormData names/GET preservados; campanha controla data/cliente na recuperação/save e change explícito informa observador de rascunho. Portais tematizados e CSS neutraliza tabela/botões legados no calendário; required auxiliar abre calendário inválido, servidor preservado. Form legado nova/form.tsx não ativo permanece nativo. Typecheck/lint/80 testes/build produção isolado/diffcheck aprovados em containers; teste novo estrutural, sem browser autenticado/teclado/refresh E2E nesta rodada, sem migrations novas/schema/auth. Sem commit/push/publicação. Validação visual/funcional de portais e recuperação real ainda necessária.
+
+## Administrativo — sem rodapé (20/11/2026)
+
+Fundador pediu remover footer administrativo. AdminLayout não renderiza nem importa Footer; header/main e demais superfícies preservados. Typecheck em container/diffcheck aprovados; sem browser/build/testes/migrations novos nesta remoção pontual. Sem commit/push/publicação.
+
+## Cobranças — alinhamento das linhas (20/11/2026)
+
+Fundador aprovou centralização vertical das células; desktop mantém descrição à esquerda, valor à direita, situação/ações centralizadas com cabeçalhos correspondentes. Mobile preserva blocos rotulados. Typecheck em container e diffcheck aprovados; sem browser/build/testes/migrations novos nesta alteração CSS pontual. Sem commit/push/publicação.
+
+## Cobranças — botões compactos nas linhas (20/11/2026)
+
+Fundador apontou altura dos botões nas rows. Override scoped às tabelas de cobrança reduz ações48→32px, fonte14→12px, ícones16→14 e padding5x10 somente desktop>760/pointer:fine; mais opções32quadrado. Mobile/toque mantém geometria anterior >=44. Emissão e demais ações preservadas. Typecheck/79 testes/diffcheck aprovados em container; sem browser/build/migrations novos. Sem commit/push/publicação.
+
+## Cobranças — ações estáveis e badges sem quebra (20/11/2026)
+
+Fundador apontou quebra de badge/compartilhamento/feedback de consulta. Corrigido override mobile que reativava quebra dos badges; situação usa largura toda no bloco mobile. Compartilhamento nowrap com Copiar link+ícone mais opções; substituído details expansível por menu Radix em portal tematizado com abrir checkout/copiar mensagem, preservando clipboard/erros/anúncio. PaymentAction mostra sucesso no botão Consultado com check, mensagem completa sr-only/title; erros visíveis preservados. Sem mudar action financeira. Typecheck/lint/79 testes/diffcheck aprovados em containers; teste estrutural atualizado para novo contrato, sem browser/build/migrations/regressão financeira nesta rodada. Sem commit/push/publicação.
+
+## Cobranças — menos quebras nas tabelas (20/11/2026)
+
+Fundador reportou quebras em Cobranças/Tentativas. CSS muda table-layout fixed→auto, mínimo980px desktop com scroll interno e nowrap em cabeçalhos/valores/datas/situações/ações; descrições e referências continuam quebráveis. Mobile<=760 preserva blocos rotulados, min-width0 e quebras naturais. Contrato local atualizado. Typecheck e79 testes aprovados em container, diffcheck aprovado; sem nova inspeção browser/build/migrations, sem regressão financeira. Sem commit/push/publicação.
+
+## Campanhas — linhas mais compactas (20/11/2026)
+
+Fundador apontou excesso de altura/scroll na lista. CSS reduz padding vertical22→10px desktop/16→12px mobile, título19/18→16px, mínimo do link de título32px desktop (44mobile) e gap de situações8→4px. Informações e ação abrir44px preservadas, sem altura fixa/corte de nomes longos. Typecheck e79 testes aprovados em container, diffcheck aprovado. Sem nova inspeção browser/build/migrations; sem commit/push/publicação.
+
 ## Administrativo — fundo do scroll elástico (20/11/2026)
 
 Fundador reportou bege ao forçar scroll para cima. Body global ainda usa paper legado #f6f5f0; CSS administrativo agora aplica preto ao canvas html/body somente quando contém admin-shell, acompanhando header sem alterar conteúdo claro/escuro nem checkout/auth. Typecheck e79 testes aprovados em container, diffcheck aprovado; sem reprodução em Safari/celular físico, build ou migrations novos. Sem commit/push/publicação.
