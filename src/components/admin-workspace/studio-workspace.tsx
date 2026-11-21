@@ -10,6 +10,8 @@ import { StudioColors } from './studio-colors';
 import { SortableMaterial, SortableMaterialLibrary } from './sortable-material';
 import { reorderMaterials } from '@/lib/reorder-materials';
 import { SaveStatus } from './save-status';
+import { discardStudioScope } from '@/lib/studio-discard';
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { StudioSkeleton } from './studio-skeleton';
 import { StudioCleanup } from './studio-cleanup';
 import { StudioRecoveryDialog } from './studio-recovery-dialog';
@@ -29,6 +31,11 @@ const scopeLabels: Record<SaveScope, string> = { artworks: 'artes', stickers: 'f
 export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: { campaignId: string; activeSection?: string; onPendingChange?: (section: string, pending: boolean) => void }) {
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
+  const [discardScope, setDiscardScope] = useState<SaveScope | null>(null);
+  const discardTrigger = useRef<HTMLButtonElement | null>(null);
+  const discardOriginScope = useRef<SaveScope>('artworks');
+  const discardCancel = useRef<HTMLButtonElement | null>(null);
+  const saveButtons = useRef<Partial<Record<SaveScope, HTMLButtonElement | null>>>({});
   const dark = useDarkTheme();
   const referenceTrigger = useRef<HTMLButtonElement | null>(null);
   const studioRoot = useRef<HTMLElement>(null);
@@ -177,8 +184,29 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
     if (retained.length !== materials.length) changeMaterials(retained);
     setEvent(next); setMessage(''); setFailure(false); setProgress(null);
   };
+  const requestDiscard = (scope: SaveScope, trigger: HTMLButtonElement) => {
+    discardTrigger.current = trigger;
+    discardOriginScope.current = scope;
+    setDiscardScope(scope);
+  };
+  const discard = (scope: SaveScope) => {
+    if (!event || !snapshot || busy || conflict || recovery || !sectionDirty(scope)) return;
+    const next = discardStudioScope(event, snapshot.event, materialsRef.current, scope);
+    setEvent(next.event);
+    changeMaterials(next.materials);
+    if (scope === 'artworks') {
+      setSelected(next.event.artworks.some(art => art.id === selected) ? selected : next.event.artworks[0]?.id ?? '');
+      // References themselves may have reverted even when the selected ID survived.
+      setReferenceOpen(false);
+      referenceTrigger.current = null;
+    }
+    setSavedTokens(current => ({ ...current, [scope]: undefined }));
+    // These states belong to the last operation, not to the currently visible tab.
+    if (operationScope === scope) { setProgress(null); setMessage(''); setFailure(false); }
+    if (draftStorageKey) void persist(draftStorageKey, next.dirty ? { event: next.event, revision: snapshot.revision, materials: next.materials, updatedAt: Date.now() } : null);
+  };
   const save = async (scope: SaveScope) => {
-    if (!event || !snapshot || busy || conflict || recovery) return;
+    if (!event || !snapshot || busy || conflict || recovery || !sectionDirty(scope)) return;
     setOperationScope(scope);
     setBusy(true); setMessage(''); setFailure(false); setProgress({ phase: 'preparing', completed: 0, total: 0 });
     try {
@@ -229,8 +257,6 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
       window.dispatchEvent(new Event('namarca:editor-saved'));
       setSnapshot(value); setEvent(merged); changeMaterials(remaining); setConflict(false); setStorageWarning('');
       const stillDirty = (['artworks', 'stickers', 'theme'] as const).some(key => !sameDraftValue(merged[key], value.event[key]));
-      // This code runs only after the section save request, never while rendering.
-      // eslint-disable-next-line react-hooks/purity
       if (draftStorageKey) await persist(draftStorageKey, stillDirty ? { event: merged, revision: value.revision, materials: remaining, updatedAt: Date.now() } : null);
       setSavedTokens(current => ({ ...current, [scope]: localMaterialId() }));
       setMessage(value.cleanupWarning || `${scopeLabels[scope][0].toUpperCase()}${scopeLabels[scope].slice(1)} salvas. A campanha não foi publicada.`);
@@ -329,7 +355,9 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
   const section = (scope: SaveScope, content: React.ReactNode) => <>{content}<footer className="ws-studio-footer ws-studio-section-footer">
     {operationScope === scope && failure && <Notice tone="error" role="alert">{message}</Notice>}
     <AnimatePresence initial={false}>{operationScope === scope && progress && <motion.div key="save-progress" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reducedMotion ? 0 : .28, ease: 'easeInOut' }} style={{ overflow: 'hidden' }}><StudioSaveProgress progress={{ ...progress, sectionLabel: scopeLabels[scope] }} /></motion.div>}</AnimatePresence>
-    <div className="ws-studio-footer-actions"><SaveStatus dirty={sectionDirty(scope)} saving={busy && operationScope === scope} successToken={savedTokens[scope]} /><Action type="button" disabled={busy || !sectionDirty(scope) || conflict || !!recovery} onClick={() => void save(scope)}>{busy && operationScope === scope ? 'Salvando…' : operationScope === scope && progress?.phase === 'failed' && !conflict ? 'Tentar novamente' : `Salvar ${scopeLabels[scope]}`}</Action></div>
+    {/* Ref writes below are only DOM commit callbacks and click handlers, never render reads. */}
+    {/* eslint-disable-next-line react-hooks/refs */}
+    <div className="ws-studio-footer-actions"><SaveStatus dirty={sectionDirty(scope)} saving={busy && operationScope === scope} successToken={savedTokens[scope]} />{sectionDirty(scope) && <Action type="button" variant="ghost" disabled={busy || conflict || !!recovery} onClick={e => requestDiscard(scope, e.currentTarget)}>Descartar edições</Action>}<Action ref={node => { saveButtons.current[scope] = node; }} type="button" disabled={busy || conflict || !!recovery} aria-disabled={!sectionDirty(scope)} onClick={() => void save(scope)}>{busy && operationScope === scope ? 'Salvando…' : operationScope === scope && progress?.phase === 'failed' && !conflict ? 'Tentar novamente' : `Salvar ${scopeLabels[scope]}`}</Action></div>
   </footer></>;
 
   return <section ref={studioRoot} tabIndex={-1} className="campaign-editor ws-studio-root" data-preview-collapsed={previewCollapsed} aria-label="Estúdio da campanha"><div className="ws-studio-workspace"><Workspace>
@@ -342,7 +370,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
     {storageWarning && <Notice role="alert">{storageWarning}</Notice>}
     <div className="ws-studio-columns"><div className="ws-studio-controls"><div className="ws-studio-library-panel"><fieldset className="ws-studio-fields" disabled={busy || !!recovery}>{activeSection ? <div className="ws-studio-section"><div hidden={activeSection !== 'artes'}>{section('artworks', library('artwork', event.artworks))}</div><div hidden={activeSection !== 'stickers'}>{section('stickers', library('sticker', event.stickers))}</div><div hidden={activeSection !== 'cores'}>{section('theme', colors)}</div></div> : <WorkspaceTabs label="Configuração do estúdio" items={[{ id: 'artes', label: 'Artes', pending: sectionDirty('artworks'), content: section('artworks', library('artwork', event.artworks)) }, { id: 'stickers', label: 'Figurinhas', pending: sectionDirty('stickers'), content: section('stickers', library('sticker', event.stickers)) }, { id: 'cores', label: 'Cores', pending: sectionDirty('theme'), content: section('theme', colors) }]} />}</fieldset></div>
     {conflict && <div className="ws-studio-footer"><Notice tone="error">{message}</Notice><Action type="button" variant="secondary" disabled={busy} onClick={() => { if (window.confirm('Descartar suas alterações de todas as abas e carregar a configuração salva?')) { if (draftStorageKey) void persist(draftStorageKey, null).then(() => load()); else void load(); } }}>Recarregar versão salva</Action></div>}
-      <Dialog.Root open={referenceOpen} onOpenChange={setReferenceOpen}><Dialog.Portal><Dialog.Overlay className="ws-client-dialog-overlay" /><Dialog.Content className={`ui-scope campaign-editor ws-studio-root ws-studio-reference-dialog ${dark ? 'dark' : ''}`} onInteractOutside={e => e.preventDefault()} onCloseAutoFocus={e => { e.preventDefault(); referenceTrigger.current?.focus(); }}><header className="ws-studio-dialog-heading"><Dialog.Title>Editar área da foto</Dialog.Title><Dialog.Close asChild><button type="button" className="ws-action ws-action-ghost" aria-label="Fechar ajuste da área da foto"><X aria-hidden /></button></Dialog.Close></header><Dialog.Description className="sr-only">Ajuste a área da foto arrastando o retângulo ou suas alças.</Dialog.Description>{referenceOpen && <div className="ws-studio-reference">{artwork ? <><fieldset className="ws-studio-fields" disabled={busy}><div className="ws-studio-reference-stage" style={{ '--artwork-ratio': artwork.width / artwork.height } as React.CSSProperties}><ReferenceCanvas key={artwork.id} artwork={artwork} assetURL={assetURL(artwork.file)} onChange={updateReference} /></div></fieldset></> : <EmptyState title="Selecione uma arte" description="A área da foto será definida aqui, separada da prévia do participante." />}</div>}<footer className="ws-studio-dialog-footer"><Dialog.Close asChild><button type="button" className="ws-action ws-action-primary">Concluir ajuste</button></Dialog.Close></footer></Dialog.Content></Dialog.Portal></Dialog.Root>
+      <Dialog.Root open={referenceOpen} onOpenChange={setReferenceOpen}><Dialog.Portal><Dialog.Overlay className="ws-client-dialog-overlay" /><Dialog.Content className={`ui-scope campaign-editor ws-studio-root ws-studio-reference-dialog ${dark ? 'dark' : ''}`} onInteractOutside={e => e.preventDefault()} onCloseAutoFocus={e => { e.preventDefault(); if (referenceTrigger.current?.isConnected) referenceTrigger.current.focus(); else saveButtons.current.artworks?.focus(); }}><header className="ws-studio-dialog-heading"><Dialog.Title>Editar área da foto</Dialog.Title><Dialog.Close asChild><button type="button" className="ws-action ws-action-ghost" aria-label="Fechar ajuste da área da foto"><X aria-hidden /></button></Dialog.Close></header><Dialog.Description className="sr-only">Ajuste a área da foto arrastando o retângulo ou suas alças.</Dialog.Description>{referenceOpen && <div className="ws-studio-reference">{artwork ? <><fieldset className="ws-studio-fields" disabled={busy}><div className="ws-studio-reference-stage" style={{ '--artwork-ratio': artwork.width / artwork.height } as React.CSSProperties}><ReferenceCanvas key={artwork.id} artwork={artwork} assetURL={assetURL(artwork.file)} onChange={updateReference} /></div></fieldset></> : <EmptyState title="Selecione uma arte" description="A área da foto será definida aqui, separada da prévia do participante." />}</div>}<footer className="ws-studio-dialog-footer"><Dialog.Close asChild><button type="button" className="ws-action ws-action-primary">Concluir ajuste</button></Dialog.Close></footer></Dialog.Content></Dialog.Portal></Dialog.Root>
       </div><motion.aside id={`studio-preview-${campaignId}`} className="ws-studio-preview" aria-label="Prévia da campanha" initial={false} animate={{ opacity: 1 }} transition={{ duration: reducedMotion ? 0 : 0.18 }}>
         <div className="ws-studio-preview-bar"><Action variant="ghost" className="ws-studio-toggle-preview" aria-expanded={!previewCollapsed} aria-controls={`studio-preview-content-${campaignId}`} onClick={() => setPreviewCollapsed(value => !value)}>{previewCollapsed ? <PanelRightOpen aria-hidden /> : <PanelRightClose aria-hidden />}{previewCollapsed ? 'Mostrar prévia' : 'Ocultar prévia'}</Action></div>
         <div id={`studio-preview-content-${campaignId}`} className="ws-studio-preview-content" hidden={previewCollapsed}>
@@ -351,6 +379,22 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
       </motion.aside>
     </div>
 
+    <AlertDialog open={discardScope !== null} onOpenChange={open => { if (!open) setDiscardScope(null); }}>
+      <AlertDialogContent onOpenAutoFocus={e => { e.preventDefault(); discardCancel.current?.focus(); }} onCloseAutoFocus={e => {
+        e.preventDefault();
+        const trigger = discardTrigger.current;
+        const target = trigger?.isConnected && !trigger.disabled ? trigger : saveButtons.current[discardOriginScope.current];
+        if (target?.isConnected && !target.disabled && !target.closest('[hidden]')) target.focus();
+        else studioRoot.current?.focus();
+      }}>
+        <header><AlertDialogTitle>Descartar edições de {discardScope ? scopeLabels[discardScope] : ''}?</AlertDialogTitle>
+        <AlertDialogDescription>Somente as edições não salvas desta aba serão descartadas. As outras abas e a versão salva permanecerão intactas.</AlertDialogDescription></header>
+        <footer>
+          <AlertDialogCancel ref={discardCancel} className="ws-action ws-action-secondary">Cancelar</AlertDialogCancel>
+          <AlertDialogAction className="ws-action ws-action-primary" disabled={busy || conflict || !!recovery || !discardScope || !sectionDirty(discardScope)} onClick={() => { if (discardScope) discard(discardScope); }}>Descartar edições</AlertDialogAction>
+        </footer>
+      </AlertDialogContent>
+    </AlertDialog>
     <StudioCleanup campaignId={campaignId} disabled={busy || dirty || !!recovery} />
   </Workspace></div></section>;
 }

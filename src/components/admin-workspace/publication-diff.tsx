@@ -8,7 +8,7 @@ import { Field } from './primitives';
 import { SelectField } from './form-controls';
 
 export type PublicationDiffVersion = { version: number; config: EventConfig; publishedBy: string; deliveredAt: string };
-export type PublicationDiffProps = { campaignId: string; versions: PublicationDiffVersion[]; draft: EventConfig };
+export type PublicationDiffProps = { campaignId: string; versions: PublicationDiffVersion[]; draft: EventConfig; currentVersion?: number };
 const labels: Record<PublicationField, string> = { slug: 'Endereço', name: 'Nome', endsAt: 'Encerramento', demo: 'Demonstração', color: 'Cor do manifesto', 'theme.background': 'Fundo', 'theme.surface': 'Painéis', 'theme.accent': 'Destaque', 'theme.text': 'Texto' };
 function date(value: string) {
   const parsed = new Date(value);
@@ -55,10 +55,10 @@ function Materials({ title, changes, campaignId, id }: { title: string; changes:
   </ul></section>;
 }
 
-export function PublicationDiff({ campaignId, versions, draft }: PublicationDiffProps) {
+export function PublicationDiff({ campaignId, versions, draft, currentVersion }: PublicationDiffProps) {
   const id = useId();
   const ordered = [...versions].sort((a, b) => b.version - a.version);
-  const [origin, setOrigin] = useState(String(ordered[0]?.version ?? ''));
+  const [origin, setOrigin] = useState(String(currentVersion ?? ordered[0]?.version ?? ''));
   const [destination, setDestination] = useState('draft');
   const before = ordered.find(item => String(item.version) === origin) ?? ordered[0];
   const after = destination === 'draft' ? undefined : ordered.find(item => String(item.version) === destination);

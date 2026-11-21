@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+test('ações de versões separam público e rascunho com confirmação e proteção local', () => {
+  const ui = readFileSync('src/components/admin-workspace/publication-versions.tsx', 'utf8');
+  assert.match(ui, /<details className="ws-publication-history">/);
+  assert.match(ui, /Versões publicadas/);
+  assert.match(ui, /Não cria uma nova versão nem altera o rascunho/);
+  assert.match(ui, /O link público não muda/);
+  assert.match(ui, /Publicar esta versão/);
+  assert.match(ui, /Restaurar no rascunho/);
+  assert.match(ui, /useCampaignAnyPending/);
+  assert.match(ui, /blocked = busy \|\| dirty \|\| !target/);
+  assert.match(ui, /Number\(selected\) === version/);
+  assert.match(ui, /O rascunho e a suspensão não serão alterados/);
+  assert.match(ui, /A página pública, cliente, observações, cobranças e suspensão não serão alterados/);
+  assert.match(ui, /authorized\.current = true; form\.current\?\.requestSubmit\(\)/);
+  assert.match(ui, /if \(blocked \|\| !authorized\.current\) event\.preventDefault\(\)/);
+  assert.match(ui, /origin\.current\?\.focus\(\)/);
+  assert.match(ui, /state\.restored\) window\.location\.reload\(\)/);
+  assert.doesNotMatch(ui, /window\.(confirm|alert|prompt)/);
+  const publication = readFileSync('src/components/admin-workspace/publication.tsx', 'utf8');
+  assert.match(publication, /<PublicationDiff key=\{`diff:/);
+  assert.match(publication, /<PublicationVersions key=\{`versions:/);
+  const actions = readFileSync('src/app/(workspace)/campanhas/[id]/publication-actions.ts', 'utf8');
+  const action = actions.slice(actions.indexOf('export async function useHistoricalVersion'), actions.indexOf('export type AccessState'));
+  assert.match(action, /await requireAdmin\(\)/);
+  assert.match(action, /form\.getAll\(key\)/);
+  assert.match(action, /single\('confirm'\) !== 'yes'/);
+  assert.match(action, /restorePublishedDraft\(id, revision, updatedAt, version, targetVersion\)/);
+  assert.match(action, /publishHistoricalVersion\(id, revision, session\.user\.id, updatedAt, version, targetVersion\)/);
+});

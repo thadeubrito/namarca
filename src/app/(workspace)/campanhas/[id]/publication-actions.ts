@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/admin';
-import { publishCampaign, setCampaignSuspended } from '@/lib/campaign-publication';
+import { publishCampaign, publishHistoricalVersion, setCampaignSuspended } from '@/lib/campaign-publication';
 import { restorePublishedDraft } from '@/lib/publication-restore';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
@@ -25,6 +25,27 @@ export async function discardUnpublishedChanges(id: string, _previous: DiscardSt
   } catch (error) {
     revalidatePath(`/campanhas/${id}`);
     return { error: error instanceof CampaignEditorError ? error.message : 'Não foi possível descartar as alterações. Recarregue e tente novamente.' };
+  }
+}
+
+export type VersionState = { error?: string; restored?: boolean; success?: string };
+export async function useHistoricalVersion(id: string, _previous: VersionState, form: FormData): Promise<VersionState> {
+  const session = await requireAdmin();
+  try {
+    requireUuid(id);
+    const single = (key: string) => { const values = form.getAll(key); return values.length === 1 && typeof values[0] === 'string' ? values[0] : undefined; };
+    const operation = single('operation'), updatedAt = single('updatedAt');
+    const numbers = ['revision', 'version', 'targetVersion'].map(key => single(key));
+    if (single('confirm') !== 'yes' || !['publish', 'restore'].includes(operation ?? '') || numbers.some(value => !value || !/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) > 2147483647) || !updatedAt || !Number.isFinite(Date.parse(updatedAt)) || new Date(updatedAt).toISOString() !== updatedAt) return { error: 'Recarregue a campanha e confirme a ação sobre a versão.' };
+    const [revision, version, targetVersion] = numbers.map(Number);
+    if (operation === 'restore') await restorePublishedDraft(id, revision, updatedAt, version, targetVersion);
+    else await publishHistoricalVersion(id, revision, session.user.id, updatedAt, version, targetVersion);
+    revalidatePath('/');
+    revalidatePath(`/campanhas/${id}`);
+    return operation === 'restore' ? { restored: true } : { success: `Versão ${targetVersion} publicada. O rascunho não foi alterado.` };
+  } catch (error) {
+    revalidatePath(`/campanhas/${id}`);
+    return { error: error instanceof CampaignEditorError ? error.message : 'Não foi possível aplicar esta versão. Recarregue e tente novamente.' };
   }
 }
 

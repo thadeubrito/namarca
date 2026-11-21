@@ -19,7 +19,7 @@
 .ui-scope .ws-action-danger { background:transparent; border-color:color-mix(in srgb,var(--error) 30%,var(--line)); color:var(--error); }
 .ui-scope .ws-action-danger:hover { background:color-mix(in srgb,var(--error) 8%,var(--background)); }
 .ui-scope .ws-action:focus-visible,.ui-scope .ws-input:focus-visible,.ui-scope .workspace select:focus-visible { outline:2px solid var(--ring);outline-offset:2px; }
-.ui-scope .ws-action:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+.ui-scope .ws-action:disabled,.ui-scope .ws-action[aria-disabled=true] { opacity:.45; cursor:not-allowed; transform:none; }
 .ui-scope .ws-field { display:flex; flex-direction:column; gap:8px; font-size:13px; font-weight:500; min-width:0; }
 .ui-scope .ws-field small { font-size:12px; font-weight:400; line-height:1.6; color:var(--muted); }
 .ui-scope .ws-input,.ui-scope .workspace select { width:100%; min-width:0; min-height:40px; height:40px; padding:9px 12px; border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--control-surface); color:var(--foreground); font:inherit; font-size:14px; line-height:1.5; box-shadow:none; }
@@ -274,13 +274,43 @@
 .ws-publication,.ws-publication-form { display:grid; gap:16px; }
 .ws-publication-top { display:flex;align-items:flex-start;justify-content:space-between;gap:16px; }
 .ws-publication-heading { display:grid;gap:8px;padding-bottom:8px;min-width:0; }
-.ui-scope .ws-publication-more { flex-shrink:0;min-width:44px;height:44px;min-height:44px;padding:0 14px;gap:8px;font-size:13px; }
-.ws-publication-menu-separator { height:1px;margin:6px;background:var(--line); }
 .ws-share-menu [role=menuitem][data-disabled] { opacity:.45;cursor:default; }
 .ws-publication .ws-publication-heading h2 { margin:0;color:var(--foreground);font-size:32px;font-weight:500;line-height:1.1;letter-spacing:-.32px;font-variant-numeric:tabular-nums; }
 .ws-publication-heading p { margin:0;color:var(--muted);font-size:13px;line-height:1.5; }
 @media(max-width:600px) { .ws-publication .ws-publication-heading h2 { font-size:28px;letter-spacing:-.28px; } }
-.ws-publication-form > .ws-action { justify-self:start; }
+.ws-publication-live-actions { margin-top:auto; }
+.ws-publication-draft-actions { display:flex;flex-wrap:wrap;gap:8px; }
+.ui-scope .ws-publication-draft-actions > .ws-action,.ui-scope .ws-publication-live-actions > .ws-action { max-width:100%;white-space:normal;text-align:center; }
+@media(max-width:600px) { .ws-publication-draft-actions { flex-direction:column; }.ui-scope .ws-publication-draft-actions > .ws-action,.ui-scope .ws-publication-live-actions > .ws-action { width:100%; } }
+.ws-publication-overview { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:1px solid var(--line);border-radius:20px;overflow:hidden; }
+.ws-publication-live,.ws-publication-draft { display:flex;flex-direction:column;align-items:stretch;gap:16px;min-width:0;padding:24px; }
+.ws-publication-draft { background:var(--muted-surface);border-left:1px solid var(--line); }
+.ws-publication-overview .ws-publication-heading { padding:0; }
+.ws-publication-overview .ws-publication-caption { margin:0; }
+.ws-publication-overview .ws-publication-form { margin-top:auto; }
+.ws-publication-heading .ws-publication-label { font-size:13px;font-weight:500;color:var(--muted); }
+.ws-publication-history { min-width:0;border-top:1px solid var(--line); }
+.ws-publication-history > summary { display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:72px;padding:20px 0;cursor:pointer;list-style:none; }
+.ws-publication-history > summary::-webkit-details-marker { display:none; }
+.ws-publication-history > summary strong { display:block;font-size:16px;font-weight:500; }
+.ws-publication-history > summary small { display:block;margin-top:4px;color:var(--muted);font-size:13px; }
+.ws-publication-history > summary:focus-visible { outline:2px solid var(--ring);outline-offset:2px;border-radius:12px; }
+.ws-publication-history-count { display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px; }
+.ws-publication-history-count::after { content:'+';font-size:22px; }
+.ws-publication-history[open] .ws-publication-history-count::after { content:'−'; }
+.ws-publication-versions { display:grid;gap:16px;min-width:0;padding:20px;background:var(--muted-surface);border-radius:20px; }
+.ws-publication-version-selection { display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0; }
+.ws-publication-version-selection h3 { margin:0;font-size:20px;font-weight:500; }
+.ws-publication-version-selection fieldset { margin:0;padding:0;border:0;min-width:0;width:min(100%,320px); }
+.ws-publication-versions .ws-publication-caption { margin:0;overflow-wrap:anywhere; }
+.ws-publication-version-actions { display:grid;gap:20px; }
+.ws-publication-version-operation { display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:20px;border-top:1px solid var(--line); }
+.ws-publication-version-operation h4 { margin:0 0 6px;font-size:14px;font-weight:500; }
+.ws-publication-version-operation p { margin:0;max-width:480px;color:var(--muted);font-size:13px;line-height:1.5; }
+.ui-scope .ws-publication-version-operation .ws-action { flex-shrink:0;max-width:100%;white-space:normal; }
+@media(max-width:900px) { .ws-publication-overview { grid-template-columns:1fr; }.ws-publication-draft { border-left:0;border-top:1px solid var(--line); }.ws-publication-version-operation { align-items:stretch;flex-direction:column;gap:12px; } }
+@media(max-width:600px) { .ws-publication-live,.ws-publication-draft { padding:20px; } }
+@media(max-width:600px) { .ws-publication-versions { padding:16px; }.ws-publication-version-selection { align-items:stretch;flex-direction:column; }.ws-publication-version-selection fieldset { width:100%; }.ws-publication-version-actions { flex-direction:column; }.ws-publication-version-actions .ws-action { width:100%; } }
 .ws-publication-confirm { display:flex; align-items:center; gap:12px; min-height:44px; cursor:pointer; }
 .ws-publication-confirm input { flex-shrink:0; }
 

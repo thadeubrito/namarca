@@ -24,7 +24,7 @@ async function main() {
   const Bucket = process.env.S3_BUCKET!;
   const { db, pool } = await import('../src/db');
   const s = await import('../src/db/schema');
-  const { publishCampaign, setCampaignSuspended } = await import('../src/lib/campaign-publication');
+  const { publishCampaign, publishHistoricalVersion, setCampaignSuspended } = await import('../src/lib/campaign-publication');
   const { CampaignEditorError, defaultCampaignEvent } = await import('../src/lib/campaign-editor');
   const { putPrivateObject, putPublicObject } = await import('../src/lib/storage');
   const { publicationArtifacts } = await import('../src/lib/publication-artifacts');
@@ -311,6 +311,80 @@ async function main() {
     assert.deepEqual(await financialState(), restoreFinancial);
     assert.deepEqual(await Promise.all([...keys].map(async key => { try { return [key, (await object(key)).bytes.toString('base64')]; } catch { return [key, null]; } })), storageBefore);
     await assert.rejects(() => restorePublishedDraft(restoreId, 7, restoreBefore.updatedAt.toISOString(), restorePublication.version), CampaignEditorError);
+    // Historical operations are independent: public rollback never adopts draft;
+    // draft restore never moves the public pointer. Reuse the isolated v2 fixture.
+    const historicalId = failureId;
+    const historicalCampaign = async () => (await db.select().from(s.campaigns).where(eq(s.campaigns.id, historicalId)))[0];
+    const historicalEditor = async () => (await db.select().from(s.campaignEditor).where(eq(s.campaignEditor.campaignId, historicalId)))[0];
+    const historicalCurrent = async () => (await db.select().from(s.campaignPublications).where(eq(s.campaignPublications.campaignId, historicalId)))[0];
+    const historicalRows = async () => db.select().from(s.campaignPublicationHistory).where(eq(s.campaignPublicationHistory.campaignId, historicalId));
+    const rollback = async (target = 1) => publishHistoricalVersion(historicalId, (await historicalEditor()).revision, 'rollback-admin', (await historicalCampaign()).updatedAt.toISOString(), (await historicalCurrent()).version, target);
+    const historicalFinancial = await financialState();
+    const draftBeforeRollback = await historicalEditor();
+    const campaignBeforeRollback = await historicalCampaign();
+    const currentBeforeRollback = await historicalCurrent();
+    const [originalV1] = await historicalRows();
+    const unchangedRollback = async () => {
+      assert.deepEqual(await historicalCurrent(), currentBeforeRollback);
+      assert.deepEqual(await historicalEditor(), draftBeforeRollback);
+      assert.deepEqual(await historicalCampaign(), campaignBeforeRollback);
+      assert.deepEqual(await historicalRows(), [originalV1]);
+    };
+    const errorStatus = (status: number) => (e: unknown) => e instanceof CampaignEditorError && e.status === status;
+    await assert.rejects(() => publishHistoricalVersion(historicalId, 7, 'admin', campaignBeforeRollback.updatedAt.toISOString(), 2, 1), errorStatus(409));
+    await assert.rejects(() => publishHistoricalVersion(historicalId, 8, 'admin', '2000-01-01T00:00:00.000Z', 2, 1), errorStatus(409));
+    await assert.rejects(() => publishHistoricalVersion(historicalId, 8, 'admin', campaignBeforeRollback.updatedAt.toISOString(), 1, 1), errorStatus(409));
+    await assert.rejects(() => rollback(999), errorStatus(404));
+    await unchangedRollback();
+    await db.update(s.campaignPublications).set({ deliveredAt: null }).where(eq(s.campaignPublications.campaignId, historicalId));
+    await assert.rejects(() => rollback(), errorStatus(409));
+    await assert.rejects(() => restorePublishedDraft(historicalId, 8, campaignBeforeRollback.updatedAt.toISOString(), 2, 1), errorStatus(409));
+    await db.update(s.campaignPublications).set({ deliveredAt: currentBeforeRollback.deliveredAt }).where(eq(s.campaignPublications.campaignId, historicalId));
+    for (const [config, status] of [
+      [{ ...originalV1.config, endsAt: '2000-01-01T00:00:00Z' }, 422],
+      [{ ...originalV1.config, slug: fixture.identity.slug }, 409],
+      [{ ...originalV1.config, artworks: [{ ...originalV1.config.artworks[0], id: fixture.asset }] }, 422],
+    ] satisfies [typeof originalV1.config, number][]) {
+      await db.update(s.campaignPublicationHistory).set({ config }).where(eq(s.campaignPublicationHistory.id, originalV1.id));
+      await assert.rejects(() => rollback(), errorStatus(status));
+    }
+    await db.update(s.campaignPublicationHistory).set({ config: originalV1.config }).where(eq(s.campaignPublicationHistory.id, originalV1.id));
+    rejectManifest = true;
+    await assert.rejects(() => rollback());
+    rejectManifest = false;
+    await unchangedRollback();
+    const rolledBack = await rollback();
+    assert.deepEqual(rolledBack, { ...currentBeforeRollback, version: 1, config: originalV1.config, editorRevision: originalV1.editorRevision, publishedBy: originalV1.publishedBy, createdAt: originalV1.authorizedAt, deliveredAt: rolledBack.deliveredAt });
+    assert.ok(rolledBack.deliveredAt && rolledBack.deliveredAt > currentBeforeRollback.deliveredAt! && rolledBack.deliveredAt > originalV1.deliveredAt, 'Historical activation has a monotonic latest-delivery timestamp');
+    assert.deepEqual(await historicalEditor(), draftBeforeRollback, 'Rollback leaves every editor field intact');
+    const campaignAfterRollback = await historicalCampaign();
+    assert.ok(campaignAfterRollback.updatedAt > campaignBeforeRollback.updatedAt);
+    assert.deepEqual(campaignAfterRollback, { ...campaignBeforeRollback, updatedAt: campaignAfterRollback.updatedAt });
+    assert.deepEqual((await historicalRows()).map(row => row.version), [2]);
+    assert.deepEqual(await (await get(`/events/${fixtures[5].identity.slug}/event.json`)).json(), { version: 1 });
+    const publicBeforeHistoricalRestore = (await object(concurrentArtifacts.manifestKey)).bytes;
+    const historyBeforeHistoricalRestore = await historicalRows();
+    await assert.rejects(() => restorePublishedDraft(historicalId, 8, campaignAfterRollback.updatedAt.toISOString(), 2, 2), errorStatus(409));
+    await assert.rejects(() => restorePublishedDraft(historicalId, 8, campaignAfterRollback.updatedAt.toISOString(), 1, 999), errorStatus(404));
+    await restorePublishedDraft(historicalId, 8, campaignAfterRollback.updatedAt.toISOString(), 1, 2);
+    assert.equal((await historicalEditor()).revision, 9);
+    assert.deepEqual((await historicalEditor()).config, concurrentConfig);
+    assert.deepEqual(await historicalCurrent(), rolledBack);
+    assert.deepEqual(await historicalRows(), historyBeforeHistoricalRestore);
+    assert.ok((await object(concurrentArtifacts.manifestKey)).bytes.equals(publicBeforeHistoricalRestore));
+    failureCampaignId = historicalId;
+    rejectManifest = true;
+    await assert.rejects(async () => publishCampaign(historicalId, 9, 'next-admin', (await historicalCampaign()).updatedAt.toISOString()));
+    const pendingHistory = await historicalRows();
+    assert.equal(pendingHistory.sort((a, b) => b.deliveredAt.getTime() - a.deliveredAt.getTime())[0].version, 1, 'Pending fallback selects last actually public version after rollback, not highest N');
+    assert.deepEqual(await (await get(`/events/${fixtures[5].identity.slug}/event.json`)).json(), { version: 1 });
+    rejectManifest = false;
+    const afterRollbackPublication = await publishCampaign(historicalId, 9, 'next-admin', (await historicalCampaign()).updatedAt.toISOString());
+    assert.equal(afterRollbackPublication.version, 3, 'Allocation uses max(current, history), not current + 1');
+    keys.add(publicationArtifacts(concurrentConfig, 3).versionKey);
+    assert.deepEqual((await historicalRows()).map(row => row.version).sort(), [1, 2]);
+    assert.deepEqual(await financialState(), historicalFinancial);
+    console.log('PASS historical: public v2→v1 preserves draft/identity/authorship; historical draft restore preserves public; next publication v3; stale/pending/unknown/scope/ownership/expiry/storage failure rejected');
     console.log('PASS restore: names/deadline/config/private filenames; monotonic timestamps/revision; stale rejected; campaign metadata/financial/publication/history/storage preserved');
     console.log('PASS publication: unpaid; v1→private save v2→public update; manifest-last; old assets retained; v3 manifest failure preserves v2; frozen retry v3; integer numbering/concurrent idempotency/history/audit/revision; immutable version JSON; legacy full manifest/release read; empty/expired/stale rejection; financial state unchanged');
     console.log('PASS access: storage failure preserves DB/pointer; stale timestamp; suspend v1→publish v2 suspended→reactivate same v2; repair retry; audit; pending blocked; expired public reactivation rejected with future draft; suspension after expiry');

@@ -25,6 +25,16 @@ test('restore uses delivered snapshot, permits expired deadline and normalizes p
   assert.deepEqual(publication, before);
 });
 
+test('historical restore validates the selected target version rather than assuming highest public number', () => {
+  const target = { ...publication, version: 1 };
+  const before = structuredClone(target);
+  const restored = resolvePublishedRestore(campaign, { revision: 8 }, target, assets, 8, campaign.updatedAt.toISOString(), 1);
+  assert.equal(restored.name, target.config.name);
+  assert.equal(restored.revision, 9);
+  assert.deepEqual(target, before);
+  assert.throws(() => resolvePublishedRestore(campaign, { revision: 8 }, target, assets, 8, campaign.updatedAt.toISOString(), 3), /mudou/);
+});
+
 test('restore rejects pending, missing publication/editor, stale revision/details/version and overflow', () => {
   assert.throws(() => run({ ...publication, deliveredAt: null! }), /Conclua/);
   assert.throws(() => run(publication, 7), /mudou/);

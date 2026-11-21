@@ -7,6 +7,7 @@ import { Action, ActionLink, Field, Notice, TextArea, TextInput } from './primit
 import { useFormDraft } from './form-draft';
 import { DatePickerField, SelectField } from './form-controls';
 import { SaveStatus } from './save-status';
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 
 const draftFields = ['name', 'slug', 'endsAt', 'clientId', 'clientName', 'clientContact', 'notes'] as const;
 
@@ -33,9 +34,12 @@ export function CampaignDataForm({ defaults, clients = [], save = createCampaign
   const [state, action, pending] = useActionState(save, {});
   const [clientId, setClientId] = useState(defaults?.clientId ?? '');
   const [endsAt, setEndsAt] = useState(defaults?.endsAt ?? '');
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const saveButton = useRef<HTMLButtonElement>(null);
+  const discardButton = useRef<HTMLButtonElement>(null);
   const reducedMotion = useReducedMotion();
   const selected = clients.find(client => client.id === clientId);
-  const { formRef, feedback, dirty, markSaved } = useFormDraft({
+  const { formRef, feedback, dirty, markSaved, discardEdits } = useFormDraft({
     draftKey, section: 'dados', fields: draftFields, submitting: pending,
     onRecover: values => { setClientId(values.clientId ?? ''); setEndsAt(values.endsAt ?? ''); },
     resolveStoredValues: values => {
@@ -95,7 +99,13 @@ export function CampaignDataForm({ defaults, clients = [], save = createCampaign
     <footer className="ws-campaign-form-footer">
       {feedback}
       {state.error && <Notice tone="error" role="alert" className="ws-campaign-form-error">{state.error}</Notice>}
-      <div className="ws-campaign-form-actions"><SaveStatus dirty={dirty} saving={pending} successToken={state.saved?.token} /><ActionLink href="/" variant="ghost">Cancelar</ActionLink><Action type="submit" disabled={pending}>{pending ? 'Salvando…' : defaults ? 'Salvar detalhes' : 'Salvar rascunho'}</Action></div>
+      <div className="ws-campaign-form-actions"><SaveStatus dirty={dirty} saving={pending} successToken={state.saved?.token} /><ActionLink href="/" variant="ghost">Cancelar</ActionLink>{dirty && <Action ref={discardButton} variant="ghost" disabled={pending} onClick={() => setConfirmDiscard(true)}>Descartar edições</Action>}<Action ref={saveButton} type="submit" disabled={pending}>{pending ? 'Salvando…' : defaults ? 'Salvar detalhes' : 'Salvar rascunho'}</Action></div>
     </footer>
+    <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+      <AlertDialogContent onCloseAutoFocus={event => { event.preventDefault(); (discardButton.current ?? saveButton.current)?.focus(); }}>
+        <header><AlertDialogTitle>Descartar edições de Detalhes?</AlertDialogTitle><AlertDialogDescription>Os campos voltarão ao último conteúdo salvo no administrativo. Outras abas e a página pública não serão alteradas.</AlertDialogDescription></header>
+        <footer><AlertDialogCancel asChild><button type="button" className="ws-action ws-action-secondary">Cancelar</button></AlertDialogCancel><AlertDialogAction asChild><button type="button" className="ws-action ws-action-primary" disabled={pending} onClick={() => { if (!pending) discardEdits(); }}>Descartar edições</button></AlertDialogAction></footer>
+      </AlertDialogContent>
+    </AlertDialog>
   </form>;
 }

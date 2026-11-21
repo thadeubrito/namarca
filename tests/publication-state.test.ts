@@ -25,5 +25,5 @@ test('primeira publicação usa diálogo explícito e servidor verifica confirma
   assert.match(ui, /Ainda não publicada/);
   assert.match(action, /!existing && form\.get\('confirm'\)/);
   assert.match(ui, /Alterações não publicadas/);
-  assert.match(ui, /Publicação atualizada/);
+  assert.match(ui, /Publicada atualmente/);
 });

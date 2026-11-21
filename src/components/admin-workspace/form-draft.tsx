@@ -162,7 +162,19 @@ export function useFormDraft({ draftKey, section, fields, submitting = false, on
     setDirty(false); setRecovery(null); setSavedLocally(false);
     remove(); report(section, false);
   }, [remove, report, section]);
-  return { formRef, dirty, markSaved, saveLocal: () => persist(true), feedback: <>
+  const discardEdits = () => {
+    if (submittingRef.current || recoveringRef.current) return;
+    const values = { ...baseline.current };
+    flushSync(() => { onRecover?.(values); });
+    for (const field of fields) {
+      const control = formRef.current?.elements.namedItem(field);
+      if (control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement || control instanceof HTMLSelectElement) control.value = values[field] ?? '';
+    }
+    dirtyRef.current = false;
+    setDirty(false); setRecovery(null); setSavedLocally(false);
+    remove(); report(section, false);
+  };
+  return { formRef, dirty, markSaved, discardEdits, saveLocal: () => persist(true), feedback: <>
     {warning && <Notice tone="error" role="alert">Não foi possível acessar o armazenamento local. Continue editando, mas não conte com a recuperação após sair ou recarregar.</Notice>}
     {savedLocally && <Notice role="status">Rascunho neste navegador. Nada foi salvo no servidor nem emitido.</Notice>}
     {recovery && !registerRecovery && <FormDraftRecovery onRecover={recover} onDiscard={discard} onDone={() => formRef.current?.querySelector<HTMLElement>('input:not([type="hidden"]), select, textarea')?.focus()} />}
