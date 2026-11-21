@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { campaignSection, campaignSectionUrl } from '@/lib/campaign-section';
 import { WorkspaceTabs } from './primitives';
 import { CampaignStudio } from './studio';
 import { CampaignRecovery } from './campaign-recovery';
@@ -18,12 +20,20 @@ export const useCampaignActiveSection = () => useContext(ActiveSection);
 
 export function CampaignSections({ campaignId, editable, details, billing, billingDraft, publication }: { campaignId: string; editable: boolean; details: ReactNode; billing: ReactNode; billingDraft: boolean; publication?: ReactNode }) {
   const [publishing, setPublishing] = useState(false);
-  const [active, setActive] = useState('dados');
+  const searchParams = useSearchParams();
+  const active = campaignSection(searchParams.get('aba'), editable, !!publication);
+  const setActive = useCallback((section: string) => {
+    // Native history integrates with Next without fetching/remounting the workbench.
+    const url = campaignSectionUrl(window.location.href, section);
+    if (url !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+      window.history.pushState(null, '', url);
+    }
+  }, []);
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const report = useCallback((section: string, value: boolean) => setPending(current => current[section] === value ? current : { ...current, [section]: value }), []);
   const publicDirty = ['dados', 'artes', 'stickers', 'cores'].some(section => pending[section]);
   const studio = <CampaignStudio campaignId={campaignId} activeSection={active} onPendingChange={report} />;
-  return <PublicationLock.Provider value={setPublishing}><CampaignPending.Provider value={publicDirty}><CampaignAnyPending.Provider value={Object.values(pending).some(Boolean)}><SectionStatus.Provider value={report}><ActiveSection.Provider value={active}><CampaignRecovery expected={[...(editable ? ['dados', 'studio'] : []), ...(billingDraft ? ['cobranca'] : [])]}><div className="ws-campaign-workbench" data-section={active}><div className="ws-campaign-task" inert={publishing} aria-busy={publishing}><WorkspaceTabs label="Seções da campanha" initialId="dados" layout="workbench" activeId={active} onActiveChange={setActive} items={[
+  return <PublicationLock.Provider value={setPublishing}><CampaignPending.Provider value={publicDirty}><CampaignAnyPending.Provider value={Object.values(pending).some(Boolean)}><SectionStatus.Provider value={report}><ActiveSection.Provider value={active}><CampaignRecovery expected={[...(editable ? ['dados', 'studio'] : []), ...(billingDraft ? ['cobranca'] : [])]}><div className="ws-campaign-workbench" data-section={active}><div className="ws-campaign-task" inert={publishing} aria-busy={publishing}><WorkspaceTabs label="Seções da campanha" initialId={active} layout="workbench" activeId={active} onActiveChange={setActive} items={[
     { id: 'dados', label: 'Detalhes', pending: pending.dados, content: details },
     ...(editable ? [
       { id: 'artes', label: 'Artes', panelKey: 'visual', lazy: false, pending: pending.artes, content: studio },

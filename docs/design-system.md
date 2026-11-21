@@ -37,6 +37,10 @@ A cópia de referência permanece integral; decisões específicas da Namarca fi
 - Financeiro: resumo do recorte antes dos filtros/histórico; pagas primeiro em superfície cobalto e coluna ampliada no desktop. Filtros GET num details, recolhido sem filtros e aberto quando ativos/inválidos. Inválidos não mostram totais0 como resultado válido. Ordem do DOM corresponde à leitura visual; consultas/CSV/valores inalterados.
 - Escopo desta revisão de componentes é administrativo. Login e checkout mantêm o tratamento da rodada anterior; não afirmar reconstrução completa dessas jornadas.
 
+## Persistência da navegação da campanha
+
+A aba ativa fica no parâmetro `aba` da URL (`dados`, `artes`, `stickers`, `cores`, `cobranca`, `publicacao`). Recarregar ou abrir o link restaura a seção; ausência/valor inválido ou seção indisponível usa Detalhes. Trocas usam histórico nativo integrado ao Next, sem requisição de navegação/remontagem do workbench ou salvamento incidental; Voltar/Avançar também atualizam a seleção. Outros parâmetros e fragmento são preservados.
+
 ## Publicação local
 
 Terminologia obrigatória na interface: **Versão N**, nunca **vN**. Vale para cabeçalho, comparação, seletores, mensagens e confirmações. Nomes técnicos de arquivos/rotas (`versions/vN.json`) e contratos de dados permanecem inalterados.

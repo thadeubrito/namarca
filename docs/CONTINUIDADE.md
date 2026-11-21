@@ -1,5 +1,12 @@
 # Namarca — continuidade de implementação da V1
 
+## Campanha — aba persistida na URL (21/11/2026)
+
+Pedido fundador: atualizar Publicação não deve voltar a Detalhes. CampaignSections deriva seleção de useSearchParams `aba`, com allow-list das seções disponíveis e fallback dados. Troca via history.pushState integrado ao Next evita navegação servidor/remontagem/alterações nos rascunhos e permite Voltar/Avançar entre abas; preserva parâmetros e fragmento. WorkspaceTabs inicia visited pela seleção resolvida. Sem mudanças visuais, auth/backend/schema/migrations novas. Testes helpers cobrem seis abas, valores inválidos/indisponíveis e preservação da URL; teste estrutural antigo atualizado para initialId dinâmico.
+
+Typecheck/lint/build produção isolado e 127 testes+1skip aprovados em containers; diffcheck aprovado. Primeira suíte falhou somente na expectativa estrutural initialId=dados, adaptada ao novo contrato; build inicial tentou flag --tmpfs não suportada por compose run, execução final com volume .next anônimo aprovada. Sem novo browser autenticado/reload real: testes não equivalem E2E de navegação/rascunhos. Schema inalterado, migrations não reexecutadas. Sem commit/push/deploy/PixGo real ou alterações de contas/campanhas/volumes existentes.
+
+
 ## Edição — descartar pendências somente da aba (21/11/2026)
 
 Fundador aprovou Descartar edições junto Salvar em Detalhes/Artes/Figurinhas/Cores e renomear operação pública. Detalhes expõe discardEdits distinto recuperação: baseline último save confirmado, sincroniza cliente/data controlados+inputs, limpa só sessionStorage dados/pending, semsubmit/rede. Estúdio helperpuro discardStudioScope restaura só scope salvo (tema+colorlegado), preserva outroscampos/blobs/revisão, changeMaterials revogaURLs removidos, seleçãofallback/referência reiniciada sóartes; IDB viafila existente preserva residual e apaga somente todolimpo. Tokens/feedback só scope. Botões ghost sódirty, confirmaçãoAlertDialog Cancelarfocoinicial/Escape/cancelpreserva; aceite retornaSalvar (studioaria-disabled focável/guardsemrequest), cancel retornaacionador. Busy/recovery/conflictprotegem. Publicação agora Restaurar versão publicada em botão/dialog, distingue restauração do draftsalvo de descarte local. Sem backend/schema/migration novos ou remoção de objetos servidor.
