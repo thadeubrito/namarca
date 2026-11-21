@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, Search } from 'lucide-react';
-import { Action, EmptyState, TextInput } from './primitives';
+import { Action, TextInput } from './primitives';
 import './campaign-directory.css';
 
 type Campaign = { id: string; name: string; slug: string; preparationStatus: 'draft' | 'validated' | 'approved'; publicationStatus: 'unpublished' | 'pending' | 'published' | 'failed' | 'ended'; priceCents: number | null; endDate: string; clientName: string | null };
@@ -59,7 +59,11 @@ export function CampaignDirectory({ campaigns }: { campaigns: Campaign[] }) {
           <ArrowUpRight aria-hidden="true" size={20} />
         </Link>
       </article>)}
-    </section> : <EmptyState title={campaigns.length ? 'Nenhuma campanha nesta seleção' : 'Sua primeira campanha começa aqui'} description={campaigns.length ? 'Altere a busca ou o filtro para encontrar outro evento.' : 'Cadastre o evento e depois prepare as artes no estúdio.'} action={campaigns.length ? <Action variant="secondary" onClick={() => { setSearch(''); setFilter('all'); }}>Limpar filtros</Action> : undefined} />}
+    </section> : <div className="ws-campaign-directory-empty">
+      <h2>{campaigns.length ? 'Nenhuma campanha nesta seleção' : 'Sua primeira campanha começa aqui'}</h2>
+      <p>{campaigns.length ? 'Altere a busca ou o filtro para encontrar outro evento.' : 'Cadastre o evento e depois prepare as artes no estúdio.'}</p>
+      {campaigns.length > 0 && <Action variant="secondary" onClick={() => { setSearch(''); setFilter('all'); }}>Limpar filtros</Action>}
+    </div>}
 
     <p className="ws-campaign-directory-count" role="status">{filtered.length} de {campaigns.length} campanhas · Mais recentes primeiro</p>
   </div>;

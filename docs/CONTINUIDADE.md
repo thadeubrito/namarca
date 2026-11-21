@@ -1,5 +1,19 @@
 # Namarca — continuidade de implementação da V1
 
+## Clientes — diretório Revolut (20/11/2026)
+
+Pedido fundador: refatorar listagem segundo referência. Removido painel externo/header encaixotado/divisórias. Busca GET pill48px tonal com ações explícitas e aviso privacidade; heading20px500+contagem, linhas arredondadas com monograma circular/nome16px500/contato13px, campanhas à direita e abertura circular44px. Mobile busca própria/ações abaixo, contagem sob contato sem duplicar DOM, wrap de dados longos. Hover tonal/cobalto/foco2px/reduced-motion. CSS local ao diretório preserva ficha/monogramas compartilhados e cadastro modal no PageIntro. Sem mudanças consultas/auth/backend/schema.
+
+Typecheck/lint/94 testes/build produção isolado/diffcheck aprovados em containers. Browser focal Chromium com SSR dos componentes reais+CSS real:30 cenários (preenchido/vazio/busca sem resultado, claro/escuro1440/1024/768/390/320), zero overflow/pageerror, links/form GET, foco teclado2px/hover/empty centralizado aprovados. Evidências `/tmp/namarca-client-directory-review`, principal observou preenchido1440claro/390escuro. Fixture sem hidratação/header/modal/autenticação/consulta banco; não substitui E2E GET/cadastro, leitor tela ou celular físico. Primeira tentativa fixture sem classe workspace omitia box-sizing e acusou overflow artificial: corrigida fixture sem mudar CSS para mascarar. Schema inalterado/sem migrations novas ou reexecução histórica. App principal observado parado durante rodada; checks em containers one-off, sem reinício/alteração dos serviços existentes, contas ou volumes. Sem commit/push/publicação.
+
+## Clientes — vazio alinhado às bibliotecas e campanhas (20/11/2026)
+
+Pedido fundador: mesmo tratamento do vazio de Campanhas. ClientEmpty compartilhado pelo diretório/ficha substitui EmptyState genérico por título/descrição/ação centralizados, máximo420px/padding40px16px, sem tracejado/ícone/altura mínima. Mantidos animação com reduced-motion, mensagens por busca/cadastro, destinos de cadastro/limpar busca, busca GET e aviso de privacidade. Retirado Plus decorativo do CTA vazio. Contrato/teste estrutural adicionados. Typecheck/lint/93 testes/build produção isolado/diffcheck aprovados em containers. Sem nova validação browser/E2E, schema/migrations novas (schema inalterado), auth/commit/push/publicação.
+
+## Campanhas — vazio alinhado às bibliotecas (20/11/2026)
+
+Pedido fundador: retirar caixa tracejada dos resultados vazios como em Artes. CampaignDirectory deixa de usar EmptyState genérico: título/descrição/ação centralizados, máximo420px/padding40px16px, sem tracejado/ícone/altura mínima. Preservados textos de primeiro cadastro vs seleção sem resultados, Limpar filtros com reset de busca/filtro, criação no cabeçalho e contagem acessível. Contrato/teste estrutural adicionados. Typecheck/lint/92 testes/build produção isolado/diffcheck aprovados em containers. Sem nova validação browser/E2E, schema/migrations novas (schema inalterado), auth/commit/push/publicação.
+
 ## Campanhas — ocultar ausência de cliente (20/11/2026)
 
 Pedido fundador: listagem deixa de mostrar Sem cliente vinculado. CampaignDirectory renderiza linha do cliente apenas quando clientName existe; opções dos formulários preservadas. Typecheck em container/diffcheck aprovados; sem novos testes/build/browser/schema/migrations/commit/push/publicação nesta mudança pontual.

@@ -83,6 +83,10 @@
 .ws-campaign-detail>.ws-tabs>.ws-tabrail button { min-height:44px; }
 @media(max-width:600px) { .ws-campaign-heading { gap:10px; } .ui-scope .ws-campaign-title-row h1 { font-size:23px; } .ws-campaign-title-row { align-items:flex-start; } .ws-campaign-meta { flex-direction:column;align-items:flex-start;gap:4px; } }
 .ws-client-search { margin-bottom:24px; }
+.ws-client-empty { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:min(100%,420px);margin:0 auto;padding:40px 16px;text-align:center; }
+.ws-client-empty h3 { margin:0;font-size:1rem;font-weight:500;line-height:1.4; }
+.ws-client-empty p { margin:0;color:var(--muted);font-size:.8125rem;line-height:1.5; }
+.ws-client-empty .ws-action { margin-top:8px;max-width:100%; }
 .ws-client-monogram { display:flex; align-items:center; justify-content:center; width:48px; height:48px; flex:none; border-radius:50%; background:var(--control-secondary); color:var(--brand-text); font-size:16px; font-weight:600; letter-spacing:-.3px; }
 .dark .ws-client-monogram { background:var(--brand); color:#fff; }
 .ws-client-row:hover .ws-client-monogram { background:var(--brand); color:#fff; }

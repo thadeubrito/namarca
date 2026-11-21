@@ -1,33 +1,44 @@
 import Link from 'next/link';
-import { ArrowUpRight, Plus, Search } from 'lucide-react';
-import { Action, ActionLink, Surface, TextInput } from './primitives';
+import { ArrowUpRight, Search } from 'lucide-react';
+import { Action, ActionLink, TextInput } from './primitives';
 import { ClientEmpty, ClientEntrance } from './client-motion';
+import './client-directory.css';
 
 export function ClientMonogram({ name }: { name: string }) {
   return <span aria-hidden="true" className="ws-client-monogram">{name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toLocaleUpperCase('pt-BR')}</span>;
 }
 
 export function ClientDirectory({ rows, query }: { rows: { id: string; name: string; contact: string; campaignCount: number }[]; query: string }) {
-  return <ClientEntrance>
-      <form method="get" role="search" className="ws-client-search">
-        <label htmlFor="client-search" className="mb-2 block text-sm font-medium">Buscar por nome ou contato</label>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><TextInput id="client-search" name="q" defaultValue={query} maxLength={254} placeholder="Nome, e-mail ou WhatsApp" className="!pl-10" aria-describedby="client-search-privacy" /></div>
-          <Action type="submit" variant="secondary">Buscar</Action>
-          {query && <ActionLink href="/admin/clientes" variant="ghost">Limpar busca</ActionLink>}
-        </div>
-        <p id="client-search-privacy" className="mt-3 text-xs text-muted-foreground">A busca pode conter dados pessoais. Não compartilhe a URL.</p>
-      </form>
-    <Surface className="overflow-hidden !p-0" aria-label="Lista de clientes">
-      <div className="flex items-center justify-between ws-panel-header"><h2 className="text-sm font-medium">{query ? 'Resultados da busca' : 'Diretório de contatos'}</h2><span className="text-xs tabular-nums text-muted-foreground">{rows.length} {rows.length === 1 ? 'cliente' : 'clientes'}{query ? ' encontrados' : ''}</span></div>
-      {rows.length ? <ul className="m-0 list-none divide-y divide-border p-0">{rows.map(client => <li key={client.id}>
-        <Link href={`/admin/clientes/${client.id}`} aria-label={client.name} className="ws-client-row group flex min-w-0 items-center gap-4 ws-panel-body transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-ring">
+  return <ClientEntrance className="ws-client-directory">
+    <form method="get" role="search" className="ws-client-search">
+      <div className="ws-client-directory-toolbar">
+        <label className="ws-client-directory-search" htmlFor="client-search">
+          <span className="sr-only">Buscar por nome ou contato</span>
+          <Search size={18} aria-hidden="true" />
+          <TextInput id="client-search" name="q" defaultValue={query} maxLength={254} placeholder="Buscar nome ou contato" aria-describedby="client-search-privacy" />
+        </label>
+        <Action type="submit" variant="secondary">Buscar</Action>
+        {query && <ActionLink href="/admin/clientes" variant="ghost">Limpar busca</ActionLink>}
+      </div>
+      <p id="client-search-privacy" className="ws-client-directory-privacy">A busca pode conter dados pessoais. Não compartilhe a URL.</p>
+    </form>
+
+    <section className="ws-client-directory-results" aria-labelledby="client-directory-heading">
+      <header className="ws-client-directory-heading">
+        <h2 id="client-directory-heading">{query ? 'Resultados da busca' : 'Todos os clientes'}</h2>
+        <span>{rows.length} {rows.length === 1 ? 'cliente' : 'clientes'}{query ? ' encontrados' : ''}</span>
+      </header>
+      {rows.length ? <ul className="ws-client-directory-list">{rows.map(client => <li key={client.id}>
+        <Link href={`/admin/clientes/${client.id}`} aria-label={client.name} className="ws-client-row">
           <ClientMonogram name={client.name} />
-          <div className="min-w-0 flex-1"><h3 className="break-words text-base font-semibold [overflow-wrap:anywhere]">{client.name}</h3><p className="mt-1 break-words text-sm text-muted-foreground [overflow-wrap:anywhere]">{client.contact || 'Não informado'}</p><p className="mt-2 text-xs text-muted-foreground sm:hidden">{client.campaignCount} {client.campaignCount === 1 ? 'campanha' : 'campanhas'}</p></div>
-          <span className="hidden shrink-0 text-sm tabular-nums text-muted-foreground sm:block">{client.campaignCount} {client.campaignCount === 1 ? 'campanha' : 'campanhas'}</span>
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-md transition-colors group-hover:bg-accent"><ArrowUpRight className="size-4 motion-safe:transition-transform motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:translate-x-0.5" aria-hidden="true" /></span>
+          <div className="ws-client-directory-identity">
+            <h3>{client.name}</h3>
+            <p>{client.contact || 'Contato não informado'}</p>
+          </div>
+          <span className="ws-client-directory-campaigns">{client.campaignCount} {client.campaignCount === 1 ? 'campanha' : 'campanhas'}</span>
+          <span className="ws-client-directory-open"><ArrowUpRight size={20} aria-hidden="true" /></span>
         </Link>
-      </li>)}</ul> : <ClientEmpty title={query ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.'} description={query ? 'Tente outro nome ou contato.' : 'Cadastre o primeiro contato para vincular às suas campanhas.'} action={<ActionLink href={query ? '/admin/clientes' : '/admin/clientes/novo'} variant="secondary">{!query && <Plus className="size-4" aria-hidden="true" />}{query ? 'Limpar busca' : 'Cadastrar primeiro cliente'}</ActionLink>} />}
-    </Surface>
+      </li>)}</ul> : <ClientEmpty title={query ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.'} description={query ? 'Tente outro nome ou contato.' : 'Cadastre o primeiro contato para vincular às suas campanhas.'} action={<ActionLink href={query ? '/admin/clientes' : '/admin/clientes/novo'} variant="secondary">{query ? 'Limpar busca' : 'Cadastrar primeiro cliente'}</ActionLink>} />}
+    </section>
   </ClientEntrance>;
 }
