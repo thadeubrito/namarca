@@ -24,6 +24,8 @@ export const campaigns = pgTable("campaigns", {
   endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
   preparationStatus: preparationStatus("preparation_status").default("draft").notNull(),
   publicationStatus: publicationStatus("publication_status").default("unpublished").notNull(),
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  suspendedBy: text("suspended_by"),
   priceCents: integer("price_cents"),
   clientId: uuid("client_id").references(() => clients.id, { onDelete: "restrict" }),
   // Legacy fields retained to preserve original data; active UI uses clientId.

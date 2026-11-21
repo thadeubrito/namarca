@@ -2,8 +2,10 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { campaigns, campaignEditor, campaignAssets, campaignPublications, campaignPublicationHistory } from '@/db/schema';
 import { assertEditable, CampaignEditorError, requireUuid, validateCampaignEvent, validatePng } from './campaign-editor';
-import { getPrivateObject, putPublicObject } from './storage';
+import { getPrivateObject, putPublicObject, publicObjectExists } from './storage';
+import { deliverPublicationAccess } from './publication-access-delivery';
 import { publicationArtifacts } from './publication-artifacts';
+import { publicationPointer, validatePublicationAccess } from './publication-access';
 import { parseEvent, type EventConfig } from '@namarca/editor/events';
 
 export function publicationEvent(input: unknown, campaign: { name: string; slug: string; endsAt: Date }, assets: Parameters<typeof validateCampaignEvent>[2], now = new Date()): EventConfig {
@@ -52,7 +54,8 @@ export async function publishCampaign(id: string, revision: number, actor: strin
     return record;
   });
   return db.transaction(async tx => {
-    await tx.select({ id: campaigns.id }).from(campaigns).where(eq(campaigns.id, id)).for('update');
+    const [campaign] = await tx.select().from(campaigns).where(eq(campaigns.id, id)).for('update');
+    if (!campaign) throw new CampaignEditorError(404, 'Campanha não encontrada.');
     const [current] = await tx.select().from(campaignPublications).where(eq(campaignPublications.campaignId, id));
     if (!current || current.version !== frozen.version || current.createdAt.getTime() !== frozen.createdAt.getTime()) throw new CampaignEditorError(409, 'A publicação mudou. Recarregue antes de continuar.');
     if (current.deliveredAt) return current;
@@ -68,8 +71,29 @@ export async function publishCampaign(id: string, revision: number, actor: strin
     // S3 and DB are not atomic. A failed final PUT leaves the previous public JSON
     // intact and this pending snapshot can be retried without reading the draft.
     await putPublicObject(artifacts.versionKey, Buffer.from(JSON.stringify(artifacts.event)), 'application/json');
-    await putPublicObject(artifacts.manifestKey, Buffer.from(JSON.stringify({ version: current.version })), 'application/json');
+    await putPublicObject(artifacts.manifestKey, Buffer.from(JSON.stringify(publicationPointer(current.version, campaign.suspendedAt !== null))), 'application/json');
     const [delivered] = await tx.update(campaignPublications).set({ config: artifacts.event, deliveredAt: new Date() }).where(eq(campaignPublications.campaignId, id)).returning();
     return delivered;
+  });
+}
+
+export async function setCampaignSuspended(id: string, suspended: boolean, actor: string, expectedUpdatedAt: string) {
+  requireUuid(id);
+  return db.transaction(async tx => {
+    const [campaign] = await tx.select().from(campaigns).where(eq(campaigns.id, id)).for('update');
+    if (!campaign) throw new CampaignEditorError(404, 'Campanha não encontrada.');
+    const [publication] = await tx.select().from(campaignPublications).where(eq(campaignPublications.campaignId, id));
+    validatePublicationAccess(campaign, publication, suspended, actor, expectedUpdatedAt);
+    // Storage first, DB second: failed PUT/commit retains the prior DB state.
+    // An explicit retry rewrites the same pointer, repairing a lost DB commit.
+    // Never skip the PUT even when the requested state already matches the DB.
+    await deliverPublicationAccess(publication, suspended, { exists: publicObjectExists, put: putPublicObject });
+    const now = new Date(Math.max(Date.now(), campaign.updatedAt.getTime() + 1));
+    const [updated] = await tx.update(campaigns).set({
+      suspendedAt: suspended ? campaign.suspendedAt ?? now : null,
+      suspendedBy: actor,
+      updatedAt: now,
+    }).where(eq(campaigns.id, id)).returning();
+    return updated;
   });
 }

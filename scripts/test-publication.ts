@@ -24,7 +24,7 @@ async function main() {
   const Bucket = process.env.S3_BUCKET!;
   const { db, pool } = await import('../src/db');
   const s = await import('../src/db/schema');
-  const { publishCampaign } = await import('../src/lib/campaign-publication');
+  const { publishCampaign, setCampaignSuspended } = await import('../src/lib/campaign-publication');
   const { CampaignEditorError, defaultCampaignEvent } = await import('../src/lib/campaign-editor');
   const { putPrivateObject, putPublicObject } = await import('../src/lib/storage');
   const { publicationArtifacts } = await import('../src/lib/publication-artifacts');
@@ -134,25 +134,56 @@ async function main() {
       assert.match(material.file, /^(artworks|stickers)\/[a-f0-9-]{36}\.png$/);
       const result = await object(`public/events/${fixture.identity.slug}/${material.file}`); assert.equal(result.type, 'image/png'); assert.ok(result.bytes.equals(bytes));
     }
+    // Availability is independent from publication; storage failure leaves DB intact.
+    const campaignState = async () => (await db.select().from(s.campaigns).where(eq(s.campaigns.id, publishedId)))[0];
+    const access = async (suspended: boolean, actor = 'access-fixture-admin') => setCampaignSuspended(publishedId, suspended, actor, (await campaignState()).updatedAt.toISOString());
+    await assert.rejects(() => setCampaignSuspended(publishedId, true, 'stale-admin', new Date(prior.updatedAt.getTime() - 1).toISOString()), (e: unknown) => e instanceof CampaignEditorError && e.status === 409);
+    rejectManifest = true;
+    const beforeAccessFailure = await campaignState();
+    await assert.rejects(() => access(true));
+    assert.deepEqual(await campaignState(), beforeAccessFailure);
+    assert.deepEqual(JSON.parse((await object(fixture.artifacts.manifestKey)).bytes.toString()), { version: 1 });
+    rejectManifest = false;
+    await access(true);
+    const suspendedV1 = await campaignState();
+    assert.ok(suspendedV1.suspendedAt); assert.equal(suspendedV1.suspendedBy, 'access-fixture-admin');
+    assert.equal(suspendedV1.publicationStatus, 'published'); assert.ok(suspendedV1.updatedAt > beforeAccessFailure.updatedAt);
+    assert.deepEqual(JSON.parse((await object(fixture.artifacts.manifestKey)).bytes.toString()), { version: 1, suspended: true });
+    // Repeating the intention always repairs the pointer, even if DB already matches.
+    await putPublicObject(fixture.artifacts.manifestKey, Buffer.from(JSON.stringify({ version: 1 })), 'application/json');
+    await access(true, 'repair-fixture-admin');
+    assert.deepEqual((await campaignState()).suspendedAt, suspendedV1.suspendedAt);
+    assert.deepEqual(JSON.parse((await object(fixture.artifacts.manifestKey)).bytes.toString()), { version: 1, suspended: true });
     // Simulate editor saves directly: private v2 cannot replace delivered v1 by itself.
     const configV2 = { ...fixture.config, artworks: [{ ...fixture.config.artworks[0], name: 'Artwork v2', reference: { x: 0, y: 0, width: 1, height: 2 } }], stickers: [] };
     const artifactsV2 = publicationArtifacts(configV2, 2);
     keys.add(artifactsV2.manifestKey); keys.add(artifactsV2.versionKey);
     for (const material of [...configV2.artworks, ...configV2.stickers]) keys.add(artifactsV2.assetKey(material.id));
     await db.update(s.campaignEditor).set({ revision: 8, config: configV2 }).where(eq(s.campaignEditor.campaignId, publishedId));
-    assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 1 });
+    assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 1, suspended: true });
     inspectManifestKey = fixture.artifacts.manifestKey;
     beforeManifestWrites.length = 0; writes.length = 0;
     const updated = await publishCampaign(publishedId, 8, 'update-fixture-admin');
     assert.equal(updated.editorRevision, 8); assert.equal(updated.publishedBy, 'update-fixture-admin'); assert.ok(updated.deliveredAt);
     assert.deepEqual(updated.config, artifactsV2.event);
     assert.equal(updated.version, 2);
-    assert.deepEqual(beforeManifestWrites, [{ version: 1 }], 'Public v1 survives until final pointer PUT');
+    assert.deepEqual(beforeManifestWrites, [{ version: 1, suspended: true }], 'Suspended v1 survives until final pointer PUT');
     assert.ok((await object(fixture.artifacts.versionKey)).bytes.equals(versionV1.bytes), 'v1 JSON remains immutable');
     const versionV2 = await object(artifactsV2.versionKey);
     assert.deepEqual(JSON.parse(versionV2.bytes.toString()), updated.config);
     assert.ok(writes.at(-1)?.endsWith('/event.json')); assert.ok(writes.at(-2)?.endsWith('/versions/v2.json'));
+    assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 2, suspended: true });
+    assert.deepEqual((await campaignState()).suspendedAt, suspendedV1.suspendedAt);
+    const beforeReactivation = await campaignState();
+    rejectManifest = true;
+    await assert.rejects(() => access(false));
+    assert.deepEqual(await campaignState(), beforeReactivation);
+    rejectManifest = false;
+    await access(false, 'reactivate-fixture-admin');
+    assert.equal((await campaignState()).suspendedAt, null);
+    assert.equal((await campaignState()).suspendedBy, 'reactivate-fixture-admin');
     assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 2 });
+    assert.deepEqual((await db.select().from(s.campaignPublications).where(eq(s.campaignPublications.campaignId, publishedId)))[0], updated, 'Access never creates or changes versions');
     writes.length = 0;
     assert.deepEqual(await publishCampaign(publishedId, 8, 'other-fixture-admin'), updated);
     assert.equal(writes.length, 0, 'Same delivered config/revision is idempotent');
@@ -172,6 +203,9 @@ async function main() {
     assert.equal(pendingV3.editorRevision, 9); assert.equal(pendingV3.deliveredAt, null); assert.deepEqual(pendingV3.config, artifactsV3.event);
     assert.ok(beforeManifestWrites.length > 0); for (const value of beforeManifestWrites) assert.deepEqual(value, { version: 2 });
     assert.equal(pendingV3.version, 3);
+    const beforePendingAccess = await campaignState();
+    await assert.rejects(() => access(true), (e: unknown) => e instanceof CampaignEditorError && e.status === 409);
+    assert.deepEqual(await campaignState(), beforePendingAccess);
     assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 2 }, 'Failed v3 leaves public v2 intact');
     const pendingVersionBytes = (await object(artifactsV3.versionKey)).bytes;
     // Even an externally changed draft cannot replace the pending frozen delivery.
@@ -191,6 +225,16 @@ async function main() {
     assert.deepEqual(history.find(row => row.editorRevision === 8)?.config, updated.config);
     assert.deepEqual(history.find(row => row.editorRevision === 7)?.authorizedAt, published.createdAt, 'v1 authorization timestamp retained');
     assert.deepEqual(history.find(row => row.editorRevision === 8)?.authorizedAt, updated.createdAt, 'v2 authorization timestamp retained');
+    // Reactivation checks delivered snapshot expiry, not the future private draft.
+    await access(true);
+    await db.update(s.campaignPublications).set({ config: { ...deliveredV3.config, endsAt: '2000-01-01T00:00:00Z' } }).where(eq(s.campaignPublications.campaignId, publishedId));
+    const expiredAccessState = await campaignState();
+    await assert.rejects(() => access(false), (e: unknown) => e instanceof CampaignEditorError && e.status === 422);
+    assert.deepEqual(await campaignState(), expiredAccessState);
+    assert.deepEqual(JSON.parse((await object(artifactsV3.manifestKey)).bytes.toString()), { version: 3, suspended: true });
+    await access(true); // Suspension remains possible even after expiry.
+    await db.update(s.campaignPublications).set({ config: deliveredV3.config }).where(eq(s.campaignPublications.campaignId, publishedId));
+    await access(false);
     inspectManifestKey = undefined; failureCampaignId = failureId;
     assert.deepEqual(await financialState(), before);
     // A manifest failure leaves a recoverable frozen DB snapshot, not delivery.
@@ -239,7 +283,37 @@ async function main() {
     for (const material of [...published.config.artworks, ...published.config.stickers]) { const response = await get(`/events/${fixture.identity.slug}/${material.file}`); assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png'); assert.ok(Buffer.from(await response.arrayBuffer()).equals(bytes)); }
     for (const path of [`/events/${fixtures[1].identity.slug}/event.json`, `/events/${fixture.identity.slug}/${fixture.outside}.png`, `/events/${fixture.identity.slug}/artworks/${fixture.outside}.png`, `/events/${fixture.identity.slug}/versions/v0.json`, '/private/campaigns/anything', '/admin', '/api', '/event-runtime/%2e%2e/package.json']) assert.equal((await get(path)).status, 404);
     assert.deepEqual(await financialState(), paidBefore);
+    const { restorePublishedDraft } = await import('../src/lib/publication-restore');
+    const restoreId = draftId;
+    const [restorePublication] = await db.select().from(s.campaignPublications).where(eq(s.campaignPublications.campaignId, restoreId));
+    const restoreHistory = await db.select().from(s.campaignPublicationHistory);
+    const restoreFinancial = await financialState();
+    const storageBefore = await Promise.all([...keys].map(async key => { try { return [key, (await object(key)).bytes.toString('base64')]; } catch { return [key, null]; } }));
+    await db.update(s.campaigns).set({ name: 'Unpublished name', endsAt: new Date('2098-01-01'), notes: 'Keep notes', priceCents: 4567, suspendedAt: new Date('2026-01-01'), suspendedBy: 'fixture-admin' }).where(eq(s.campaigns.id, restoreId));
+    await db.update(s.campaignEditor).set({ config: { ...fixtures[4].config, artworks: [], stickers: [] } }).where(eq(s.campaignEditor.campaignId, restoreId));
+    const [restoreBefore] = await db.select().from(s.campaigns).where(eq(s.campaigns.id, restoreId));
+    await assert.rejects(() => restorePublishedDraft(restoreId, 6, restoreBefore.updatedAt.toISOString(), restorePublication.version), CampaignEditorError);
+    await assert.rejects(() => restorePublishedDraft(restoreId, 7, restoreBefore.updatedAt.toISOString(), restorePublication.version + 1), CampaignEditorError);
+    await assert.rejects(() => restorePublishedDraft(restoreId, 7, '2000-01-01T00:00:00.000Z', restorePublication.version), CampaignEditorError);
+    await db.update(s.campaignPublications).set({ deliveredAt: null }).where(eq(s.campaignPublications.campaignId, restoreId));
+    await assert.rejects(() => restorePublishedDraft(restoreId, 7, restoreBefore.updatedAt.toISOString(), restorePublication.version), CampaignEditorError);
+    await db.update(s.campaignPublications).set({ deliveredAt: restorePublication.deliveredAt }).where(eq(s.campaignPublications.campaignId, restoreId));
+    const restored = await restorePublishedDraft(restoreId, 7, restoreBefore.updatedAt.toISOString(), restorePublication.version);
+    const [restoreAfter] = await db.select().from(s.campaigns).where(eq(s.campaigns.id, restoreId));
+    const [restoredEditor] = await db.select().from(s.campaignEditor).where(eq(s.campaignEditor.campaignId, restoreId));
+    assert.deepEqual(restoreAfter, { ...restoreBefore, name: restorePublication.config.name, endsAt: new Date(restorePublication.config.endsAt), updatedAt: new Date(restored.updatedAt) });
+    assert.ok(restoreAfter.updatedAt > restoreBefore.updatedAt);
+    assert.equal(restoredEditor.revision, 8);
+    assert.equal(restoredEditor.updatedAt.toISOString(), restored.updatedAt);
+    assert.deepEqual(restoredEditor.config, { ...restorePublication.config, artworks: restorePublication.config.artworks.map(item => ({ ...item, file: `${item.id}.png` })), stickers: restorePublication.config.stickers.map(item => ({ ...item, file: `${item.id}.png` })) });
+    assert.deepEqual((await db.select().from(s.campaignPublications).where(eq(s.campaignPublications.campaignId, restoreId)))[0], restorePublication);
+    assert.deepEqual(await db.select().from(s.campaignPublicationHistory), restoreHistory);
+    assert.deepEqual(await financialState(), restoreFinancial);
+    assert.deepEqual(await Promise.all([...keys].map(async key => { try { return [key, (await object(key)).bytes.toString('base64')]; } catch { return [key, null]; } })), storageBefore);
+    await assert.rejects(() => restorePublishedDraft(restoreId, 7, restoreBefore.updatedAt.toISOString(), restorePublication.version), CampaignEditorError);
+    console.log('PASS restore: names/deadline/config/private filenames; monotonic timestamps/revision; stale rejected; campaign metadata/financial/publication/history/storage preserved');
     console.log('PASS publication: unpaid; v1→private save v2→public update; manifest-last; old assets retained; v3 manifest failure preserves v2; frozen retry v3; integer numbering/concurrent idempotency/history/audit/revision; immutable version JSON; legacy full manifest/release read; empty/expired/stale rejection; financial state unchanged');
+    console.log('PASS access: storage failure preserves DB/pointer; stale timestamp; suspend v1→publish v2 suspended→reactivate same v2; repair retry; audit; pending blocked; expired public reactivation rejected with future draft; suspension after expiry');
     console.log('PASS independent HTTP: marketing /, slug shell, runtime, S3 JSON and exact PNG; privacy/scope/404; host isolated from app and DB networks');
   } finally {
     rejectManifest = false;

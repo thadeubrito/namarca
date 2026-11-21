@@ -16,10 +16,13 @@ test('publicação compara conteúdo público, não caminhos de release nem orde
   for (const draft of [{ ...base, name: 'Novo nome' }, { ...base, endsAt: '2099-02-01T00:00:00Z' }, { ...base, artworks: [] }, { ...base, theme: { ...base.theme!, background: '#000000' } }]) assert.equal(hasUnpublishedChanges(draft, published), true);
   assert.equal(hasUnpublishedChanges({ ...base, notes: 'somente interno' } as typeof base, published), false);
 });
-test('checkbox é exclusivo da primeira publicação e servidor verifica registro existente', async () => {
+test('primeira publicação usa diálogo explícito e servidor verifica confirmação' , async () => {
   const ui = await readFile('src/components/admin-workspace/publication.tsx', 'utf8');
   const action = await readFile('src/app/(workspace)/campanhas/[id]/publication-actions.ts', 'utf8');
-  assert.match(ui, /!published && <label/);
+  assert.doesNotMatch(ui, /type="checkbox"|sem exigir pagamento/);
+  assert.match(ui, /!published && <input type="hidden" name="confirm" value="yes"/);
+  assert.match(ui, /setConfirmation\('publish'\)/);
+  assert.match(ui, /Ainda não publicada/);
   assert.match(action, /!existing && form\.get\('confirm'\)/);
   assert.match(ui, /Alterações não publicadas/);
   assert.match(ui, /Publicação atualizada/);

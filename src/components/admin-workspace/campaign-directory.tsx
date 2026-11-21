@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { campaignAvailability } from '@/lib/campaign-availability';
 import Link from 'next/link';
 import { ArrowUpRight, Search } from 'lucide-react';
 import { Action, TextInput } from './primitives';
 import './campaign-directory.css';
 
-type Campaign = { id: string; name: string; slug: string; preparationStatus: 'draft' | 'validated' | 'approved'; publicationStatus: 'unpublished' | 'pending' | 'published' | 'failed' | 'ended'; priceCents: number | null; endDate: string; clientName: string | null };
+type Campaign = { suspended?: boolean; publicEndsAt?: string | null; id: string; name: string; slug: string; preparationStatus: 'draft' | 'validated' | 'approved'; publicationStatus: 'unpublished' | 'pending' | 'published' | 'failed' | 'ended'; priceCents: number | null; endDate: string; clientName: string | null };
 const preparation = { draft: 'Rascunho', validated: 'Validada', approved: 'Aprovada' };
-const publication = { unpublished: 'Não publicada', pending: 'Pendente', published: 'Publicada', failed: 'Falha', ended: 'Encerrada' };
 const filters = [['all', 'Todas'], ['preparing', 'Em preparação'], ['approved', 'Aprovadas']] as const;
 type Filter = typeof filters[number][0];
 
@@ -49,7 +49,7 @@ export function CampaignDirectory({ campaigns }: { campaigns: Campaign[] }) {
         </div>
         <dl className="ws-campaign-directory-status">
           <div><dt>Preparação</dt><dd>{preparation[c.preparationStatus]}</dd></div>
-          <div><dt>Publicação</dt><dd>{publication[c.publicationStatus]}</dd></div>
+          <div><dt>Disponibilidade</dt><dd>{campaignAvailability({ published: !!c.publicEndsAt, suspended: !!c.suspended, endsAt: c.publicEndsAt ?? undefined, pending: c.publicationStatus === 'pending' || c.publicationStatus === 'published' && !c.publicEndsAt })}</dd></div>
         </dl>
         <div className="ws-campaign-directory-end">
           <span className="ws-campaign-directory-mobile-label">Encerramento</span>

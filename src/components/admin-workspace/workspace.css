@@ -69,7 +69,8 @@
 .ws-campaign-heading { display:flex;align-items:flex-start;gap:16px;min-height:44px;padding-bottom:24px;border-bottom:1px solid var(--line); }
 .ui-scope .ws-campaign-heading>.ws-action { width:44px;min-width:44px;padding:0; }
 .ws-campaign-heading-content { min-width:0;flex:1; }
-.ws-campaign-title-row { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;min-height:44px; }
+.ws-campaign-title-row { display:flex;align-items:center;justify-content:flex-start;gap:12px;flex-wrap:wrap;min-height:44px; }
+.ws-campaign-publication-status { margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.5; }
 .ui-scope .ws-campaign-title-row h1 { font-size:28px;line-height:1.2;font-weight:500;letter-spacing:-.6px;overflow-wrap:anywhere; }
 .ws-campaign-meta { display:flex;align-items:center;gap:8px 24px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin-top:4px; }
 .ws-campaign-meta a { display:inline-flex;align-items:center;min-height:44px;max-width:100%;color:var(--brand-text);overflow-wrap:anywhere; }
@@ -271,7 +272,14 @@
 
 /* Publication uses shared surfaces/actions; checkbox label retains a touch target. */
 .ws-publication,.ws-publication-form { display:grid; gap:16px; }
-.ws-publication h2 { font-size:20px; font-weight:500; }
+.ws-publication-top { display:flex;align-items:flex-start;justify-content:space-between;gap:16px; }
+.ws-publication-heading { display:grid;gap:8px;padding-bottom:8px;min-width:0; }
+.ui-scope .ws-publication-more { flex-shrink:0;min-width:44px;height:44px;min-height:44px;padding:0 14px;gap:8px;font-size:13px; }
+.ws-publication-menu-separator { height:1px;margin:6px;background:var(--line); }
+.ws-share-menu [role=menuitem][data-disabled] { opacity:.45;cursor:default; }
+.ws-publication .ws-publication-heading h2 { margin:0;color:var(--foreground);font-size:32px;font-weight:500;line-height:1.1;letter-spacing:-.32px;font-variant-numeric:tabular-nums; }
+.ws-publication-heading p { margin:0;color:var(--muted);font-size:13px;line-height:1.5; }
+@media(max-width:600px) { .ws-publication .ws-publication-heading h2 { font-size:28px;letter-spacing:-.28px; } }
 .ws-publication-form > .ws-action { justify-self:start; }
 .ws-publication-confirm { display:flex; align-items:center; gap:12px; min-height:44px; cursor:pointer; }
 .ws-publication-confirm input { flex-shrink:0; }

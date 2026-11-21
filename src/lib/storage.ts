@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, ListObjectsV2Command, HeadBucketCommand, S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand, HeadBucketCommand, S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { z } from "zod";
 import { getEnv } from "./env";
 
@@ -34,6 +34,17 @@ export async function putPrivateObject(key: string, body: Uint8Array, contentTyp
 // Public delivery is restricted to campaign manifests and immutable versioned PNGs.
 export function assertPublicKey(key: string) {
   if (!/^public\/events\/[a-z0-9]+(?:-[a-z0-9]+)*\/(?:event\.json|versions\/v[1-9][0-9]*\.json|(?:artworks|stickers)\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.png|releases\/[a-f0-9]{64}\/[a-f0-9-]{36}\.png)$/.test(key)) throw new Error('Invalid public key');
+}
+export async function publicObjectExists(key: string): Promise<boolean> {
+  assertPublicKey(key);
+  const client = createStorageClient();
+  try {
+    await client.send(new HeadObjectCommand({ Bucket: getEnv().S3_BUCKET, Key: key }));
+    return true;
+  } catch (error) {
+    if ((error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404) return false;
+    throw error;
+  } finally { client.destroy(); }
 }
 export async function putPublicObject(key: string, body: Uint8Array, contentType: 'application/json' | 'image/png') {
   assertPublicKey(key);

@@ -88,20 +88,41 @@ export function parseEvent(value: unknown, slug: string, options: { allowEmptyAr
 }
 
 export class MissingEventError extends Error {}
-export async function loadEvent(slug: string, signal: AbortSignal): Promise<EventConfig> {
-  const read = async (path: string, pointer = false): Promise<unknown> => {
+export class SuspendedEventError extends Error {}
+
+// The control pointer is strict; full legacy manifests retain their existing parser.
+function publicationPointer(value: unknown): { version: number; suspended: boolean } | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  if (!('version' in value) && !('suspended' in value)) return null
+  const input = value as Record<string, unknown>
+  if (typeof input.version !== 'number' || !Number.isSafeInteger(input.version) || input.version < 1 ||
+    Object.keys(input).some(key => key !== 'version' && key !== 'suspended') ||
+    ('suspended' in input && input.suspended !== true)) throw new Error('Configuração inválida: ponteiro de publicação')
+  return { version: input.version, suspended: input.suspended === true }
+}
+
+async function readEventJson(path: string, signal: AbortSignal, pointer = false): Promise<unknown> {
     const response = await fetch(path, { signal, ...(pointer ? { cache: 'no-store' as const } : {}) })
     // Servidores SPA podem retornar index.html (200) quando o JSON não existe.
     if (response.status === 404) throw new MissingEventError()
     if (!response.ok) throw new Error('Falha de rede')
     if (response.headers.get('content-type')?.includes('text/html')) throw new MissingEventError()
     return response.json()
-  }
-  const manifest = await read(`/events/${slug}/event.json`, true)
-  if (manifest && typeof manifest === 'object' && !Array.isArray(manifest) && 'version' in manifest) {
-    const { version } = manifest
-    if (Object.keys(manifest).length !== 1 || typeof version !== 'number' || !Number.isSafeInteger(version) || version < 1) throw new Error('Configuração inválida: versão de publicação')
-    return parseEvent(await read(`/events/${slug}/versions/v${version}.json`), slug)
-  }
+}
+
+/** Reads only the no-store control object. Failure is unknown, never an active verdict. */
+export async function checkEventSuspended(slug: string, signal: AbortSignal): Promise<boolean> {
+  const manifest = await readEventJson(`/events/${slug}/event.json`, signal, true)
+  const pointer = publicationPointer(manifest)
+  if (pointer) return pointer.suspended
+  parseEvent(manifest, slug)
+  return false
+}
+
+export async function loadEvent(slug: string, signal: AbortSignal): Promise<EventConfig> {
+  const manifest = await readEventJson(`/events/${slug}/event.json`, signal, true)
+  const pointer = publicationPointer(manifest)
+  if (pointer?.suspended) throw new SuspendedEventError()
+  if (pointer) return parseEvent(await readEventJson(`/events/${slug}/versions/v${pointer.version}.json`, signal), slug)
   return parseEvent(manifest, slug)
 }
