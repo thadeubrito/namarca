@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { campaignAssets, campaignEditor, campaignPackages, campaigns } from "@/db/schema";
+import { campaignAssets, campaignEditor, campaignPackages, campaignPublications, campaignPublicationHistory, campaigns } from "@/db/schema";
 import { assertEditable, CampaignEditorError } from "./campaign-editor";
 import { deletePrivateObject, listPrivateObjects } from "./storage";
 import { assetIdFromKey, campaignAssetKey, campaignAssetPrefix, CLEANUP_BATCH_LIMIT, oldEnough, referencedAssetIds } from "./asset-cleanup-policy";
@@ -15,8 +15,10 @@ export async function cleanupCampaignAssets(campaignId: string, options: { ids?:
     assertEditable(campaign);
     const [editor] = await tx.select().from(campaignEditor).where(eq(campaignEditor.campaignId, campaignId));
     const packages = await tx.select().from(campaignPackages).where(eq(campaignPackages.campaignId, campaignId));
+    const publications = await tx.select().from(campaignPublications).where(eq(campaignPublications.campaignId, campaignId));
+    const history = await tx.select().from(campaignPublicationHistory).where(eq(campaignPublicationHistory.campaignId, campaignId));
     const protectedIds = new Set<string>();
-    for (const config of [...(editor ? [editor.config] : []), ...packages.map((p) => p.config)]) {
+    for (const config of [...(editor ? [editor.config] : []), ...packages.map((p) => p.config), ...publications.map(p => p.config), ...history.map(p => p.config)]) {
       for (const id of referencedAssetIds(config)) protectedIds.add(id);
     }
     const rows = await tx.select().from(campaignAssets).where(eq(campaignAssets.campaignId, campaignId));

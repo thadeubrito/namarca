@@ -14,7 +14,7 @@ test('clientes vazios seguem composição centralizada sem caixa genérica', asy
   assert.match(motion, /useReducedMotion/);
   assert.match(directory, /Nenhum cliente encontrado/);
   assert.match(directory, /Nenhum cliente cadastrado/);
-  assert.match(directory, /href=\{query \? '\/admin\/clientes' : '\/admin\/clientes\/novo'\}/);
+  assert.match(directory, /href=\{query \? '\/clientes' : '\/clientes\/novo'\}/);
   assert.match(directory, /Limpar busca' : 'Cadastrar primeiro cliente'/);
   const rule = css.match(/\.ws-client-empty \{([^}]+)\}/)?.[1] ?? '';
   assert.match(rule, /align-items:center/);

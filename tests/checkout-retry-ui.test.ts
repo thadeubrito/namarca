@@ -12,7 +12,7 @@ test('falha permite retry explícito sem consultas automáticas nem liberação 
   const page = await readFile('src/app/checkout/[token]/page.tsx', 'utf8');
   assert.ok(page.includes('Não foi possível gerar o Pix'));
   assert.ok(page.includes('const retry = !generating'));
-  const action = await readFile('src/app/admin/campanhas/[id]/billing-actions.ts', 'utf8');
+  const action = await readFile('src/app/(workspace)/campanhas/[id]/billing-actions.ts', 'utf8');
   assert.ok(!action.includes("operation === 'release'"));
 });
 test('pagamentos ativos e callbacks tardios continuam protegidos', async () => {

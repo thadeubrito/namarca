@@ -71,6 +71,41 @@
       "when": 1795136096494,
       "tag": "0009_silly_solo",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795220380354,
+      "tag": "0010_thin_cobalt_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795222260295,
+      "tag": "0011_clear_obadiah_stane",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795223874516,
+      "tag": "0012_clear_mandrill",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795224027623,
+      "tag": "0013_parched_pyro",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795225148106,
+      "tag": "0014_marvelous_captain_flint",
+      "breakpoints": true
     }
   ]
 }

@@ -15,8 +15,8 @@ export function requireUuid(value: string) {
   return value.toLowerCase();
 }
 export function assertEditable(campaign: { preparationStatus: string; publicationStatus: string }) {
-  if (campaign.preparationStatus !== "draft" || campaign.publicationStatus !== "unpublished") {
-    throw new CampaignEditorError(409, "Somente campanhas em rascunho e não publicadas podem ser editadas");
+  if (campaign.preparationStatus !== "draft" || !["unpublished", "published"].includes(campaign.publicationStatus)) {
+    throw new CampaignEditorError(409, "Esta campanha não está disponível para edição");
   }
 }
 export function assertMutationOrigin(origin: string | null, baseUrl: string | undefined, development = false) {

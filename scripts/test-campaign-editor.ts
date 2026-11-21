@@ -65,7 +65,7 @@ async function main() {
     await pool.query('insert into auth_user (id,name,email,email_verified,created_at,updated_at) values ($1,$2,$3,true,now(),now())', [id, 'Editor integration', email]);
     await pool.query('insert into auth_account (id,account_id,provider_id,user_id,password,created_at,updated_at) values ($1,$2,$3,$2,$4,now(),now())', [randomUUID(), id, 'credential', await hashPassword(password)]);
     stage = 'client directory rejects anonymous access';
-    for (const path of ['/admin/clientes', '/admin/clientes/novo', `/admin/clientes/${randomUUID()}`]) {
+    for (const path of ['/clientes', '/clientes/novo', `/clientes/${randomUUID()}`]) {
       const response = await context.request.get(`${base}${path}`, { maxRedirects: 0 });
       assert.ok([302, 303, 307, 308, 401, 403].includes(response.status()));
     }
@@ -91,7 +91,7 @@ async function main() {
     assert.equal((await context.request.get(`${base}/api/campaigns/${randomUUID()}/financial-report`)).status(), 403);
     assert.equal((await context.request.get(`${base}/api/campaigns/invalid/financial-report`)).status(), 403);
     stage = 'client directory rejects enrollment-only session';
-    const enrollmentClients = await context.request.get(`${base}/admin/clientes`, { maxRedirects: 0 });
+    const enrollmentClients = await context.request.get(`${base}/clientes`, { maxRedirects: 0 });
     assert.ok([302, 303, 307, 308, 401, 403].includes(enrollmentClients.status()));
     stage = 'browser TOTP enrollment';
     await page.getByLabel('Confirme sua senha').fill(password);
@@ -101,7 +101,7 @@ async function main() {
     await page.getByRole('checkbox').check();
     await page.getByLabel('Código de seis dígitos').fill(totp(uri));
     await page.getByRole('button', { name: 'Verificar código' }).click();
-    await page.waitForURL('**/admin');
+    await page.waitForURL(`${base}/`);
     stage = 'client directory create, search, edit and reload';
     await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Clientes', exact: true }).click();
     await expect(page.getByText('Nenhum cliente cadastrado.', { exact: false })).toBeVisible();
@@ -114,7 +114,7 @@ async function main() {
     await page.getByLabel('Nome do cliente', { exact: true }).fill('Cliente diretório sintético');
     await page.getByRole('textbox', { name: /^Contato/ }).fill('diretorio@example.test');
     await page.getByRole('button', { name: 'Cadastrar cliente', exact: true }).click();
-    await page.waitForURL(/\/admin\/clientes\/[0-9a-f-]+\?salvo=1$/);
+    await page.waitForURL(/\/clientes\/[0-9a-f-]+\?salvo=1$/);
     const directoryId = new URL(page.url()).pathname.split('/').pop()!;
     clientIds.push(directoryId);
     await expect(page.getByRole('status')).toHaveText('Cliente salvo.');
@@ -136,19 +136,19 @@ async function main() {
     await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     await expect(page.getByText('Nenhum cliente encontrado.', { exact: false })).toBeVisible();
     stage = 'create campaign through UI';
-    await page.goto(`${base}/admin/campanhas/nova`);
+    await page.goto(`${base}/campanhas/nova`);
     await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
     await expect(page.locator('.ws-campaign-form h3')).toHaveText(['Evento', 'Cliente e observações']);
     if (process.env.CAMPAIGN_SECTIONS_ONLY === '1') {
       await page.getByRole('button', { name: 'Salvar rascunho', exact: true }).click();
       await expect(page.getByLabel('Nome do evento')).toBeFocused();
-      assert.equal(new URL(page.url()).pathname, '/admin/campanhas/nova');
+      assert.equal(new URL(page.url()).pathname, '/campanhas/nova');
     }
     await page.getByLabel('Nome do evento').fill('Integração editor isolada');
     await page.getByLabel('Endereço da campanha').fill(`editor-test-${randomBytes(5).toString('hex')}`);
     await page.getByLabel('Data de encerramento').fill('2099-12-31');
     await page.getByRole('button', { name: 'Salvar rascunho' }).click();
-    await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
+    await page.waitForURL(/\/campanhas\/[0-9a-f-]+$/);
     campaignId = new URL(page.url()).pathname.split('/').pop()!;
     assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, null, 'Creation without billing must leave price unset');
     if (process.env.UNIFIED_TABS_ONLY === '1') {
@@ -167,7 +167,7 @@ async function main() {
     await expect(campaignSections(page).getByRole('tab', { name: 'Aprovação visual', exact: true, includeHidden: true })).toHaveCount(0);
     const removedPackageId = randomUUID();
     for (const path of [
-      `/admin/campanhas/${campaignId}/pacotes/${removedPackageId}`,
+      `/campanhas/${campaignId}/pacotes/${removedPackageId}`,
       `/api/campaigns/${campaignId}/packages/${removedPackageId}/preview`,
     ]) {
       assert.equal((await context.request.get(`${base}${path}`, { maxRedirects: 0 })).status(), 404, `Removed snapshot route must return 404: ${path}`);
@@ -178,19 +178,19 @@ async function main() {
     await page.getByLabel('Cliente', { exact: true }).selectOption(directoryId);
     await page.getByRole('button', { name: 'Salvar detalhes', exact: true }).click();
     await expect.poll(async () => (await pool.query('select client_id,price_cents from campaigns where id=$1', [campaignId])).rows[0]).toEqual({ client_id: directoryId, price_cents: null });
-    await page.goto(`${base}/admin/clientes/${directoryId}`);
-    await expect(page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link', { name: 'Integração editor isolada' })).toHaveAttribute('href', `/admin/campanhas/${campaignId}`);
+    await page.goto(`${base}/clientes/${directoryId}`);
+    await expect(page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link', { name: 'Integração editor isolada' })).toHaveAttribute('href', `/campanhas/${campaignId}`);
     await page.getByRole('region', { name: 'Campanhas do cliente' }).getByRole('link').click();
     await closeStudio(page);
     await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await expect(page.getByLabel('Cliente', { exact: true })).toHaveValue(directoryId);
-    await page.goto(`${base}/admin/clientes/${directoryId}`);
+    await page.goto(`${base}/clientes/${directoryId}`);
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Client details must fit mobile viewport');
     await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Clientes', exact: true }).click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'Client directory must fit mobile viewport');
     await page.setViewportSize({ width: 1440, height: 1400 });
-    await page.goto(`${base}/admin/campanhas/${campaignId}`);
+    await page.goto(`${base}/campanhas/${campaignId}`);
     console.info('PASS client directory: anonymous/enrollment blocked, create/edit/reload, search name/contact and empty result, linked campaign, mobile overflow checks.');
     if (process.env.CAMPAIGN_SECTIONS_ONLY === '1') {
       stage = 'campaign sections visibility, keyboard and draft retention';
@@ -397,7 +397,7 @@ async function main() {
     if (process.env.BILLING_UI_ONLY === '1') return;
     stage = 'financial report guards, empty summary and synthetic payments';
     const reportEndpoint = `${base}/api/campaigns/${campaignId}/financial-report`;
-    const reportUrl = `${base}/admin/campanhas/${campaignId}/financeiro`;
+    const reportUrl = `${base}/campanhas/${campaignId}/financeiro`;
     const anonymousReport = await playwrightRequest.newContext();
     try {
       for (const key of [campaignId, 'invalid']) {
@@ -473,7 +473,7 @@ async function main() {
     console.info('PASS financial report: anonymous and enrollment-only 403/auth-first; admin empty and pending/paid/refunded summaries; CSV download/content/headers/formula protection; no token/CPF/gateway fields. Synthetic DB only.');
     // Focused financial run still exercises real password/TOTP and the shared finally cleanup.
     if (process.env.FINANCIAL_REPORT_ONLY === '1') return;
-    await page.goto(`${base}/admin/campanhas/${campaignId}`);
+    await page.goto(`${base}/campanhas/${campaignId}`);
     const endpoint = `${base}/api/campaigns/${campaignId}/editor`;
     await openStudio(page);
     const editor = page.getByRole('region', { name: 'Estúdio da campanha' });
@@ -551,7 +551,7 @@ async function main() {
     console.info('PASS static runtime: shared CSS, isolated preview, public fetch/PNG, rejected bridge messages and ended manifest.');
     if (process.env.EDITOR_RUNTIME_ONLY === '1') return;
     stage = 'inline client registration: return to campaign';
-    await page.goto(`${base}/admin/campanhas/${campaignId}`);
+    await page.goto(`${base}/campanhas/${campaignId}`);
     stage = 'inline client registration: reveal details';
     await closeStudio(page);
     await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
@@ -578,18 +578,18 @@ async function main() {
     await expect(page.locator('.ws-campaign-form input[name=price]')).toHaveCount(0);
     assert.equal((await pool.query('select price_cents from campaigns where id=$1', [campaignId])).rows[0].price_cents, priceBeforeClientEdit);
     stage = 'reuse client in another campaign';
-    await page.goto(`${base}/admin/campanhas/nova`);
+    await page.goto(`${base}/campanhas/nova`);
     await page.getByLabel('Nome do evento').fill('Segunda campanha mesmo cliente');
     await page.getByLabel('Endereço da campanha').fill(`client-test-${randomBytes(5).toString('hex')}`);
     await page.getByLabel('Data de encerramento').fill('2099-12-31');
     await page.getByLabel('Cliente', { exact: true }).selectOption(linked);
     await page.getByRole('button', { name: 'Salvar rascunho' }).click();
-    await page.waitForURL(/\/admin\/campanhas\/[0-9a-f-]+$/);
+    await page.waitForURL(/\/campanhas\/[0-9a-f-]+$/);
     secondCampaignId = new URL(page.url()).pathname.split('/').pop()!;
     assert.deepEqual((await pool.query('select client_id,price_cents from campaigns where id=$1', [secondCampaignId])).rows[0], { client_id: linked, price_cents: null });
     assert.equal((await pool.query('select count(*)::int as n from clients where id=$1', [linked])).rows[0].n, 1);
     stage = 'unlink client without deleting reusable record';
-    await page.goto(`${base}/admin/campanhas/${campaignId}`);
+    await page.goto(`${base}/campanhas/${campaignId}`);
     await closeStudio(page);
     await page.getByRole('tab', { name: 'Detalhes', exact: true }).click();
     await page.getByLabel('Cliente', { exact: true }).selectOption('');

@@ -9,17 +9,17 @@ import { SignOut } from '@/components/sign-out';
 import { Brand } from '@/components/brand';
 
 const navigation = [
-  { href: '/admin', title: 'Campanhas', icon: FolderOpen },
-  { href: '/admin/clientes', title: 'Clientes', icon: Users },
-  { href: '/admin/financeiro', title: 'Financeiro', icon: Wallet },
+  { href: '/', title: 'Campanhas', icon: FolderOpen },
+  { href: '/clientes', title: 'Clientes', icon: Users },
+  { href: '/financeiro', title: 'Financeiro', icon: Wallet },
 ];
 
 export function AdminNav() {
   const path = usePathname();
   const reduced = useReducedMotion();
-  const section = path.startsWith('/admin/clientes') ? '/admin/clientes' : path.startsWith('/admin/financeiro') ? '/admin/financeiro' : '/admin';
+  const section = path.startsWith('/clientes') ? '/clientes' : path.startsWith('/financeiro') ? '/financeiro' : '/';
   return <div className="admin-header-inner">
-    <Brand href="/admin" className="admin-brand" label="Namarca, campanhas" />
+    <Brand href="/" className="admin-brand" label="Namarca, campanhas" />
     <LayoutGroup id="admin-navigation">
       <nav className="admin-links" aria-label="Principal">
         {navigation.map(({ href, title, icon: Icon }) => {

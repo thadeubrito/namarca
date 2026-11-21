@@ -15,7 +15,7 @@ A pasta é um módulo interno de código-fonte, não pacote npm publicado. O adm
 
 ## Entradas e isolamento
 
-- `apps/event/src/main.tsx`: resolve `/<slug>`, busca `/events/<slug>/event.json`, valida, carrega PNGs em `/events/<slug>/<file>`. Não recebe mensagens de configuração. Estado de encerramento conferido após leitura, a cada segundo e ao retornar à aba; ao encerrar desmonta o editor. Isso existe apenas no novo frontend local, não altera o público antigo.
+- `apps/event/src/main.tsx`: resolve `/<slug>`, busca `/events/<slug>/event.json` semcache; ponteiro `{version:N}` resolve `/events/<slug>/versions/vN.json`, mantendo leitura de manifesto completo legado; valida e carrega PNGs em `/events/<slug>/<file>`. Não recebe mensagens de configuração. Estado de encerramento conferido após leitura, a cada segundo e ao retornar à aba; ao encerrar desmonta o editor. Isso existe apenas no novo frontend local, não altera o público antigo.
 - `apps/event/src/preview.tsx`: mesma interface e CSS, mas configuração em memória via bridge de mesma origem. Aceita somente parent, origem e campaignId correspondentes, contrato válido e filenames privados UUID.png. Mensagem inválida preserva última configuração e informa pausa. Para materiais novos do Plano A, mapa `localAssets` separado associa somente filenames presentes no evento a blob URLs da mesma origem; `PhotoEditor.assetUrls` prioriza esses materiais sem remontar a composição. Sem foto/composição no bridge; a entrada pública não aceita esse mapa.
 
 O iframe aponta diretamente para HTML estático em `/event-runtime/preview.html`, sem layout/CSS/JS do Next. O caminho administrativo antigo de prévia foi mantido como redirect autenticado. Não há CORS externo nem afrouxamento de CSP.
@@ -34,9 +34,9 @@ docker compose exec app npm run dev:event
 
 `predev` e `prebuild` também compilam o frontend automaticamente. Sem watch ativo, mudanças no editor estático exigem `build:event` e recarregar a prévia. O watch recompila, não injeta HMR nem salva a foto após reload.
 
-Artefato gerado, ignorado no Git: `public/event-runtime/`, com index/preview HTML, JS, CSS e chunks compartilhados. A entrada pública pode ser hospedada estaticamente com fallback `/<slug>` para esse index e `/events/*` apontando ao gateway read-only do bucket. Não foi configurado fallback no Next para não capturar rotas administrativas. Abrir `/event-runtime/index.html` diretamente não é uma URL de evento válida.
+Artefato gerado, ignorado no Git: `public/event-runtime/`, com index/preview HTML, JS, CSS e chunks compartilhados. A entrada pública pode ser hospedada estaticamente com fallback `/<slug>` para esse index e `/events/*` apontando ao gateway read-only do bucket. Desde a correção de20/11/2026, o serviço local `public-site` emlocalhost:3001 serve esse HTML e a raiz estática sem Next ou banco. O gateway somente lê o prefixo public/events do storage, com JSON/PNGs exportados pelo publicador. As rotas públicas Next da primeira implementação foram removidas. Em produção, hospedagem estática/CDN independente pode cumprir esse contrato. Ver publication.md. Abrir `/event-runtime/index.html` diretamente não é uma URL de evento válida.
 
-Os caminhos dos assets de build são `/event-runtime/*`; preservar esse prefixo no host estático. Manifestos e PNGs não são incluídos no build. Chunks têm hash, entradas usam nomes estáveis; entrega atômica/retenção/cache de deploy ainda precisam ser definidos. Não há publicação de campanhas nem CDN provisionada.
+Os caminhos dos assets de build são `/event-runtime/*`; preservar esse prefixo no host estático. Manifestos e PNGs não são incluídos no build. Chunks têm hash, entradas usam nomes estáveis; entrega atômica/retenção/cache de deploy ainda precisam ser definidos. Há publicação local de campanhas sem exigir pagamento; nenhuma CDN ou implantação pública foi provisionada.
 
 ## Evidências e limites
 

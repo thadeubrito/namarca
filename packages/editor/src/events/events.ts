@@ -89,10 +89,19 @@ export function parseEvent(value: unknown, slug: string, options: { allowEmptyAr
 
 export class MissingEventError extends Error {}
 export async function loadEvent(slug: string, signal: AbortSignal): Promise<EventConfig> {
-  const response = await fetch(`/events/${slug}/event.json`, { signal })
-  // Servidores SPA podem retornar index.html (200) quando o JSON não existe.
-  if (response.status === 404) throw new MissingEventError()
-  if (!response.ok) throw new Error('Falha de rede')
-  if (response.headers.get('content-type')?.includes('text/html')) throw new MissingEventError()
-  return parseEvent(await response.json(), slug)
+  const read = async (path: string, pointer = false): Promise<unknown> => {
+    const response = await fetch(path, { signal, ...(pointer ? { cache: 'no-store' as const } : {}) })
+    // Servidores SPA podem retornar index.html (200) quando o JSON não existe.
+    if (response.status === 404) throw new MissingEventError()
+    if (!response.ok) throw new Error('Falha de rede')
+    if (response.headers.get('content-type')?.includes('text/html')) throw new MissingEventError()
+    return response.json()
+  }
+  const manifest = await read(`/events/${slug}/event.json`, true)
+  if (manifest && typeof manifest === 'object' && !Array.isArray(manifest) && 'version' in manifest) {
+    const { version } = manifest
+    if (Object.keys(manifest).length !== 1 || typeof version !== 'number' || !Number.isSafeInteger(version) || version < 1) throw new Error('Configuração inválida: versão de publicação')
+    return parseEvent(await read(`/events/${slug}/versions/v${version}.json`), slug)
+  }
+  return parseEvent(manifest, slug)
 }

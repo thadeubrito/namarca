@@ -56,6 +56,29 @@ export const campaignPackages = pgTable("campaign_packages", {
   createdAt: createdAt(),
 }, (t) => [uniqueIndex("campaign_package_version_unique").on(t.campaignId, t.version), check("campaign_package_positive", sql`${t.version} > 0 AND ${t.editorRevision} > 0`)]);
 
+// Immutable local publication, independent of checkout and legacy approvals.
+export const campaignPublications = pgTable("campaign_publications", {
+  campaignId: uuid("campaign_id").primaryKey().references(() => campaigns.id, { onDelete: "restrict" }),
+  version: integer("version").notNull(),
+  config: jsonb("config").$type<EventConfig>().notNull(),
+  editorRevision: integer("editor_revision").notNull(),
+  publishedBy: text("published_by").notNull(),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, t => [check("publication_version_positive", sql`${t.version} > 0`)]);
+
+// Delivered snapshots retain private source materials for historical releases.
+export const campaignPublicationHistory = pgTable("campaign_publication_history", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  version: integer("version").notNull(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "restrict" }),
+  config: jsonb("config").$type<EventConfig>().notNull(),
+  editorRevision: integer("editor_revision").notNull(),
+  publishedBy: text("published_by").notNull(),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }).notNull(),
+  authorizedAt: timestamp("authorized_at", { withTimezone: true }).notNull(),
+}, t => [index("publication_history_campaign_idx").on(t.campaignId), uniqueIndex("publication_history_version_unique").on(t.campaignId, t.version), check("publication_history_version_positive", sql`${t.version} > 0`)]);
+
 export const campaignAssets = pgTable("campaign_assets", {
   id: uuid("id").defaultRandom().primaryKey(),
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),

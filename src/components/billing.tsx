@@ -1,7 +1,7 @@
 'use client';
 import { useActionState, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { billingAction, type BillingState } from '@/app/admin/campanhas/[id]/billing-actions';
+import { billingAction, type BillingState } from '@/app/(workspace)/campanhas/[id]/billing-actions';
 export function BillingButton({ id, operation, children }: { id: string; operation: string; children: React.ReactNode }) {
   const [state, action, pending] = useActionState<BillingState, FormData>(billingAction.bind(null, id), {});
   return <form action={action}><input type="hidden" name="operation" value={operation} /><Button type="submit" variant="outline" disabled={pending}>{pending ? 'Processando…' : children}</Button>{state.error && <p role="alert">{state.error}</p>}{state.success && <p role="status">{state.success}</p>}</form>;

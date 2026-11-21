@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { ArrowUpRight, Check, Copy, Link2, MessageSquare, MoreHorizontal, Send } from 'lucide-react';
 import { DropdownMenu } from 'radix-ui';
 import { useDarkTheme } from '@/components/theme-scope';
-import { billingAction, type BillingState } from '@/app/admin/campanhas/[id]/billing-actions';
+import { billingAction, type BillingState } from '@/app/(workspace)/campanhas/[id]/billing-actions';
 import { Action, ActionLink, Field, TextInput, Notice } from './primitives';
 import { useFormDraft } from './form-draft';
 import { localMaterialId } from '@/lib/studio-draft';

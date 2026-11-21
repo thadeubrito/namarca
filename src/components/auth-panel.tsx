@@ -27,7 +27,7 @@ export function AuthPanel({ mode }: { mode: 'login' | 'verify' | 'setup' }) {
         const result = await authClient.signIn.email({ email: String(data.get('email')), password: String(data.get('password')) });
         if (result.error) throw new Error('Não foi possível entrar. Confira suas credenciais.');
         const twoFactor = result.data && 'twoFactorRedirect' in result.data && result.data.twoFactorRedirect;
-        window.location.assign(twoFactor ? '/login/verificar' : '/admin');
+        window.location.assign(twoFactor ? '/login/verificar' : '/');
       } else if (mode === 'setup' && !setup) {
         const result = await authClient.twoFactor.enable({ password: String(data.get('password')), issuer: 'Namarca' });
         if (result.error || !result.data || !('totpURI' in result.data)) throw new Error('Não foi possível configurar o segundo fator. Confira sua senha.');
@@ -40,7 +40,7 @@ export function AuthPanel({ mode }: { mode: 'login' | 'verify' | 'setup' }) {
           ? await authClient.twoFactor.verifyBackupCode({ code, disableSession: false })
           : await authClient.twoFactor.verifyTotp({ code, trustDevice: false });
         if (result.error) throw new Error('Código inválido ou expirado. Tente novamente.');
-        window.location.assign('/admin');
+        window.location.assign('/');
       }
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Operação indisponível. Tente novamente.'); }
     finally { setBusy(false); }

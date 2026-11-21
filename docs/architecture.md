@@ -2,11 +2,15 @@
 
 ## Escopo
 
-Next.js Node.js + Better Auth + Drizzle/PostgreSQL + S3 privado. V1 permite campanhas drafts e confirmação financeira síncrona pelo webhook, sem worker ou agendamento. **Checkout somente mock local; sem checkout live completo ou publicação real.** O estúdio de campanha e a prévia do editor estão descritos em campaign-editor.md. Pagar nunca marca campanha published. Sem organizations/multi-tenancy nesta base.
+Next.js Node.js + Better Auth + Drizzle/PostgreSQL + S3 privado. V1 permite campanhas drafts e confirmação financeira síncrona pelo webhook, sem worker ou agendamento. **Checkout somente mock local; sem checkout live homologado ou deploy público.** Publicação local sem exigir pagamento: [publication.md](publication.md). O estúdio de campanha e a prévia do editor estão descritos em campaign-editor.md. Pagar nunca marca campanha published. Sem organizations/multi-tenancy nesta base.
 
 ## Editor compartilhado e frontend estático
 
-`packages/editor/src` reúne contrato do manifesto, UI/CSS, composição, gestos e exportação. `apps/event` tem duas entradas estáticas esbuild: pública (fetch do manifesto/PNGs no caminho do bucket) e prévia privada (bridge validado ou snapshot autenticado). O iframe não carrega layout/CSS Next. Build gerado em `public/event-runtime`, separado do build administrativo. O público original não foi alterado nem publicado; esta é a base local para migrá-lo sem SSR/Next. Detalhes e limites em [editor-runtime.md](editor-runtime.md).
+`packages/editor/src` reúne contrato do manifesto, UI/CSS, composição, gestos e exportação. `apps/event` tem duas entradas estáticas esbuild: pública (fetch do manifesto/PNGs no host estático/gateway storage independente) e prévia privada (bridge validado). O iframe não carrega layout/CSS Next. Build gerado em `public/event-runtime`, separado do build administrativo. O público original não foi alterado nem publicado; esta é a base local para migrá-lo sem SSR/Next. Detalhes e limites em [editor-runtime.md](editor-runtime.md).
+
+## Rotas administrativas na raiz
+
+A aplicação administrativa usa route group `src/app/(workspace)` para preservar o layout autenticado sem prefixar URLs. `/` é a listagem de campanhas; detalhes/criação em `/campanhas/*`, clientes em `/clientes/*`, financeiro em `/financeiro`. Login/TOTP/setup ficam fora desse grupo, mas as operações privilegiadas continuam exigindo requireAdmin individualmente. Não há redirect para `/admin` nem compatibilidade de URLs antigas nesta alteração. O público independente usa outro host.
 
 ## Modelo e exports
 
@@ -23,7 +27,7 @@ Banco já existente precisa migração para adicionar refunded ao enum payment_s
 
 ## Dados comerciais simples
 
-`clients` guarda nome e contato opcional; `campaigns.clientId` é FK opcional restrita, permitindo reutilizar cliente em várias campanhas. Cadastro inline e salvamento da campanha são transacionais; cliente existente é verificado no servidor. `campaigns.notes` segue na campanha. O formulário de criação/dados não recebe nem altera preço; `campaigns.priceCents` é legado inicial preenchido somente se nulo ao emitir; adicionais não o sobrescrevem. Cada cobrança usa `checkout_links.amountCents` independente. Dados de cobranças existentes e `payments.amountCents` são preservados ao editar a campanha. Migration `0005_sloppy_silk_fever.sql` migra os antigos organizer/contact para clientes (apenas pares exatos compartilhados), preservando campos legados e preço. Por decisão do fundador, a contratação versionada foi retirada da UI e suas actions removidas. Tabelas `campaign_contracts`/`contract_approvals` e migration 0003 permanecem somente para preservar registros, sem uso no fluxo ativo ou checkout. Aprovação visual foi removida; publicação ainda pendente. Detalhes em [contracts.md](contracts.md).
+`clients` guarda nome e contato opcional; `campaigns.clientId` é FK opcional restrita, permitindo reutilizar cliente em várias campanhas. Cadastro inline e salvamento da campanha são transacionais; cliente existente é verificado no servidor. `campaigns.notes` segue na campanha. O formulário de criação/dados não recebe nem altera preço; `campaigns.priceCents` é legado inicial preenchido somente se nulo ao emitir; adicionais não o sobrescrevem. Cada cobrança usa `checkout_links.amountCents` independente. Dados de cobranças existentes e `payments.amountCents` são preservados ao editar a campanha. Migration `0005_sloppy_silk_fever.sql` migra os antigos organizer/contact para clientes (apenas pares exatos compartilhados), preservando campos legados e preço. Por decisão do fundador, a contratação versionada foi retirada da UI e suas actions removidas. Tabelas `campaign_contracts`/`contract_approvals` e migration 0003 permanecem somente para preservar registros, sem uso no fluxo ativo ou checkout. Aprovação visual foi removida; publicação local sem exigir pagamento disponível (publication.md). Detalhes em [contracts.md](contracts.md).
 
 ## Relatório financeiro administrativo
 
@@ -35,7 +39,7 @@ Aprovação, snapshots e prévia histórica não têm UI, actions ou endpoints a
 
 ## Checkout mock — fatia inicial
 
-`checkout_links` permite várias cobranças por campanha e congela nome/descrição/valor com token opaco próprio. Migration0008 adiciona descrição com default Campanha aos links existentes. Emissão usa UUID por intenção como ID, com reenvio idempotente sob lock da campanha; mesma intenção divergente é rejeitada, nova intenção cria cobrança independente. `checkout_attempts` registra criação antes do gateway e bloqueia duplicação em resultado incerto; `payments.checkoutId`, `qrCode`, `expiresAt` ligam resposta confirmada. `src/lib/checkout.ts` contém transações, reconciliação e guard estrito mock local. Callback antecipado pode registrar uma tentativa conhecida após consulta e comparação de IDs/valor. Painel agora oferece consulta manual e recuperação via listagem **somente no mock**. Não há checkout live ou publicação. Contratos e limites em [checkout.md](checkout.md); esta seção substitui afirmações históricas abaixo de ausência de consulta manual.
+`checkout_links` permite várias cobranças por campanha e congela nome/descrição/valor com token opaco próprio. Migration0008 adiciona descrição com default Campanha aos links existentes. Emissão usa UUID por intenção como ID, com reenvio idempotente sob lock da campanha; mesma intenção divergente é rejeitada, nova intenção cria cobrança independente. `checkout_attempts` registra criação antes do gateway e bloqueia duplicação em resultado incerto; `payments.checkoutId`, `qrCode`, `expiresAt` ligam resposta confirmada. `src/lib/checkout.ts` contém transações, reconciliação e guard estrito mock local. Callback antecipado pode registrar uma tentativa conhecida após consulta e comparação de IDs/valor. Painel agora oferece consulta manual e recuperação via listagem **somente no mock**. Não há checkout live; publicação local é independente do financeiro (publication.md). Contratos e limites em [checkout.md](checkout.md); esta seção substitui afirmações históricas abaixo de ausência de consulta manual.
 
 ## Configuração
 
@@ -82,7 +86,7 @@ Após commit, exclusão de IDs removidos revalida configuração atual e package
 
 ## Storage e readiness
 
-S3 privado, path-style, sem ACL pública. Helpers devem ser chamados somente após autorização pela camada de aplicação. Manifesto público é allow-list estrita de version, slug, name, endsAt, assets; nunca serializar linhas comerciais. Não existe publicador de manifest nesta V1.
+S3 privado, path-style, sem ACL pública. Helpers devem ser chamados somente após autorização pela camada de aplicação. Manifesto público é allow-list estrita de version, slug, name, endsAt, assets; nunca serializar linhas comerciais. Publicação guarda snapshot de auditoria em campaign_publications, envia PNGs versionados ao prefixo public/events e grava event.json por último. Site público separado lê storage sem consultar Next/DB. deliveredAt distingue conclusão e permite retry da versão congelada após falha. Rotas públicas Next foram removidas; não migra o frontend antigo. Ver [publication.md](publication.md).
 
 GET `/api/health` público: somente `{status,checks:{database,storage}}`, SELECT 1 + HeadBucket; 200/503, no-store. Sem URLs, versões, bucket, credenciais ou erros internos. O gateway precisa monitoramento separado.
 

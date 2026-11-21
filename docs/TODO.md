@@ -42,6 +42,6 @@ Escopo confirmado em 18/11/2026: administrativo local, serviços Docker e pagame
 
 Deploy, provisionamento e implantação em produção foram retirados da lista de tarefas a pedido do fundador. Não houve publicação, push, serviços pagos nem chamada PixGo real.
 
-Publicação/editor público, encerramento/suspensão e métricas/relatório de participantes permanecem adiados pela decisão anterior — não foram implementados nem removidos do conceito do produto. O financeiro atual não substitui métricas de participantes. Para retomar essa jornada, confirmar arquitetura e autorização de publicação em pedido específico.
+Publicação local sem exigir pagamento foi autorizada em20/11/2026 e implementada no novo aplicativo: snapshot, entrega de PNGs versionados/event.json no storage, host público independente do Next/DB e encerramento no runtime compartilhado (ver publication.md). Migração/deploy do público antigo, republicação/suspensão e métricas/relatório de participantes continuam pendentes. O financeiro atual não substitui métricas de participantes. Para retomar essa jornada, confirmar arquitetura e autorização de publicação em pedido específico.
 
 **Status honesto:** o núcleo administrativo local está implementado, mas ainda há cobertura/confiabilidade e validações acima. Não equivale a “100% da jornada pública” nem a aceite de produção.

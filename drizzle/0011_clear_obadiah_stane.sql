@@ -1,0 +1,1 @@
+ALTER TABLE "campaign_publications" ADD COLUMN "delivered_at" timestamp with time zone;

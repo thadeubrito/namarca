@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
-import { saveClient, type ClientState } from '@/app/admin/clientes/actions';
+import { saveClient, type ClientState } from '@/app/(workspace)/clientes/actions';
 import { Action, ActionLink, Field, Notice, Surface, TextInput } from './primitives';
 
 export function ClientContactForm({ client }: { client?: { id: string; name: string; contact: string } }) {
@@ -24,7 +24,7 @@ export function ClientContactForm({ client }: { client?: { id: string; name: str
         {state.error && <Notice role="alert" tone="error">{state.error}</Notice>}
       </div>
       <div className="flex flex-col-reverse gap-3 border-t border-border ws-panel-footer sm:flex-row sm:items-center sm:justify-between">
-        <ActionLink href="/admin/clientes" variant="ghost">Clientes</ActionLink>
+        <ActionLink href="/clientes" variant="ghost">Clientes</ActionLink>
         <Action type="submit" disabled={pending} aria-busy={pending}>{pending ? 'Salvando…' : client ? 'Salvar cliente' : 'Cadastrar cliente'}{client ? <Check className="size-4" aria-hidden="true" /> : <ArrowRight className="size-4" aria-hidden="true" />}</Action>
       </div>
     </form>

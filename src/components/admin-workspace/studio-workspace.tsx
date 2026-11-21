@@ -226,6 +226,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
       const merged = { ...event, [scope]: value.event[scope] };
       const savedIds = new Set(scope === 'theme' ? [] : value.event[scope].map(item => item.id));
       const remaining = materialsRef.current.filter(item => !savedIds.has(item.id));
+      window.dispatchEvent(new Event('namarca:editor-saved'));
       setSnapshot(value); setEvent(merged); changeMaterials(remaining); setConflict(false); setStorageWarning('');
       const stillDirty = (['artworks', 'stickers', 'theme'] as const).some(key => !sameDraftValue(merged[key], value.event[key]));
       // This code runs only after the section save request, never while rendering.

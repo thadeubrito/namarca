@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { createCampaign, type CreateState } from '@/app/admin/campanhas/nova/actions';
+import { createCampaign, type CreateState } from '@/app/(workspace)/campanhas/nova/actions';
 import { Action, ActionLink, Field, Notice, TextArea, TextInput } from './primitives';
 import { useFormDraft } from './form-draft';
 import { DatePickerField, SelectField } from './form-controls';
@@ -17,6 +17,7 @@ export type CampaignDefaults = { name: string; slug: string; endsAt: string; cli
 export type CampaignDataFormProps = {
   defaults?: CampaignDefaults;
   draftKey?: string;
+  slugLocked?: boolean;
   clients?: { id: string; name: string; contact: string }[];
   save?: (state: CreateState, form: FormData) => Promise<CreateState>;
 };
@@ -28,7 +29,7 @@ function FormSection({ title, children }: { title: string; children: ReactNode }
   </section>;
 }
 
-export function CampaignDataForm({ defaults, clients = [], save = createCampaign, draftKey }: CampaignDataFormProps) {
+export function CampaignDataForm({ defaults, clients = [], save = createCampaign, draftKey, slugLocked = false }: CampaignDataFormProps) {
   const [state, action, pending] = useActionState(save, {});
   const [clientId, setClientId] = useState(defaults?.clientId ?? '');
   const [endsAt, setEndsAt] = useState(defaults?.endsAt ?? '');
@@ -62,13 +63,14 @@ export function CampaignDataForm({ defaults, clients = [], save = createCampaign
       }
     }
     markSaved(state.saved.values);
+    window.dispatchEvent(new Event('namarca:editor-saved'));
   }, [state.saved, markSaved, formRef]);
 
   return <form ref={formRef} action={action} data-campaign-save={defaults ? 'details' : undefined} data-campaign-navigation="true" aria-busy={pending} className="ws-campaign-form min-w-0">
     <div className="ws-form-groups">
       <FormSection title="Evento">
         <Field label="Nome do evento"><TextInput type="text" name="name" defaultValue={defaults?.name} required minLength={2} maxLength={160} placeholder="Ex.: Corrida Horizonte" /></Field>
-        <Field label="Endereço da campanha" hint="Letras minúsculas, números e hífens."><span className="ws-input-prefix-group"><span className="ws-input-prefix" aria-hidden="true">namarca.com/</span><TextInput type="text" name="slug" defaultValue={defaults?.slug} required minLength={2} maxLength={80} pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="corrida-horizonte" /></span></Field>
+        <Field label="Endereço da campanha" hint={slugLocked ? 'Endereço preservado para manter os links já divulgados.' : 'Letras minúsculas, números e hífens.'}><span className="ws-input-prefix-group"><span className="ws-input-prefix" aria-hidden="true">namarca.com/</span><TextInput type="text" name="slug" readOnly={slugLocked} defaultValue={defaults?.slug} required minLength={2} maxLength={80} pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="corrida-horizonte" /></span></Field>
         <Field label="Data de encerramento" hint="Às 23h59 de São Paulo."><DatePickerField name="endsAt" label="Data de encerramento" value={endsAt} onValueChange={setEndsAt} required /></Field>
       </FormSection>
       <FormSection title="Cliente e observações">
@@ -93,7 +95,7 @@ export function CampaignDataForm({ defaults, clients = [], save = createCampaign
     <footer className="ws-campaign-form-footer">
       {feedback}
       {state.error && <Notice tone="error" role="alert" className="ws-campaign-form-error">{state.error}</Notice>}
-      <div className="ws-campaign-form-actions"><SaveStatus dirty={dirty} saving={pending} successToken={state.saved?.token} /><ActionLink href="/admin" variant="ghost">Cancelar</ActionLink><Action type="submit" disabled={pending}>{pending ? 'Salvando…' : defaults ? 'Salvar detalhes' : 'Salvar rascunho'}</Action></div>
+      <div className="ws-campaign-form-actions"><SaveStatus dirty={dirty} saving={pending} successToken={state.saved?.token} /><ActionLink href="/" variant="ghost">Cancelar</ActionLink><Action type="submit" disabled={pending}>{pending ? 'Salvando…' : defaults ? 'Salvar detalhes' : 'Salvar rascunho'}</Action></div>
     </footer>
   </form>;
 }

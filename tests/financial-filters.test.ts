@@ -18,7 +18,7 @@ test('período financeiro inclui dias completos de criação em São Paulo', () 
   assert.equal(financialFilterQuery({ status: 'paid', from: '2026-11-01' }), 'status=paid&from=2026-11-01');
 });
 test('página e CSV global exigem admin antes de consultar e não acionam gateway', async () => {
-  for (const path of ['src/app/admin/financeiro/page.tsx', 'src/app/api/financial-report/route.ts']) {
+  for (const path of ['src/app/(workspace)/financeiro/page.tsx', 'src/app/api/financial-report/route.ts']) {
     const source = await readFile(path, 'utf8');
     assert.ok(source.includes('await requireAdmin('));
     assert.ok(source.indexOf('await requireAdmin(') < source.indexOf('await globalFinancialRows('));

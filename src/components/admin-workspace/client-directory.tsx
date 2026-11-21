@@ -18,7 +18,7 @@ export function ClientDirectory({ rows, query }: { rows: { id: string; name: str
           <TextInput id="client-search" name="q" defaultValue={query} maxLength={254} placeholder="Buscar nome ou contato" aria-describedby="client-search-privacy" />
         </label>
         <Action type="submit" variant="secondary">Buscar</Action>
-        {query && <ActionLink href="/admin/clientes" variant="ghost">Limpar busca</ActionLink>}
+        {query && <ActionLink href="/clientes" variant="ghost">Limpar busca</ActionLink>}
       </div>
       <p id="client-search-privacy" className="ws-client-directory-privacy">A busca pode conter dados pessoais. Não compartilhe a URL.</p>
     </form>
@@ -29,7 +29,7 @@ export function ClientDirectory({ rows, query }: { rows: { id: string; name: str
         <span>{rows.length} {rows.length === 1 ? 'cliente' : 'clientes'}{query ? ' encontrados' : ''}</span>
       </header>
       {rows.length ? <ul className="ws-client-directory-list">{rows.map(client => <li key={client.id}>
-        <Link href={`/admin/clientes/${client.id}`} aria-label={client.name} className="ws-client-row">
+        <Link href={`/clientes/${client.id}`} aria-label={client.name} className="ws-client-row">
           <ClientMonogram name={client.name} />
           <div className="ws-client-directory-identity">
             <h3>{client.name}</h3>
@@ -38,7 +38,7 @@ export function ClientDirectory({ rows, query }: { rows: { id: string; name: str
           <span className="ws-client-directory-campaigns">{client.campaignCount} {client.campaignCount === 1 ? 'campanha' : 'campanhas'}</span>
           <span className="ws-client-directory-open"><ArrowUpRight size={20} aria-hidden="true" /></span>
         </Link>
-      </li>)}</ul> : <ClientEmpty title={query ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.'} description={query ? 'Tente outro nome ou contato.' : 'Cadastre o primeiro contato para vincular às suas campanhas.'} action={<ActionLink href={query ? '/admin/clientes' : '/admin/clientes/novo'} variant="secondary">{query ? 'Limpar busca' : 'Cadastrar primeiro cliente'}</ActionLink>} />}
+      </li>)}</ul> : <ClientEmpty title={query ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.'} description={query ? 'Tente outro nome ou contato.' : 'Cadastre o primeiro contato para vincular às suas campanhas.'} action={<ActionLink href={query ? '/clientes' : '/clientes/novo'} variant="secondary">{query ? 'Limpar busca' : 'Cadastrar primeiro cliente'}</ActionLink>} />}
     </section>
   </ClientEntrance>;
 }

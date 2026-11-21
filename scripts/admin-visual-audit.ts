@@ -10,7 +10,7 @@ export async function auditAdminVisuals(page: Page, base: string, campaignId: st
   for (const width of [1440, 1024, 768, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     for (const theme of ['light', 'dark']) {
-      await page.goto(`${base}/admin`);
+      await page.goto(`${base}/`);
       const toggle = page.getByRole('button', { name: theme === 'dark' ? 'Ativar tema escuro' : 'Ativar tema claro', exact: true });
       await expect(page.getByRole('button', { name: /Ativar tema (claro|escuro)/ })).toBeEnabled();
       if (await toggle.count()) await toggle.click();
@@ -30,13 +30,13 @@ export async function auditAdminVisuals(page: Page, base: string, campaignId: st
       expect(Math.abs(brand.y + brand.height / 2 - tools.y - tools.height / 2)).toBeLessThan(2);
       expect(await header.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe('rgb(0, 0, 0)');
       const views = [
-        { name: 'new-campaign', url: `${base}/admin/campanhas/nova` },
-        { name: 'new-client', url: `${base}/admin/clientes/novo` },
-        { name: 'campaigns', url: `${base}/admin` },
-        { name: 'clients', url: `${base}/admin/clientes` },
-        { name: 'studio', url: `${base}/admin/campanhas/${campaignId}`, tab: undefined },
-        { name: 'data', url: `${base}/admin/campanhas/${campaignId}`, tab: 'Detalhes' },
-        { name: 'billing', url: `${base}/admin/campanhas/${campaignId}`, tab: 'Cobrança' },
+        { name: 'new-campaign', url: `${base}/campanhas/nova` },
+        { name: 'new-client', url: `${base}/clientes/novo` },
+        { name: 'campaigns', url: `${base}/` },
+        { name: 'clients', url: `${base}/clientes` },
+        { name: 'studio', url: `${base}/campanhas/${campaignId}`, tab: undefined },
+        { name: 'data', url: `${base}/campanhas/${campaignId}`, tab: 'Detalhes' },
+        { name: 'billing', url: `${base}/campanhas/${campaignId}`, tab: 'Cobrança' },
       ];
       for (const view of views) {
         await page.goto(view.url);
@@ -99,6 +99,6 @@ export async function auditAdminVisuals(page: Page, base: string, campaignId: st
   }
   await writeFile('/tmp/namarca-visual-audit/metrics.json', JSON.stringify(results, null, 2));
   await page.setViewportSize({ width: 1440, height: 1400 });
-  await page.goto(`${base}/admin/campanhas/${campaignId}`);
+  await page.goto(`${base}/campanhas/${campaignId}`);
   await openStudio(page);
 }

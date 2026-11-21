@@ -11,7 +11,7 @@ test('diretório de clientes usa linhas Revolut e mantém busca GET, privacidade
   assert.match(source, /aria-describedby="client-search-privacy"/);
   assert.match(source, /Não compartilhe a URL/);
   assert.match(source, /aria-labelledby="client-directory-heading"/);
-  assert.match(source, /href=\{`\/admin\/clientes\/\$\{client.id\}`\} aria-label=\{client.name\}/);
+  assert.match(source, /href=\{`\/clientes\/\$\{client.id\}`\} aria-label=\{client.name\}/);
   assert.match(source, /client.campaignCount === 1 \? 'campanha' : 'campanhas'/);
   assert.match(css, /grid-template-columns:48px minmax\(0,1fr\) auto 44px/);
   assert.match(css, /border-radius:var\(--radius-panel\)/);

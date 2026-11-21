@@ -7,15 +7,21 @@ import { CampaignRecovery } from './campaign-recovery';
 
 const SectionStatus = createContext<(section: string, pending: boolean) => void>(() => {});
 export const useCampaignSectionStatus = () => useContext(SectionStatus);
+const PublicationLock = createContext<(busy: boolean) => void>(() => {});
+export const usePublicationLock = () => useContext(PublicationLock);
+const CampaignPending = createContext(false);
+export const useCampaignPending = () => useContext(CampaignPending);
 const ActiveSection = createContext<string | undefined>(undefined);
 export const useCampaignActiveSection = () => useContext(ActiveSection);
 
-export function CampaignSections({ campaignId, editable, details, billing, billingDraft }: { campaignId: string; editable: boolean; details: ReactNode; billing: ReactNode; billingDraft: boolean }) {
+export function CampaignSections({ campaignId, editable, details, billing, billingDraft, publication, hasPublished = false, unpublishedChanges = false, deliveryPending = false }: { hasPublished?: boolean; unpublishedChanges?: boolean; deliveryPending?: boolean; campaignId: string; editable: boolean; details: ReactNode; billing: ReactNode; billingDraft: boolean; publication?: ReactNode }) {
+  const [publishing, setPublishing] = useState(false);
   const [active, setActive] = useState('dados');
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const report = useCallback((section: string, value: boolean) => setPending(current => current[section] === value ? current : { ...current, [section]: value }), []);
+  const publicDirty = ['dados', 'artes', 'stickers', 'cores'].some(section => pending[section]);
   const studio = <CampaignStudio campaignId={campaignId} activeSection={active} onPendingChange={report} />;
-  return <SectionStatus.Provider value={report}><ActiveSection.Provider value={active}><CampaignRecovery expected={[...(editable ? ['dados', 'studio'] : []), ...(billingDraft ? ['cobranca'] : [])]}><div className="ws-campaign-workbench" data-section={active}><div className="ws-campaign-task"><WorkspaceTabs label="Seções da campanha" initialId="dados" layout="workbench" activeId={active} onActiveChange={setActive} items={[
+  return <PublicationLock.Provider value={setPublishing}><CampaignPending.Provider value={publicDirty}><SectionStatus.Provider value={report}><ActiveSection.Provider value={active}><CampaignRecovery expected={[...(editable ? ['dados', 'studio'] : []), ...(billingDraft ? ['cobranca'] : [])]}><div className="ws-campaign-workbench" data-section={active}><div className="ws-campaign-task" inert={publishing} aria-busy={publishing}><WorkspaceTabs label="Seções da campanha" initialId="dados" layout="workbench" activeId={active} onActiveChange={setActive} items={[
     { id: 'dados', label: 'Detalhes', pending: pending.dados, content: details },
     ...(editable ? [
       { id: 'artes', label: 'Artes', panelKey: 'visual', lazy: false, pending: pending.artes, content: studio },
@@ -23,5 +29,6 @@ export function CampaignSections({ campaignId, editable, details, billing, billi
       { id: 'cores', label: 'Cores', panelKey: 'visual', lazy: true, pending: pending.cores, content: studio },
     ] : []),
     { id: 'cobranca', label: 'Cobrança', pending: pending.cobranca, content: billing },
-  ]} /></div></div></CampaignRecovery></ActiveSection.Provider></SectionStatus.Provider>;
+    ...(publication ? [{ id: 'publicacao', label: deliveryPending ? 'Publicação pendente' : hasPublished && (unpublishedChanges || publicDirty) ? 'Publicação · alterações' : 'Publicação', content: publication }] : []),
+  ]} /></div></div></CampaignRecovery></ActiveSection.Provider></SectionStatus.Provider></CampaignPending.Provider></PublicationLock.Provider>;
 }

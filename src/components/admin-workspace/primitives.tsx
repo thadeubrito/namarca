@@ -4,12 +4,12 @@ import { useId, useState, useSyncExternalStore, type ReactNode, type ComponentPr
 import { flushSync } from 'react-dom';
 import Link from 'next/link';
 import { motion, MotionConfig, useReducedMotion } from 'motion/react';
-import { Inbox, FileText, Image, Smile, Palette, Wallet } from 'lucide-react';
+import { Inbox, FileText, Image, Smile, Palette, Wallet, Globe } from 'lucide-react';
 import './workspace.css';
 
 const subscribeWorkbench = (notify: () => void) => { const media = window.matchMedia('(min-width: 1101px)'); media.addEventListener('change', notify); return () => media.removeEventListener('change', notify); };
 const getWorkbench = () => window.matchMedia('(min-width: 1101px)').matches;
-const sectionIcons: Record<string, typeof Inbox> = { dados: FileText, artes: Image, stickers: Smile, cores: Palette, cobranca: Wallet };
+const sectionIcons: Record<string, typeof Inbox> = { dados: FileText, artes: Image, stickers: Smile, cores: Palette, cobranca: Wallet, publicacao: Globe };
 
 /** Operational components with Revolut-inspired hierarchy and segmented navigation.
  * Persistent panels, server actions and reduced-motion behavior are preserved. */

@@ -43,7 +43,7 @@ export function CampaignDirectory({ campaigns }: { campaigns: Campaign[] }) {
       </div>
       {filtered.map(c => <article key={c.id} className="ws-campaign-directory-row">
         <div className="ws-campaign-directory-identity">
-          <h2><Link href={`/admin/campanhas/${c.id}`}>{c.name}</Link></h2>
+          <h2><Link href={`/campanhas/${c.id}`}>{c.name}</Link></h2>
           {c.clientName && <p className="ws-campaign-directory-client">{c.clientName}</p>}
           <p className="ws-campaign-directory-slug">/{c.slug}</p>
         </div>
@@ -55,7 +55,7 @@ export function CampaignDirectory({ campaigns }: { campaigns: Campaign[] }) {
           <span className="ws-campaign-directory-mobile-label">Encerramento</span>
           <span>{c.endDate}</span>
         </div>
-        <Link href={`/admin/campanhas/${c.id}`} aria-label={`Abrir campanha ${c.name}`} className="ws-campaign-directory-open">
+        <Link href={`/campanhas/${c.id}`} aria-label={`Abrir campanha ${c.name}`} className="ws-campaign-directory-open">
           <ArrowUpRight aria-hidden="true" size={20} />
         </Link>
       </article>)}

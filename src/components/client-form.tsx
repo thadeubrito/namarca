@@ -4,7 +4,7 @@ import { useActionState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { saveClient, type ClientState } from '@/app/admin/clientes/actions';
+import { saveClient, type ClientState } from '@/app/(workspace)/clientes/actions';
 
 export function ClientForm({ client }: { client?: { id: string; name: string; contact: string } }) {
   const [state, action, pending] = useActionState<ClientState, FormData>(saveClient.bind(null, client?.id ?? null), {});
@@ -23,7 +23,7 @@ export function ClientForm({ client }: { client?: { id: string; name: string; co
       </CardContent>
       <CardFooter className="justify-end gap-2 border-t max-md:flex-col max-md:items-stretch max-md:px-4">
         <Button type="submit" disabled={pending}>{pending ? 'Salvando…' : client ? 'Salvar cliente' : 'Cadastrar cliente'}</Button>
-        <Button type="button" variant="ghost" asChild><Link href="/admin/clientes">Clientes</Link></Button>
+        <Button type="button" variant="ghost" asChild><Link href="/clientes">Clientes</Link></Button>
       </CardFooter>
     </Card>
   </form>;

@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from 'react';
 import { Dialog } from 'radix-ui';
 import { Plus, X } from 'lucide-react';
-import { saveClient } from '@/app/admin/clientes/actions';
+import { saveClient } from '@/app/(workspace)/clientes/actions';
 import { Action, Field, Notice, TextInput } from './primitives';
 import { useDarkTheme } from '@/components/theme-scope';
 

@@ -8,7 +8,7 @@ import { ClientEmpty } from './client-motion';
 export function ClientCampaigns({ campaigns, clientName }: { campaigns: { id: string; name: string; endsAt: string }[]; clientName: string }) {
   return <section className="min-w-0" aria-label="Campanhas do cliente">
     <div className="mb-5 flex items-center gap-3"><h2 className="text-lg font-semibold">Campanhas</h2><Pill>{campaigns.length}</Pill></div>
-    {campaigns.length ? <div className="grid gap-4 md:grid-cols-2">{campaigns.map(campaign => <Link key={campaign.id} href={`/admin/campanhas/${campaign.id}`} className="group min-w-0 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring motion-safe:transition-transform motion-safe:hover:-translate-y-0.5">
+    {campaigns.length ? <div className="grid gap-4 md:grid-cols-2">{campaigns.map(campaign => <Link key={campaign.id} href={`/campanhas/${campaign.id}`} className="group min-w-0 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring motion-safe:transition-transform motion-safe:hover:-translate-y-0.5">
       <Surface className="flex h-full flex-col gap-6 p-6">
         <div className="flex items-center justify-between gap-3"><Pill>Campanha vinculada</Pill><ArrowUpRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" /></div>
         <h3 className="flex-1 break-words text-lg font-semibold leading-snug [overflow-wrap:anywhere]">{campaign.name}</h3>

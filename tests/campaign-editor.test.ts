@@ -40,9 +40,11 @@ test("valida referência estrita, dimensões, tipo, propriedade e duplicatas glo
 test("revisão obrigatória e estados não editáveis", () => {
   assert.equal(editorSaveInput.safeParse({ event: {}, revision: 0 }).success, true);
   for (const revision of [-1, 0.5, 2147483647, "0", undefined]) assert.equal(editorSaveInput.safeParse({ event: {}, revision }).success, false);
-  assertEditable({ preparationStatus: "draft", publicationStatus: "unpublished" });
-  assert.throws(() => assertEditable({ preparationStatus: "approved", publicationStatus: "unpublished" }), status(409));
-  assert.throws(() => assertEditable({ preparationStatus: "draft", publicationStatus: "published" }), status(409));
+  for (const publicationStatus of ["unpublished", "published"]) assertEditable({ preparationStatus: "draft", publicationStatus });
+  for (const preparationStatus of ["validated", "approved"]) {
+    for (const publicationStatus of ["unpublished", "published"]) assert.throws(() => assertEditable({ preparationStatus, publicationStatus }), status(409));
+  }
+  for (const publicationStatus of ["pending", "failed", "ended"]) assert.throws(() => assertEditable({ preparationStatus: "draft", publicationStatus }), status(409));
 });
 test("CSRF falha fechado e localhost só é permitido em desenvolvimento", () => {
   assertMutationOrigin("https://admin.example", "https://admin.example/path");

@@ -28,9 +28,14 @@ Acesse **http://localhost:3000**. O identificador local inicial é `admin@namarc
 | App | http://localhost:3000 |
 | PostgreSQL | localhost:5432; credenciais em `.env.local` |
 | S3 privado / SeaweedFS | http://localhost:9000; sem console web |
+| Site público independente | http://localhost:3001 (`docker compose up -d public-site`) |
 | Simulador PixGo | http://localhost:4010; API protegida, sem dinheiro real |
 
 Downloads de imagens/pacotes exigem rede no bootstrap. A operação de desenvolvimento não exige Vercel, Neon, R2, Google ou conta PixGo. Dados persistem em volumes. `docker compose down` para os serviços sem apagar dados. Não use `down -v` se quiser preservá-los.
+
+## Rotas do administrativo
+
+O app administrativo não usa prefixo `/admin`: `/` lista campanhas, `/campanhas/nova` cria, `/campanhas/<id>` abre a campanha, `/clientes` e `/financeiro` são as outras seções. Login em `/login` e TOTP em `/login/verificar`; layout protegido no route group `(workspace)` e `requireAdmin` em cada operação privilegiada. Links antigos `/admin/*` não são mantidos. O site público continua em outro host (`localhost:3001` no desenvolvimento), sem conflito com essas rotas.
 
 ## Comandos
 
@@ -58,7 +63,7 @@ Migrations em `drizzle/` são versionadas. `db:push` existe somente para explora
 - Confirmação financeira e registro idempotente do evento na própria requisição do webhook, sem worker ou cron.
 - Infra reproduzível e testes.
 
-**Ainda não é o SaaS comercial completo.** O estúdio e a prévia foram integrados, há checkout local, mas não há checkout real homologado nem publicação pública. Uma confirmação de pagamento não publica a campanha. Registro de data não implementa sozinho o encerramento do editor antigo.
+**Ainda não é o SaaS comercial completo.** O estúdio e a prévia foram integrados, há checkout local, mas não há checkout real homologado nem implantação pública em produção. A aba Publicação permite ao administrador publicar a versão salva sem exigir pagamento, com confirmação explícita, no host público separado `http://localhost:3001/<slug>` (configurável por `PUBLIC_SITE_URL`). O publicador envia PNGs em artworks/stickers, o manifesto imutável versions/vN.json e, por último, `event.json` com `{version:N}` ao storage; a aba permite comparar versões e rascunho salvo; o site público não consulta Next ou banco. A publicação congela somente a versão pública; detalhes e estúdio continuam editáveis como rascunho. Atualizar publicação entrega uma nova versão sem interromper a anterior; o endereço já divulgado permanece fixo. Cobranças continuam independentes. Uma confirmação de pagamento não publica a campanha. Registro de data não implementa sozinho o encerramento do editor antigo.
 
 ## Guia de design
 
