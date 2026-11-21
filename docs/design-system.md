@@ -37,6 +37,10 @@ A cópia de referência permanece integral; decisões específicas da Namarca fi
 - Financeiro: resumo do recorte antes dos filtros/histórico; pagas primeiro em superfície cobalto e coluna ampliada no desktop. Filtros GET num details, recolhido sem filtros e aberto quando ativos/inválidos. Inválidos não mostram totais0 como resultado válido. Ordem do DOM corresponde à leitura visual; consultas/CSV/valores inalterados.
 - Escopo desta revisão de componentes é administrativo. Login e checkout mantêm o tratamento da rodada anterior; não afirmar reconstrução completa dessas jornadas.
 
+## Skeletons da campanha
+
+A fronteira `campanhas/[id]/loading.tsx` apresenta cabeçalho e navegação responsiva, com conteúdo correspondente à `aba` da URL (fallback Detalhes). Detalhes espelha grupos de campos; Cobrança, emissão e registros; Publicação, visão atual/próxima e dois expansíveis. Artes/Figurinhas espelham miniaturas160px e rodapé com duas/uma ações; Cores, quatro linhas de ajustes e amostras circulares. Estúdio compartilha o mesmo skeleton por seção entre bundle e configuração, sem tabs internas antigas, índices ou controles fictícios. Prévia usa geometria atual de dispositivo28px. Blocos usam tokens, status acessível único, decoração aria-hidden, sem controles focáveis e sem pulsação em reduced-motion. Trocas de abas já carregadas e salvamentos não introduzem atrasos artificiais nem substituem conteúdo por skeleton.
+
 ## Persistência da navegação da campanha
 
 A aba ativa fica no parâmetro `aba` da URL (`dados`, `artes`, `stickers`, `cores`, `cobranca`, `publicacao`). Recarregar ou abrir o link restaura a seção; ausência/valor inválido ou seção indisponível usa Detalhes. Trocas usam histórico nativo integrado ao Next, sem requisição de navegação/remontagem do workbench ou salvamento incidental; Voltar/Avançar também atualizam a seleção. Outros parâmetros e fragmento são preservados.

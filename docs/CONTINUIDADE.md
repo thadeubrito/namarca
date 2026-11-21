@@ -1,5 +1,12 @@
 # Namarca — continuidade de implementação da V1
 
+## Campanha — skeletons por seção e carregamento da página (21/11/2026)
+
+Pedido fundador: atualizar página e abas. Nova fronteira loading.tsx usa aba da URL e CampaignPageSkeleton (cabeçalho/nav desktop lateral e mobile horizontal), com CampaignTabSkeleton próprio Detalhes/Cobrança/Publicação e visual compartilhado. StudioSkeleton substitui tabs internas/índices/ações antigas por cartões160px+rodapé duas ações Artes/uma Figurinhas ou quatro linhas Cores, preview28px. Contexto leve no launcher entrega activeSection ao fallback dynamic sem remontar workspace; GET também usa seção atual. CSS legado dos skeletons removido, tokens compartilhados/aria-busy/status único/decoração ariahidden/zero controles/reducedmotion. Sem alterar fetch/actions/auth/recovery/instânciaiframe ou introduzir loading artificial nas trocas já carregadas.
+
+Typecheck/lint/128testes+1skip/buildproduçãoisolado/diffcheck aprovados containers. Browser focal renderToStaticMarkup dos componentes+CSS reais (inclui CSS base compilado), Chromium rede none:60cenários seisabas×1440/1024/768/390/320×claroescuro, zerooverflowhorizontal,1status/zerocontroles, reducedmotionnone. Evidências36capturas/results em /tmp/namarca-campaign-skeleton-review; principal observou Artes1440claro/Publicação320claro/Cores390escuro. Inspeção detectou toolbarrecortada mobile: flexwrap corrigido e60reexecutadosPASS. Tentativa fixture compilada sem CSSbase deixava sr-only visível; corrigida fixture; wrapperfixture sem minwidth/boxsizing causou overflow próprio, corrigido semmascararCSSproduto. Limites:fixtureSSR estática sem Nextstreaming/hydration/auth/rede lenta real; nãoE2E. Build aprovado antes do ajuste final flexwrapCSS; typecheck/lint/testes/browser finais após. Schema inalterado/migrations não reexecutadas, sem commit/push/deploy/PixGo real/dadosvolumesalterados.
+
+
 ## Campanha — aba persistida na URL (21/11/2026)
 
 Pedido fundador: atualizar Publicação não deve voltar a Detalhes. CampaignSections deriva seleção de useSearchParams `aba`, com allow-list das seções disponíveis e fallback dados. Troca via history.pushState integrado ao Next evita navegação servidor/remontagem/alterações nos rascunhos e permite Voltar/Avançar entre abas; preserva parâmetros e fragmento. WorkspaceTabs inicia visited pela seleção resolvida. Sem mudanças visuais, auth/backend/schema/migrations novas. Testes helpers cobrem seis abas, valores inválidos/indisponíveis e preservação da URL; teste estrutural antigo atualizado para initialId dinâmico.

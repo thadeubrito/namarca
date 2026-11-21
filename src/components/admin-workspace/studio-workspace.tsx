@@ -315,7 +315,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
   }, [registerRecovery, recoveryChecked, recovery, snapshot?.revision]);
 
   if (!event) {
-    if (!failure) return <StudioSkeleton />;
+    if (!failure) return <StudioSkeleton activeSection={activeSection} />;
     return <section className="campaign-editor ws-studio-root" aria-label="Estúdio da campanha"><Surface><Notice tone="error" role="alert">{message}</Notice><Action type="button" onClick={() => void load()}>Tentar novamente</Action></Surface></section>;
   }
 
