@@ -22,7 +22,9 @@ test('referência Revolut mantém tokens sem alterar o tema do runtime', async (
   assert.match(checkout, /\.checkout-card \.error \{ color:var\(--error\)/);
   assert.ok(ui.includes('--radius-control:12px; --radius-button:9999px; --radius-panel:20px'));
   assert.ok(ui.includes('--paper:#000; --background:#000; --surface:#16181a'));
-  assert.match(ui, /\.admin-header \{[^}]*background:#000; color:#fff;/);
+  assert.match(ui, /\.admin-header \{[^}]*background:var\(--background\); color:var\(--foreground\);/);
+  assert.match(ui, /html:has\(\.admin-shell\), body:has\(\.admin-shell\) \{ background:#fff;/);
+  assert.match(ui, /html\[data-admin-theme=dark\]:has\(\.admin-shell\)[^}]*background:#000;/);
   assert.match(ui, /\[data-slot=button\] \{[^}]*border-radius:var\(--radius-button\)/);
   assert.match(workspace, /\.ws-action \{[^}]*min-height:48px[^}]*border-radius:var\(--radius-button\)/);
   assert.match(workspace, /\.ws-input,[^{]+\{[^}]*border-radius:var\(--radius-control\)/);

@@ -15,7 +15,7 @@ A cópia de referência permanece integral; decisões específicas da Namarca fi
 ## Sistema
 
 - Canvas claro `#ffffff`; canvas escuro `#000000`; superfície escura `#16181a`.
-- Header preto nos dois temas, com texto branco; menu centralizado entre colunas laterais iguais, marca à esquerda e ações à direita. Até600px, menu centralizado na segunda linha. Área operacional respeita a preferência claro/escuro existente. A alternância preto/branco é estrutural, não um gradiente.
+- Header acompanha o tema: branco/texto escuro no claro e preto/texto claro no escuro, com divisória inferior discreta e tokens herdados (inclusive foco/hover/seleção). Canvas do scroll elástico acompanha o mesmo tema. Menu centralizado entre colunas laterais iguais, marca à esquerda e ações à direita. Até600px, menu centralizado na segunda linha. Área operacional respeita a preferência claro/escuro existente. A alternância preto/branco é estrutural, não um gradiente.
 - Texto claro `#191c1f`, secundário `#505a63`, borda `#e2e2e7`; no escuro texto branco, secundário branco a 72%, borda branca a 12%.
 - Texto de marca usa `--brand-text`: #494fdf no claro, #a4a8ff no escuro; superfície cobalto e texto branco continuam distintos. Auditoria e exceções: `docs/color-audit.md`.
 - Cobalto `#494fdf` identifica seleção ativa (tabs, filtros, material), símbolos de campanha e um destaque financeiro para tentativas pagas. Não representa publicação, saldo ou autorização. CTAs principais continuam preto/branco. Erros mantêm cor semântica legível e mensagem textual.

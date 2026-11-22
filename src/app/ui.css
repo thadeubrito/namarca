@@ -70,7 +70,7 @@
 .admin-shell { display:flex; flex-direction:column; }
 .admin-shell .shell { width:100%; max-width:1440px; padding-inline:24px; }
 .admin-shell .content { flex:1; padding-top:40px; padding-bottom:48px; }
-.admin-header { --foreground:#fff; --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.12); --primary:#fff; --primary-foreground:#000; --interaction:#16181a; --ring:#c9c9cd; border-bottom:1px solid var(--line); background:#000; color:#fff; }
+.admin-header { border-bottom:1px solid var(--line); background:var(--background); color:var(--foreground); }
 .admin-header-inner { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:24px; width:100%; max-width:1280px; margin-inline:auto; padding-inline:24px; }
 .admin-header > .admin-header-inner { min-height:64px; }
 .admin-brand { display:flex; align-items:center; gap:12px; font-size:20px; font-weight:600; letter-spacing:-.6px; min-height:44px; }
@@ -168,7 +168,8 @@
 }
 }
 /* Match the administrative header when elastic scrolling exposes the root canvas. */
-html:has(.admin-shell), body:has(.admin-shell) { background:#000; }
+html:has(.admin-shell), body:has(.admin-shell) { background:#fff; }
+html[data-admin-theme=dark]:has(.admin-shell), html[data-admin-theme=dark] body:has(.admin-shell), html:has(.admin-shell.dark), body:has(.admin-shell.dark) { background:#000; }
 
 /* Unlayered adapters intentionally beat shadcn utilities, like workspace.css.
    Keep this contract scoped: checkout and the standalone event runtime are unrelated. */

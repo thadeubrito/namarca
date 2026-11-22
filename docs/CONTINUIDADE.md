@@ -1,5 +1,12 @@
 # Namarca — continuidade de implementação da V1
 
+## Header — acompanha tema claro/escuro (21/11/2026)
+
+Fundador aprovou substituir header preto fixo por branco no light/preto no dark. Removidos overrides locais de tokens/cor; header herda background/foreground/line/foco/hover do ThemeScope, mantendo grid/menu/ações/seleção. Canvas html/body com admin-shell agora branco padrão e preto somente dark (atributo pré-paint ou classe), evitando faixa preta no scroll elástico light. Substitui decisão anterior de header sempre preto; referência marketing não impõe contraste fixo no administrativo. Sem auth/actions/schema novos.
+
+Typecheck/lint/130testes+1skip/buildproduçãoisolado/diffcheck aprovados containers. Browser focal markup representativo+ui.css real Chromium8cenários1440/768/390/320claroescuro: backgroundheader/canvas iguais esperado/indicadorforeground/zerooverflowhorizontal. Capturas /tmp/namarca-campaign-skeleton-review/header-*.png; principal observou390light. Fixture inicial concatenava CSScompilado antigo com tokens/cascade layers duplicados e texto branco; removida duplicação e8reexecutadosPASS, sempatchproduto para fixture. Limites sem DOM Reactauth/hydration/teclado/scrollSafari real; fixture nãoE2E. Sem migrations (schema inalterado), commit/push/deploy/serviçosreais/dadosvolumes alterados.
+
+
 ## Tema — dark antes da hidratação (21/11/2026)
 
 Fundador reportou flash light no refresh com dark salvo. Causa: ThemeScope SSR/useSyncExternalStore inicia claro, preferência só após hidratação. Script fixo no head lê somente namarca-admin-theme e aplica data-admin-theme ao html antes de pintar; exceção storage/valor inválido mantém claro. CSS aplica tokens dark às ui-scope pelo atributo, sem depender da classe pós-hidratação. suppressHydrationWarning restrito ao html pelo atributo pré-paint. Toggle e eventos storage/custom mantêm atributo sincronizado; classes/portais/useDarkTheme existentes preservados. Sem cookie/auth/backend/schema novos.
