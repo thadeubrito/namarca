@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { suggestCampaignSlug } from '../src/lib/campaign-slug';
+import { suggestCampaignSlug } from '../apps/admin/src/lib/campaign-slug';
 
 test('creation suggests normalized bounded addresses without changing server validation', () => {
   assert.equal(suggestCampaignSlug('  Corrida São João — 2027! '), 'corrida-sao-joao-2027');
@@ -10,10 +10,10 @@ test('creation suggests normalized bounded addresses without changing server val
 });
 
 test('dialog and standalone route share the basic form and keep editing separate', async () => {
-  const form = await readFile('src/components/admin-workspace/campaign-create-form.tsx', 'utf8');
-  const dialog = await readFile('src/components/admin-workspace/campaign-create-dialog.tsx', 'utf8');
-  const route = await readFile('src/app/(workspace)/campanhas/nova/page.tsx', 'utf8');
-  const list = await readFile('src/app/(workspace)/page.tsx', 'utf8');
+  const form = await readFile('apps/admin/src/components/admin-workspace/campaign-create-form.tsx', 'utf8');
+  const dialog = await readFile('apps/admin/src/components/admin-workspace/campaign-create-dialog.tsx', 'utf8');
+  const route = await readFile('apps/admin/src/app/(workspace)/campanhas/nova/page.tsx', 'utf8');
+  const list = await readFile('apps/admin/src/app/(workspace)/page.tsx', 'utf8');
   assert.match(list, /action=\{<CampaignCreateDialog \/>\}/);
   for (const source of [route, dialog]) assert.match(source, /<CampaignCreateForm/);
   for (const field of ['name', 'slug', 'endsAt']) assert.ok(form.includes(`name="${field}"`));

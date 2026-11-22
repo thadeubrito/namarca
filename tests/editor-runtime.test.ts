@@ -53,22 +53,22 @@ test('público rejeita manifesto vazio; rascunho da prévia pode ficar sem mater
 
 test('duas entradas importam uma única implementação e CSS, sem depender de Next no runtime', async () => {
   for (const entry of ['main', 'preview']) {
-    const source = await readFile(`apps/event/src/${entry}.tsx`, 'utf8');
-    assert.match(source, /packages\/editor\/src\/editor\/PhotoEditor/);
-    assert.match(source, /packages\/editor\/src\/styles\.css/);
+    const source = await readFile(`apps/campaign/src/${entry}.tsx`, 'utf8');
+    assert.match(source, /@namarca\/editor\/photo-editor/);
+    assert.match(source, /@namarca\/editor\/styles\.css/);
     assert.doesNotMatch(source, /from ['"]next\//);
   }
-  const previewSource = await readFile('apps/event/src/preview.tsx', 'utf8');
+  const previewSource = await readFile('apps/campaign/src/preview.tsx', 'utf8');
   assert.doesNotMatch(previewSource, /fetch\(|\/api\/campaigns\/.*\/packages\//);
   assert.match(previewSource, /!query\.has\('packageId'\)/);
-  const publicSource = await readFile('apps/event/src/main.tsx', 'utf8');
+  const publicSource = await readFile('apps/campaign/src/main.tsx', 'utf8');
   assert.doesNotMatch(publicSource, /postMessage|addEventListener\(['"]message/);
 });
 
 
 test('prévia sem arte mantém shell real e quadriculado apenas na composição', async () => {
-  const preview = await readFile('apps/event/src/preview.tsx', 'utf8');
-  const css = await readFile('apps/event/src/preview.css', 'utf8');
+  const preview = await readFile('apps/campaign/src/preview.tsx', 'utf8');
+  const css = await readFile('apps/campaign/src/preview.css', 'utf8');
   const editor = await readFile('packages/editor/src/editor/PhotoEditor.tsx', 'utf8');
   const workspace = await readFile('packages/editor/src/editor/EditorWorkspace.tsx', 'utf8');
   assert.match(preview, /<PhotoEditor event=/);

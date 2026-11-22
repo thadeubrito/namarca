@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 test('comparador usa pares responsivos, cards tonais e seletores compartilhados sem tabela larga', async () => {
-  const source = await readFile('src/components/admin-workspace/publication-diff.tsx', 'utf8');
-  const css = await readFile('src/components/admin-workspace/workspace.css', 'utf8');
+  const source = await readFile('apps/admin/src/components/admin-workspace/publication-diff.tsx', 'utf8');
+  const css = await readFile('apps/admin/src/components/admin-workspace/workspace.css', 'utf8');
   assert.doesNotMatch(source, /<table|<input[^>]*checkbox/);
   assert.match(source, /ws-diff-pair/);
   assert.match(source, /SelectField/);

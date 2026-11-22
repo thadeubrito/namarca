@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { nextPaymentStatus } from "../src/lib/pixgo";
-import { publicManifestSchema } from "../src/lib/storage";
+import { nextPaymentStatus } from "../apps/admin/src/lib/pixgo";
+import { publicManifestSchema } from "../apps/admin/src/lib/storage";
 
 test("paid only advances to refunded, which is terminal and separate from publication", () => {
   for (const status of ["pending", "paid", "expired", "cancelled"] as const) assert.equal(nextPaymentStatus("paid", status), "paid");

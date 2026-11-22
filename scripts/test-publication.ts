@@ -22,12 +22,12 @@ async function main() {
   assert.equal(new URL(publicUrl).hostname, 'publication-test-public');
   const client = new S3Client({ endpoint: endpoint.href, region: 'us-east-1', forcePathStyle: true, credentials: { accessKeyId: process.env.S3_ACCESS_KEY_ID!, secretAccessKey: process.env.S3_SECRET_ACCESS_KEY! } });
   const Bucket = process.env.S3_BUCKET!;
-  const { db, pool } = await import('../src/db');
-  const s = await import('../src/db/schema');
-  const { publishCampaign, publishHistoricalVersion, setCampaignSuspended } = await import('../src/lib/campaign-publication');
-  const { CampaignEditorError, defaultCampaignEvent } = await import('../src/lib/campaign-editor');
-  const { putPrivateObject, putPublicObject } = await import('../src/lib/storage');
-  const { publicationArtifacts } = await import('../src/lib/publication-artifacts');
+  const { db, pool } = await import('../apps/admin/src/db');
+  const s = await import('../apps/admin/src/db/schema');
+  const { publishCampaign, publishHistoricalVersion, setCampaignSuspended } = await import('../apps/admin/src/lib/campaign-publication');
+  const { CampaignEditorError, defaultCampaignEvent } = await import('../apps/admin/src/lib/campaign-editor');
+  const { putPrivateObject, putPublicObject } = await import('../apps/admin/src/lib/storage');
+  const { publicationArtifacts } = await import('../apps/admin/src/lib/publication-artifacts');
   const ids = Array.from({ length: 6 }, () => randomUUID());
   const [publishedId, emptyId, expiredId, staleId, draftId, failureId] = ids;
   const keys = new Set<string>();
@@ -283,7 +283,7 @@ async function main() {
     for (const material of [...published.config.artworks, ...published.config.stickers]) { const response = await get(`/events/${fixture.identity.slug}/${material.file}`); assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png'); assert.ok(Buffer.from(await response.arrayBuffer()).equals(bytes)); }
     for (const path of [`/events/${fixtures[1].identity.slug}/event.json`, `/events/${fixture.identity.slug}/${fixture.outside}.png`, `/events/${fixture.identity.slug}/artworks/${fixture.outside}.png`, `/events/${fixture.identity.slug}/versions/v0.json`, '/private/campaigns/anything', '/admin', '/api', '/event-runtime/%2e%2e/package.json']) assert.equal((await get(path)).status, 404);
     assert.deepEqual(await financialState(), paidBefore);
-    const { restorePublishedDraft } = await import('../src/lib/publication-restore');
+    const { restorePublishedDraft } = await import('../apps/admin/src/lib/publication-restore');
     const restoreId = draftId;
     const [restorePublication] = await db.select().from(s.campaignPublications).where(eq(s.campaignPublications.campaignId, restoreId));
     const restoreHistory = await db.select().from(s.campaignPublicationHistory);

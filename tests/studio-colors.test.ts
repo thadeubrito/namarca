@@ -3,8 +3,8 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 test('cores usa ajustes em linhas, amostras circulares e HEX acessível sem alterar save', async () => {
-  const source = await readFile('src/components/admin-workspace/studio-colors.tsx', 'utf8');
-  const css = await readFile('src/components/admin-workspace/studio.css', 'utf8');
+  const source = await readFile('apps/admin/src/components/admin-workspace/studio-colors.tsx', 'utf8');
+  const css = await readFile('apps/admin/src/components/admin-workspace/studio.css', 'utf8');
   assert.match(source, /aria-describedby=\{hintId\}/);
   assert.match(source, /aria-invalid=\{invalid\}/);
   assert.match(source, /window.confirm/);

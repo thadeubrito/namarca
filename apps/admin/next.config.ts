@@ -1,7 +1,11 @@
 import type { NextConfig } from 'next';
+import path from 'node:path';
 
 const config: NextConfig = {
   output: 'standalone',
+  outputFileTracingRoot: path.resolve(process.cwd(), '../..'),
+  turbopack: { root: path.resolve(process.cwd(), '../..') },
+  transpilePackages: ['@namarca/editor'],
   poweredByHeader: false,
   allowedDevOrigins: ['localhost', '127.0.0.1', 'app', 'namarca-editor-test'],
   async headers() {

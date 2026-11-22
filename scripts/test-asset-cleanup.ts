@@ -2,12 +2,12 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
-import { db, pool } from "../src/db";
-import { campaigns, campaignAssets, campaignEditor, campaignPackages } from "../src/db/schema";
-import { cleanupCampaignAssets } from "../src/lib/asset-cleanup";
-import { campaignAssetKey } from "../src/lib/asset-cleanup-policy";
-import { defaultCampaignEvent } from "../src/lib/campaign-editor";
-import { deletePrivateObject, getPrivateObject, putPrivateObject } from "../src/lib/storage";
+import { db, pool } from "../apps/admin/src/db";
+import { campaigns, campaignAssets, campaignEditor, campaignPackages } from "../apps/admin/src/db/schema";
+import { cleanupCampaignAssets } from "../apps/admin/src/lib/asset-cleanup";
+import { campaignAssetKey } from "../apps/admin/src/lib/asset-cleanup-policy";
+import { defaultCampaignEvent } from "../apps/admin/src/lib/campaign-editor";
+import { deletePrivateObject, getPrivateObject, putPrivateObject } from "../apps/admin/src/lib/storage";
 
 async function main() {
 assert.match(new URL(process.env.DATABASE_URL!).pathname, /_editor_test$/, "Disposable database required");

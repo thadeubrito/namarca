@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { comparePublicationEvents } from '../src/lib/publication-diff';
-import { hasUnpublishedChanges } from '../src/lib/publication-state';
+import { comparePublicationEvents } from '../apps/admin/src/lib/publication-diff';
+import { hasUnpublishedChanges } from '../apps/admin/src/lib/publication-state';
 import { themeDefaults, type EventConfig } from '@namarca/editor/events';
 
 const art = (id: string) => ({ id, name: `Arte ${id}`, file: `${id}.png`, width: 100, height: 100, reference: { x: 0, y: 0, width: 50, height: 50 } });

@@ -1,6 +1,19 @@
-# Namarca — administrativo
+# Namarca — monorepo
 
-Base do novo administrativo e checkout, separada do editor público existente. Next.js 16, React 19, TypeScript, PostgreSQL/Drizzle, Better Auth e S3 compatível com R2. Pagamentos PixGo simulados por padrão. Sem Inngest.
+Monorepo do administrativo/checkout, site institucional e página da campanha. O público antigo em produção permanece separado, sem migração de deploy. Next.js 16, React 19, TypeScript, PostgreSQL/Drizzle, Better Auth e S3 compatível com R2. Pagamentos PixGo simulados por padrão. Sem Inngest.
+
+## Organização
+
+- `apps/admin`: Next.js (administrativo, checkout, APIs e banco/migrations).
+- `apps/campaign`: página da campanha e entrada estática de prévia.
+- `apps/site`: site institucional estático.
+- `packages/editor`: pacote privado `@namarca/editor`, core/UI/contrato compartilhados.
+- `services`: entrega pública local independente e simulador PixGo.
+- `scripts`, `tests`, `e2e`: operação e validações que cruzam aplicações.
+
+npm workspaces, com um único `package-lock.json`; executar instalações na raiz em containers. `npm run build` compila o admin e prepara sua prévia; `npm run build:campaign` gera somente `apps/campaign/dist`, consumido pelo host público. URLs `/event-runtime`, `/events` e `event.json` são contratos legados preservados, não nomenclatura de produto.
+
+Para futuro deploy na Vercel, selecionar **Root Directory `apps/admin`**, habilitar acesso a arquivos fora desse diretório e usar o build do workspace (Next detectado). A raiz continua responsável pelo lockfile/workspaces; o `prebuild` administrativo inclui a prévia. Não há deploy/provisionamento nesta reorganização; upload direto R2 e demais requisitos de produção continuam pendentes.
 
 ## Começar localmente
 
@@ -49,13 +62,13 @@ docker compose exec app npm run admin:reset
 docker compose logs -f app
 ```
 
-Migrations em `drizzle/` são versionadas. `db:push` existe somente para exploração local, não substitui migrations. Build deve ser verificado com configuração HTTPS e secrets próprios de teste; nunca usar credenciais reais apenas para compilar.
+Migrations em `apps/admin/drizzle/` são versionadas. `db:push` existe somente para exploração local, não substitui migrations. Build deve ser verificado com configuração HTTPS e secrets próprios de teste; nunca usar credenciais reais apenas para compilar.
 
 ## Escopo desta base
 
 - Login administrativo com senha, TOTP, códigos de recuperação e cadastro público bloqueado.
 - Cadastro, listagem, detalhes e edição de campanhas em rascunho, com encerramento; consulta de cobranças já registradas.
-- Estúdio: seleção local de artes/figurinhas PNG com recuperação de rascunho após refresh, upload privado ao salvar (até três envios simultâneos), nomes/ordenação, retângulo visual da foto, cores, limpeza manual de materiais não usados e prévia estática isolada com composição/exportação no navegador. Editor e estilos únicos em `packages/editor`, consumidos pelas entradas privada e pública local de `apps/event`; público antigo não migrado. [Arquitetura do editor](docs/editor-runtime.md).
+- Estúdio: seleção local de artes/figurinhas PNG com recuperação de rascunho após refresh, upload privado ao salvar (até três envios simultâneos), nomes/ordenação, retângulo visual da foto, cores, limpeza manual de materiais não usados e prévia estática isolada com composição/exportação no navegador. Editor e estilos únicos em `packages/editor`, consumidos pelas entradas privada e pública local de `apps/campaign`; público antigo não migrado. [Arquitetura do editor](docs/editor-runtime.md).
 - Cliente leve reutilizável entre campanhas, seleção/cadastro inline com nome e contato opcional; seção Clientes com busca, cadastro, edição e campanhas vinculadas. Observações na campanha, sem contratos. Valores definidos por cobrança na aba Cobrança, permitindo adicionais independentes.
 - Cobrança exclusivamente mock: múltiplos links por campanha com descrição/nome/valor congelados, checkout sem conta, QR simulado, recuperação de tentativa incerta e consulta manual no painel. [Limites do checkout](docs/checkout.md).
 - Financeiro global no menu principal, com filtros por campanha, situação e período de criação, totais por situação e CSV administrativo protegido, sem dados de pagador ou tokens. [Relatório financeiro](docs/financial-report.md).

@@ -6,15 +6,15 @@ Next.js Node.js + Better Auth + Drizzle/PostgreSQL + S3 privado. V1 permite camp
 
 ## Editor compartilhado e frontend estático
 
-`packages/editor/src` reúne contrato do manifesto, UI/CSS, composição, gestos e exportação. `apps/event` tem duas entradas estáticas esbuild: pública (fetch do manifesto/PNGs no host estático/gateway storage independente) e prévia privada (bridge validado). O iframe não carrega layout/CSS Next. Build gerado em `public/event-runtime`, separado do build administrativo. O público original não foi alterado nem publicado; esta é a base local para migrá-lo sem SSR/Next. Detalhes e limites em [editor-runtime.md](editor-runtime.md).
+`packages/editor/src` reúne contrato do manifesto, UI/CSS, composição, gestos e exportação. `apps/campaign` tem duas entradas estáticas esbuild: pública (fetch do manifesto/PNGs no host estático/gateway storage independente) e prévia privada (bridge validado). O iframe não carrega layout/CSS Next. Build gerado em `apps/admin/public/event-runtime`, separado do build administrativo. O público original não foi alterado nem publicado; esta é a base local para migrá-lo sem SSR/Next. Detalhes e limites em [editor-runtime.md](editor-runtime.md).
 
 ## Rotas administrativas na raiz
 
-A aplicação administrativa usa route group `src/app/(workspace)` para preservar o layout autenticado sem prefixar URLs. `/` é a listagem de campanhas; detalhes/criação em `/campanhas/*`, clientes em `/clientes/*`, financeiro em `/financeiro`. Login/TOTP/setup ficam fora desse grupo, mas as operações privilegiadas continuam exigindo requireAdmin individualmente. Não há redirect para `/admin` nem compatibilidade de URLs antigas nesta alteração. O público independente usa outro host.
+A aplicação administrativa usa route group `apps/admin/src/app/(workspace)` para preservar o layout autenticado sem prefixar URLs. `/` é a listagem de campanhas; detalhes/criação em `/campanhas/*`, clientes em `/clientes/*`, financeiro em `/financeiro`. Login/TOTP/setup ficam fora desse grupo, mas as operações privilegiadas continuam exigindo requireAdmin individualmente. Não há redirect para `/admin` nem compatibilidade de URLs antigas nesta alteração. O público independente usa outro host.
 
 ## Modelo e exports
 
-`src/db/index.ts`: `db`, `pool`; `src/db/schema.ts` reexporta auth-schema e:
+`apps/admin/src/db/index.ts`: `db`, `pool`; `apps/admin/src/db/schema.ts` reexporta auth-schema e:
 
 - `campaigns`: UUID, name, slug unique validado, endsAt timestamptz obrigatório, preparationStatus draft/validated/approved, publicationStatus unpublished/pending/published/failed/ended, priceCents nullable com CHECK positivo, createdAt/updatedAt. Defaults draft/unpublished. updatedAt deve ser atualizado explicitamente.
 - `payments`: tentativa com campaignId FK, externalId unique, paymentId unique, amountCents inteiro positivo, status pending/paid/expired/cancelled/**refunded**, paidAt, timestamps. Refund preserva paidAt histórico. Não persiste CPF, identidade do pagador ou payload bruto.
@@ -31,7 +31,7 @@ Banco já existente precisa migração para adicionar refunded ao enum payment_s
 
 ## Relatório financeiro administrativo
 
-`src/lib/financial-report.ts` agrega payments por situação sem misturar reembolsos e pagamentos atuais; exporta CSV por allow-list com neutralização de fórmulas. Página global `/admin/financeiro` e endpoint `/api/financial-report` guardados por requireAdmin, com join de campanha e filtros validados de campanha/status/período de criação em São Paulo. Totais/lista/CSV usam o mesmo recorte; CSV global acrescenta nome da campanha com proteção de fórmulas. Rotas antigas `/admin/campanhas/[id]/financeiro` e `/api/campaigns/[id]/financial-report` preservadas protegidas para compatibilidade, sem link na aba Cobrança. Somente leitura local, não consulta gateway; nenhuma métrica de participante ou alteração de publicação. Ver [financial-report.md](financial-report.md).
+`apps/admin/src/lib/financial-report.ts` agrega payments por situação sem misturar reembolsos e pagamentos atuais; exporta CSV por allow-list com neutralização de fórmulas. Página global `/admin/financeiro` e endpoint `/api/financial-report` guardados por requireAdmin, com join de campanha e filtros validados de campanha/status/período de criação em São Paulo. Totais/lista/CSV usam o mesmo recorte; CSV global acrescenta nome da campanha com proteção de fórmulas. Rotas antigas `/admin/campanhas/[id]/financeiro` e `/api/campaigns/[id]/financial-report` preservadas protegidas para compatibilidade, sem link na aba Cobrança. Somente leitura local, não consulta gateway; nenhuma métrica de participante ou alteração de publicação. Ver [financial-report.md](financial-report.md).
 
 ## Aprovação visual removida
 
@@ -39,7 +39,7 @@ Aprovação, snapshots e prévia histórica não têm UI, actions ou endpoints a
 
 ## Checkout mock — fatia inicial
 
-`checkout_links` permite várias cobranças por campanha e congela nome/descrição/valor com token opaco próprio. Migration0008 adiciona descrição com default Campanha aos links existentes. Emissão usa UUID por intenção como ID, com reenvio idempotente sob lock da campanha; mesma intenção divergente é rejeitada, nova intenção cria cobrança independente. `checkout_attempts` registra criação antes do gateway e bloqueia duplicação em resultado incerto; `payments.checkoutId`, `qrCode`, `expiresAt` ligam resposta confirmada. `src/lib/checkout.ts` contém transações, reconciliação e guard estrito mock local. Callback antecipado pode registrar uma tentativa conhecida após consulta e comparação de IDs/valor. Painel agora oferece consulta manual e recuperação via listagem **somente no mock**. Não há checkout live; publicação local é independente do financeiro (publication.md). Contratos e limites em [checkout.md](checkout.md); esta seção substitui afirmações históricas abaixo de ausência de consulta manual.
+`checkout_links` permite várias cobranças por campanha e congela nome/descrição/valor com token opaco próprio. Migration0008 adiciona descrição com default Campanha aos links existentes. Emissão usa UUID por intenção como ID, com reenvio idempotente sob lock da campanha; mesma intenção divergente é rejeitada, nova intenção cria cobrança independente. `checkout_attempts` registra criação antes do gateway e bloqueia duplicação em resultado incerto; `payments.checkoutId`, `qrCode`, `expiresAt` ligam resposta confirmada. `apps/admin/src/lib/checkout.ts` contém transações, reconciliação e guard estrito mock local. Callback antecipado pode registrar uma tentativa conhecida após consulta e comparação de IDs/valor. Painel agora oferece consulta manual e recuperação via listagem **somente no mock**. Não há checkout live; publicação local é independente do financeiro (publication.md). Contratos e limites em [checkout.md](checkout.md); esta seção substitui afirmações históricas abaixo de ausência de consulta manual.
 
 ## Configuração
 
@@ -51,7 +51,7 @@ Nenhum segredo deve receber prefixo NEXT_PUBLIC.
 
 Referência consultada: https://pixgo.org/api/v1/docs. O contrato anterior camelCase/Bearer era incorreto e foi substituído. Integração live ainda exige homologação/autorização operacional.
 
-`src/lib/pixgo.ts` exporta `createPixgoClient`, `createPaymentSchema`, `paymentResponseSchema`, `webhookSchema`, `GatewayPayment`, `centsToDecimal`, `decimalToCents`, `numberAmountToCents`, `isValidCpf`, `verifyWebhookSignature`, `verifyKnownPayment`, `nextPaymentStatus`.
+`apps/admin/src/lib/pixgo.ts` exporta `createPixgoClient`, `createPaymentSchema`, `paymentResponseSchema`, `webhookSchema`, `GatewayPayment`, `centsToDecimal`, `decimalToCents`, `numberAmountToCents`, `isValidCpf`, `verifyWebhookSignature`, `verifyKnownPayment`, `nextPaymentStatus`.
 
 - `createPayment({ externalId, amountCents, payerCpf })`: CPF com dígitos verificadores, externalId até 50 caracteres, mínimo 1000 e máximo 600000 centavos (R$10–6000; provedor pode impor limite menor por conta). Esta interface aceita CPF, não CNPJ. CPF é transmitido apenas ao gateway, nunca ao banco/logs. Erros expostos pelo adapter são genéricos, sem eco de input/payload.
 - POST `/payment/create`, header `X-API-Key`, JSON `{ amount: 10.50, receiver_cpf, external_id, webhook_url }`. `amount` é número decimal exigido pelo provedor, gerado de centavos inteiros.

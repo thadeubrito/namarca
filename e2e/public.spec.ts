@@ -11,7 +11,7 @@ for (const width of [1440, 390]) {
   });
 }
 test('admin e configuração exigem login', async ({ page }) => {
-  await page.goto('/admin'); await expect(page).toHaveURL(/\/login$/);
+  await page.goto('/'); await expect(page).toHaveURL(/\/login$/);
   await page.goto('/seguranca'); await expect(page).toHaveURL(/\/login$/);
 });
 test('signup indisponível e webhook sem assinatura rejeitado', async ({ request }) => {

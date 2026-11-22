@@ -52,7 +52,7 @@ let stage = 'safety gate';
 async function main() {
   safetyGate();
   const [{ db, pool }, schema, { eq, sql }, checkout, { createPixgoClient }, { chromium, expect }] = await Promise.all([
-    import('../src/db'), import('../src/db/schema'), import('drizzle-orm'), import('../src/lib/checkout'), import('../src/lib/pixgo'), import('@playwright/test'),
+    import('../apps/admin/src/db'), import('../apps/admin/src/db/schema'), import('drizzle-orm'), import('../apps/admin/src/lib/checkout'), import('../apps/admin/src/lib/pixgo'), import('@playwright/test'),
   ]);
   const { campaigns, checkoutLinks, checkoutAttempts, checkoutAttemptEvents, payments, webhookReceipts, publicationTasks } = schema;
   const gateway = createPixgoClient();

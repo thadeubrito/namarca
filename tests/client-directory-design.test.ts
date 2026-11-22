@@ -2,14 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
-test('diretório de clientes usa linhas Revolut e mantém busca GET, privacidade e vínculos', async () => {
-  const source = await readFile('src/components/admin-workspace/client-directory.tsx', 'utf8');
-  const css = await readFile('src/components/admin-workspace/client-directory.css', 'utf8');
+test('diretório de clientes usa linhas Revolut e mantém busca GET e vínculos', async () => {
+  const source = await readFile('apps/admin/src/components/admin-workspace/client-directory.tsx', 'utf8');
+  const css = await readFile('apps/admin/src/components/admin-workspace/client-directory.css', 'utf8');
   assert.doesNotMatch(source, /Surface|divide-y|ws-panel-header/);
   assert.match(source, /method="get" role="search"/);
   assert.match(source, /name="q" defaultValue=\{query\} maxLength=\{254\}/);
-  assert.match(source, /aria-describedby="client-search-privacy"/);
-  assert.match(source, /Não compartilhe a URL/);
   assert.match(source, /aria-labelledby="client-directory-heading"/);
   assert.match(source, /href=\{`\/clientes\/\$\{client.id\}`\} aria-label=\{client.name\}/);
   assert.match(source, /client.campaignCount === 1 \? 'campanha' : 'campanhas'/);

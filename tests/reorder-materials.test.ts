@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { reorderMaterials } from '../src/lib/reorder-materials';
+import { reorderMaterials } from '../apps/admin/src/lib/reorder-materials';
 
 test('material ordering inserts forward/backward while retaining objects and references', () => {
   const items = ['a', 'b', 'c', 'd'].map(id => ({ id, reference: { x: 1 } }));
@@ -14,9 +14,9 @@ test('material ordering inserts forward/backward while retaining objects and ref
 });
 
 test('studio shares accessible pointer handles in both material libraries', async () => {
-  const workspace = await readFile('src/components/admin-workspace/studio-workspace.tsx', 'utf8');
-  const handle = await readFile('src/components/admin-workspace/sortable-material.tsx', 'utf8');
-  const css = await readFile('src/components/admin-workspace/studio.css', 'utf8');
+  const workspace = await readFile('apps/admin/src/components/admin-workspace/studio-workspace.tsx', 'utf8');
+  const handle = await readFile('apps/admin/src/components/admin-workspace/sortable-material.tsx', 'utf8');
+  const css = await readFile('apps/admin/src/components/admin-workspace/studio.css', 'utf8');
   assert.match(workspace, /<SortableMaterial key=\{item.id\}/);
   assert.doesNotMatch(workspace, /<ArrowUp|<ArrowDown/);
   for (const feature of ['DndContext', 'DragOverlay', 'PointerSensor', 'KeyboardSensor', 'sortableKeyboardCoordinates', 'rectSortingStrategy', 'setActivatorNodeRef']) assert.ok(handle.includes(feature));

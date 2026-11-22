@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 
-const preview = readFileSync('apps/event/src/preview.tsx', 'utf8');
+const preview = readFileSync('apps/campaign/src/preview.tsx', 'utf8');
 const editor = readFileSync('packages/editor/src/editor/PhotoEditor.tsx', 'utf8');
 const file = '12345678-1234-1234-1234-123456789abc.png';
 const sticker = '22345678-1234-1234-1234-123456789abc.png';
@@ -46,7 +46,7 @@ test('mapa é validado antes da atualização atômica e não remonta editor nem
   assert.equal(resolve({}, '/private'), '/private/' + file.replace(/\.png$/, ''));
   assert.equal(resolve(undefined), '/events/public-event/' + file);
   assert.equal(resolve(Object.create({ [file]: 'https://evil.test' }), '/private'), '/private/' + file.replace(/\.png$/, ''));
-  const publicEntry = readFileSync('apps/event/src/main.tsx', 'utf8');
+  const publicEntry = readFileSync('apps/campaign/src/main.tsx', 'utf8');
   assert.doesNotMatch(publicEntry, /assetUrls|localAssets/);
   assert.match(editor, /if \(existing && activeArtwork\)/);
   assert.match(editor, /syncHistoryArtwork\(existing, activeArtwork\)/);

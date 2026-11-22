@@ -4,7 +4,7 @@ import type { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { openStudio } from './studio-navigation';
 import { setEditorReference } from './editor-reference-helper';
-import type { StudioDraft } from '../src/lib/studio-draft';
+import type { StudioDraft } from '../apps/admin/src/lib/studio-draft';
 
 /** Real browser + HTTP + disposable DB. Only the lost upload response is fault-injected. */
 export async function testEditorPlanA(page: Page, endpoint: string, pool: Pool, image: (size: number, kind: 'artwork' | 'photo') => Buffer, stage: (value: string) => void) {

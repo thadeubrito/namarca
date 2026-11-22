@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { EventConfig } from '@namarca/editor/events';
-import { discardStudioScope } from '../src/lib/studio-discard';
-import type { LocalMaterial } from '../src/lib/studio-draft';
+import { discardStudioScope } from '../apps/admin/src/lib/studio-discard';
+import type { LocalMaterial } from '../apps/admin/src/lib/studio-draft';
 
 const saved: EventConfig = { name: 'Salvo', slug: 'evento', endsAt: '2030-01-01T00:00:00Z', demo: false, color: '#123456', artworks: [{ id: 'a', name: 'Arte', file: 'a.png', width: 10, height: 10, reference: { x: 0, y: 0, width: 10, height: 10 } }], stickers: [{ id: 's', name: 'Figurinha', file: 's.png' }] };
 const local: LocalMaterial[] = [

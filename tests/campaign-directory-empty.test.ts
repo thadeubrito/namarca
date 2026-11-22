@@ -3,8 +3,8 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 test('campanhas vazias seguem composição centralizada das bibliotecas sem caixa genérica', async () => {
-  const directory = await readFile('src/components/admin-workspace/campaign-directory.tsx', 'utf8');
-  const css = await readFile('src/components/admin-workspace/campaign-directory.css', 'utf8');
+  const directory = await readFile('apps/admin/src/components/admin-workspace/campaign-directory.tsx', 'utf8');
+  const css = await readFile('apps/admin/src/components/admin-workspace/campaign-directory.css', 'utf8');
   assert.doesNotMatch(directory, /EmptyState/);
   assert.match(directory, /ws-campaign-directory-empty/);
   assert.match(directory, /Nenhuma campanha nesta seleção/);

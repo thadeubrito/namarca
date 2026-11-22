@@ -3,10 +3,10 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 test('campaign loading resolves URL tab and offers skeletons for every task without fake controls', async () => {
-  const loading = await readFile('src/app/(workspace)/campanhas/[id]/loading.tsx', 'utf8');
-  const skeleton = await readFile('src/components/admin-workspace/campaign-skeleton.tsx', 'utf8');
-  const studio = await readFile('src/components/admin-workspace/studio-skeleton.tsx', 'utf8');
-  const css = await readFile('src/components/admin-workspace/campaign-skeleton.css', 'utf8');
+  const loading = await readFile('apps/admin/src/app/(workspace)/campanhas/[id]/loading.tsx', 'utf8');
+  const skeleton = await readFile('apps/admin/src/components/admin-workspace/campaign-skeleton.tsx', 'utf8');
+  const studio = await readFile('apps/admin/src/components/admin-workspace/studio-skeleton.tsx', 'utf8');
+  const css = await readFile('apps/admin/src/components/admin-workspace/campaign-skeleton.css', 'utf8');
   assert.match(loading, /campaignSection\(searchParams.get\('aba'\), true, true\)/);
   for (const section of ['dados', 'artes', 'stickers', 'cores', 'cobranca', 'publicacao']) assert.ok(skeleton.includes(`'${section}'`));
   assert.match(skeleton, /<StudioSkeleton activeSection=\{section\}/);

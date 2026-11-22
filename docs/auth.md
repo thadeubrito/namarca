@@ -4,8 +4,8 @@ Implementação para Better Auth **1.7.25**, PostgreSQL + Drizzle, Next.js (runt
 
 ## Contrato com banco e aplicação
 
-- `src/db/index.ts` deve exportar `db` (Drizzle PostgreSQL, com transações).
-- `src/db/schema.ts` deve reexportar `user`, `session`, `account`, `verification`, `twoFactor` de `./auth-schema` para geração das migrations. `authSchema` também está disponível, mas não precisa ser incluído no agregado das migrations.
+- `apps/admin/src/db/index.ts` deve exportar `db` (Drizzle PostgreSQL, com transações).
+- `apps/admin/src/db/schema.ts` deve reexportar `user`, `session`, `account`, `verification`, `twoFactor` de `./auth-schema` para geração das migrations. `authSchema` também está disponível, mas não precisa ser incluído no agregado das migrations.
 - Aplicar migrations antes dos comandos/admin ou de iniciar o servidor. Não usar o CLI de migração do Better Auth em paralelo ao Drizzle.
 - Variáveis usadas: `DATABASE_URL`, `ADMIN_EMAIL`, `BETTER_AUTH_SECRET` (aleatório, mínimo 32 caracteres), `BETTER_AUTH_URL` e `NODE_ENV`. Produção exige HTTPS. Nenhuma variável `NEXT_PUBLIC_*` é necessária.
 - A configuração falha se secret/URL/email estiverem ausentes. Fornecer também no ambiente de build do Next se as rotas forem importadas durante build.

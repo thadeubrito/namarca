@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test';
 
 // Isolated runtime session: real App/loadEvent, local composition stand-in (no photo/upload).
 test('sessão preserva composição ativa, limita checks, suspende e só reativa por retry explícito', { skip: process.env.EVENT_BROWSER_TEST !== '1' }, async () => {
-  const bundle = await build({ entryPoints: ['apps/event/src/main.tsx'], bundle: true, write: false, loader: { '.css': 'empty' }, plugins: [{ name: 'local-editor', setup(builder) {
+  const bundle = await build({ entryPoints: ['apps/campaign/src/main.tsx'], bundle: true, write: false, loader: { '.css': 'empty' }, plugins: [{ name: 'local-editor', setup(builder) {
     builder.onLoad({ filter: /\/editor\/PhotoEditor\.tsx$/ }, () => ({ contents: `import React from 'react'; export function PhotoEditor(){return <input aria-label="Composição local" defaultValue=""/>}`, loader: 'tsx' }));
   } }] });
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
@@ -56,7 +56,7 @@ test('sessão preserva composição ativa, limita checks, suspende e só reativa
     assert.equal(checks, suspendedChecks);
     offline = true;
     await page.getByRole('button', { name: 'Tentar novamente' }).click();
-    await page.getByRole('heading', { name: 'Não foi possível abrir o evento' }).waitFor();
+    await page.getByRole('heading', { name: 'Não foi possível abrir a campanha' }).waitFor();
     assert.equal(await composition.count(), 0);
     offline = false;
     await page.getByRole('button', { name: 'Tentar novamente' }).click();

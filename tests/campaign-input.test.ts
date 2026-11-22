@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { campaignInput } from '../src/lib/campaign-input';
+import { campaignInput } from '../apps/admin/src/lib/campaign-input';
 const input = { name: 'Corrida Horizonte', slug: 'corrida-horizonte', endsAt: '2099-01-01' };
 test('cliente é opcional; novo exige nome, contato opcional e limites', () => {
   const empty = campaignInput.parse(input);

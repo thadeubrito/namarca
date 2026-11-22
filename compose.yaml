@@ -13,7 +13,7 @@ services:
     volumes:
       - .:/app
       - node_modules:/app/node_modules
-      - next:/app/.next
+      - next:/app/apps/admin/.next
     command: sh -c 'npm ci --no-audit --no-fund && npm run dev -- --port 3000'
     depends_on:
       postgres: {condition: service_healthy}
@@ -39,7 +39,7 @@ services:
     security_opt: ['no-new-privileges:true']
     volumes:
       - ./services/public-site:/app/services/public-site:ro
-      - ./public/event-runtime:/app/public/event-runtime:ro
+      - ./apps/campaign/dist:/app/apps/campaign/dist:ro
       - ./apps/site:/app/apps/site:ro
       - node_modules:/app/node_modules:ro
     depends_on:

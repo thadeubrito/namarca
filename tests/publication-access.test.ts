@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { publicationPointer, validatePublicationAccess } from '../src/lib/publication-access';
+import { publicationPointer, validatePublicationAccess } from '../apps/admin/src/lib/publication-access';
 
 const updatedAt = new Date('2026-01-01T00:00:00.000Z');
 const campaign = { updatedAt, publicationStatus: 'published' };
@@ -26,7 +26,7 @@ test('acesso exige entrega, timestamp esperado e ator; expiração usa versão p
   }
 });
 test('action de acesso exige admin, boolean estrito, timestamp e revalidação', async () => {
-  const action = await readFile('src/app/(workspace)/campanhas/[id]/publication-actions.ts', 'utf8');
+  const action = await readFile('apps/admin/src/app/(workspace)/campanhas/[id]/publication-actions.ts', 'utf8');
   const access = action.slice(action.indexOf('export async function changeCampaignAccess'), action.indexOf('export type PublicationState'));
   assert.match(access, /await requireAdmin\(\)/);
   assert.match(access, /values\.length !== 1/);

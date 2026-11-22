@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { maskBRL, displayBRL } from '../src/lib/currency-input';
-import { billingAmountInput } from '../src/lib/billing-input';
+import { maskBRL, displayBRL } from '../apps/admin/src/lib/currency-input';
+import { billingAmountInput } from '../apps/admin/src/lib/billing-input';
 
 test('máscara BRL usa centavos, milhar e mantém vazio', () => {
   assert.equal(maskBRL(''), '');

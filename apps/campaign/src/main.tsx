@@ -1,8 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { createRoot } from 'react-dom/client'
-import { PhotoEditor } from '../../../packages/editor/src/editor/PhotoEditor'
-import { checkEventSuspended, eventThemeStyle, loadEvent, MissingEventError, SuspendedEventError, resolveSlug, type EventConfig } from '../../../packages/editor/src/events/events'
-import '../../../packages/editor/src/styles.css'
+import { PhotoEditor } from '@namarca/editor/photo-editor'
+import { checkEventSuspended, eventThemeStyle, loadEvent, MissingEventError, SuspendedEventError, resolveSlug, type EventConfig } from '@namarca/editor/events'
+import '@namarca/editor/styles.css'
 
 type State = { status: 'loading' | 'missing' | 'error' | 'suspended' } | { status: 'ready'; event: EventConfig }
 
@@ -78,9 +78,9 @@ function App() {
   return <div className="event-status-page"><main>
     <p className="brand">na<span>marca</span></p>
     {state.status === 'loading' && <p role="status">Preparando editor…</p>}
-    {state.status === 'missing' && <><h1>Evento não encontrado</h1><p>Confira o link enviado pela organização.</p></>}
+    {state.status === 'missing' && <><h1>Campanha não encontrada</h1><p>Confira o link enviado pela organização.</p></>}
     {state.status === 'suspended' && <><h1>Ativação temporariamente indisponível</h1><p>Entre em contato com a organização para mais informações.</p><button type="button" onClick={() => { setState({ status: 'loading' }); setAttempt(value => value + 1) }}>Tentar novamente</button></>}
-    {state.status === 'error' && <><h1>Não foi possível abrir o evento</h1><p role="alert">Confira sua conexão e tente novamente.</p><button type="button" onClick={() => { setState({ status: 'loading' }); setAttempt(value => value + 1) }}>Tentar novamente</button></>}
+    {state.status === 'error' && <><h1>Não foi possível abrir a campanha</h1><p role="alert">Confira sua conexão e tente novamente.</p><button type="button" onClick={() => { setState({ status: 'loading' }); setAttempt(value => value + 1) }}>Tentar novamente</button></>}
     {state.status === 'ready' && <><h1>Ativação encerrada</h1><p>A ativação de {state.event.name} já terminou.</p></>}
   </main></div>
 }

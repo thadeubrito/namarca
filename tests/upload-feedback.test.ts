@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { uploadFailureMessage } from '../src/lib/upload-feedback';
+import { uploadFailureMessage } from '../apps/admin/src/lib/upload-feedback';
 
 test('upload explica transparência e PNG inválido sem mudar a política de validação', async () => {
   assert.match(await uploadFailureMessage(Response.json({ error: 'PNG deve conter pixels transparentes e opacos' }, { status: 422 })), /totalmente transparente.*totalmente opaco/);

@@ -1,7 +1,7 @@
 node_modules/
 .next/
 out/
-public/event-runtime/
+apps/admin/public/event-runtime/
 .env*
 !.env.example
 *.tsbuildinfo
@@ -9,3 +9,5 @@ coverage/
 test-results/
 .tmp/
 .DS_Store
+
+apps/campaign/dist/

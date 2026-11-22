@@ -1,0 +1,21 @@
+{
+  "name": "@namarca/editor",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./events": "./src/events/events.ts",
+    "./photo-editor": "./src/editor/PhotoEditor.tsx",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "konva": "^10.9.1",
+    "react-konva": "^19.3.2",
+    "motion": "^14.14.0",
+    "@tabler/icons-react": "^3.52.0"
+  }
+}

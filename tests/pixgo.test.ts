@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { centsToDecimal, decimalToCents, createPaymentSchema, numberAmountToCents, paymentResponseSchema, createPixgoClient, verifyKnownPayment, verifyWebhookSignature, webhookSchema } from "../src/lib/pixgo";
+import { centsToDecimal, decimalToCents, createPaymentSchema, numberAmountToCents, paymentResponseSchema, createPixgoClient, verifyKnownPayment, verifyWebhookSignature, webhookSchema } from "../apps/admin/src/lib/pixgo";
 
 test("exact decimal amounts without binary floating point rounding", () => {
   for (const cents of [1, 10, 99, 100, 1050, 2147483647]) assert.equal(decimalToCents(centsToDecimal(cents)), cents);

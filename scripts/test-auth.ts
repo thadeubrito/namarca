@@ -17,8 +17,8 @@ registerHooks({ resolve(specifier, context, nextResolve) {
   if (specifier === "server-only") return { url: pathToFileURL(marker).href, shortCircuit: true };
   return nextResolve(specifier, context);
 } });
-import { db, pool } from "../src/db";
-import { account, session, user } from "../src/db/auth-schema";
+import { db, pool } from "../apps/admin/src/db";
+import { account, session, user } from "../apps/admin/src/db/auth-schema";
 
 function totp(uri: string) {
   const encoded = new URL(uri).searchParams.get("secret")!;
@@ -40,8 +40,8 @@ function totp(uri: string) {
 
 let stage = "load modules";
 async function main() {
-  const { auth, adminEmail } = await import("../src/lib/auth");
-  const { getAdminSession, getEnrollmentSession } = await import("../src/lib/admin");
+  const { auth, adminEmail } = await import("../apps/admin/src/lib/auth");
+  const { getAdminSession, getEnrollmentSession } = await import("../apps/admin/src/lib/admin");
   const database = new URL(process.env.DATABASE_URL ?? "").pathname;
   assert.match(database, /_auth_test$/, "Refusing non-disposable database: name must end in _auth_test");
   const email = adminEmail();

@@ -28,7 +28,7 @@ docker compose run --rm --no-deps app sh -c 'export DATABASE_URL="$(node -e '\''
 docker compose run -d --no-deps --name namarca-editor-test \
   -e BETTER_AUTH_URL=http://namarca-editor-test:3000 \
   -e ADMIN_EMAIL=editor-test@namarca.test \
-  -v namarca_editor_test_next:/app/.next \
+  -v namarca_editor_test_next:/app/apps/admin/.next \
   app sh -c 'export DATABASE_URL="$(node -e '\''const u=new URL(process.env.DATABASE_URL);u.pathname="/namarca_editor_test";process.stdout.write(u.href)'\'')"; exec npm run dev -- --port 3000'
 
 docker run --rm --network namarca_default --env-file .env.local \

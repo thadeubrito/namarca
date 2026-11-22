@@ -2,7 +2,7 @@
 
 ## Implementado localmente
 
-O Next.js permanece responsável por administração, sessão e uploads. `apps/event` é um frontend React de navegador, compilado por esbuild: não depende de servidor Next, banco ou credenciais de bucket para executar o editor público.
+O Next.js permanece responsável por administração, sessão e uploads. `apps/campaign` é um frontend React de navegador, compilado por esbuild: não depende de servidor Next, banco ou credenciais de bucket para executar o editor público.
 
 Fonte única em `packages/editor/src`:
 
@@ -11,12 +11,12 @@ Fonte única em `packages/editor/src`:
 - `styles.css`: aparência da experiência;
 - `analytics.ts`: no-op nesta entrega, inclusive na entrada pública local.
 
-A pasta é um módulo interno de código-fonte, não pacote npm publicado. O administrativo importa o contrato por alias TypeScript; as duas entradas estáticas importam o mesmo editor e CSS. Não se moveu o administrativo inteiro para `apps/admin`: uma reorganização cosmética não é necessária para separar os builds.
+O editor é um pacote npm workspace privado (`@namarca/editor`), sem publicação no registry. Seus exports explícitos `events`, `photo-editor` e `styles.css` são consumidos pelo administrativo em `apps/admin` e pelas duas entradas estáticas em `apps/campaign`. Campanha é o nome da entidade; nomes técnicos legados do protocolo (`EventConfig`, `/events`, `event.json` e `/event-runtime`) permanecem para compatibilidade.
 
 ## Entradas e isolamento
 
-- `apps/event/src/main.tsx`: resolve `/<slug>`, busca `/events/<slug>/event.json` semcache; ponteiro `{version:N}` resolve `/events/<slug>/versions/vN.json`, mantendo leitura de manifesto completo legado; valida e carrega PNGs em `/events/<slug>/<file>`. Não recebe mensagens de configuração. Estado de encerramento conferido após leitura, a cada segundo e ao retornar à aba; ao encerrar desmonta o editor. Isso existe apenas no novo frontend local, não altera o público antigo.
-- `apps/event/src/preview.tsx`: mesma interface e CSS, mas configuração em memória via bridge de mesma origem. Aceita somente parent, origem e campaignId correspondentes, contrato válido e filenames privados UUID.png. Mensagem inválida preserva última configuração e informa pausa. Para materiais novos do Plano A, mapa `localAssets` separado associa somente filenames presentes no evento a blob URLs da mesma origem; `PhotoEditor.assetUrls` prioriza esses materiais sem remontar a composição. Sem foto/composição no bridge; a entrada pública não aceita esse mapa.
+- `apps/campaign/src/main.tsx`: resolve `/<slug>`, busca `/events/<slug>/event.json` semcache; ponteiro `{version:N}` resolve `/events/<slug>/versions/vN.json`, mantendo leitura de manifesto completo legado; valida e carrega PNGs em `/events/<slug>/<file>`. Não recebe mensagens de configuração. Estado de encerramento conferido após leitura, a cada segundo e ao retornar à aba; ao encerrar desmonta o editor. Isso existe apenas no novo frontend local, não altera o público antigo.
+- `apps/campaign/src/preview.tsx`: mesma interface e CSS, mas configuração em memória via bridge de mesma origem. Aceita somente parent, origem e campaignId correspondentes, contrato válido e filenames privados UUID.png. Mensagem inválida preserva última configuração e informa pausa. Para materiais novos do Plano A, mapa `localAssets` separado associa somente filenames presentes no evento a blob URLs da mesma origem; `PhotoEditor.assetUrls` prioriza esses materiais sem remontar a composição. Sem foto/composição no bridge; a entrada pública não aceita esse mapa.
 
 O iframe aponta diretamente para HTML estático em `/event-runtime/preview.html`, sem layout/CSS/JS do Next. O caminho administrativo antigo de prévia foi mantido como redirect autenticado. Não há CORS externo nem afrouxamento de CSP.
 
@@ -34,7 +34,7 @@ docker compose exec app npm run dev:event
 
 `predev` e `prebuild` também compilam o frontend automaticamente. Sem watch ativo, mudanças no editor estático exigem `build:event` e recarregar a prévia. O watch recompila, não injeta HMR nem salva a foto após reload.
 
-Artefato gerado, ignorado no Git: `public/event-runtime/`, com index/preview HTML, JS, CSS e chunks compartilhados. A entrada pública pode ser hospedada estaticamente com fallback `/<slug>` para esse index e `/events/*` apontando ao gateway read-only do bucket. Desde a correção de20/11/2026, o serviço local `public-site` emlocalhost:3001 serve esse HTML e a raiz estática sem Next ou banco. O gateway somente lê o prefixo public/events do storage, com JSON/PNGs exportados pelo publicador. As rotas públicas Next da primeira implementação foram removidas. Em produção, hospedagem estática/CDN independente pode cumprir esse contrato. Ver publication.md. Abrir `/event-runtime/index.html` diretamente não é uma URL de evento válida.
+Artefato canônico gerado, ignorado no Git: `apps/campaign/dist/`, com index/preview HTML, JS, CSS e chunks compartilhados. O host público consome esse diretório sem depender do Next. Os comandos `predev`/`prebuild` do workspace administrativo executam o build da campanha e copiam o artefato para `apps/admin/public/event-runtime/`, incluindo a prévia no deploy do admin. `build:event` permanece como alias legado para compilar somente a campanha; para atualizar a cópia administrativa, executar `npm run build:preview --workspace @namarca/admin`. A entrada pública pode ser hospedada estaticamente com fallback `/<slug>` para esse index e `/events/*` apontando ao gateway read-only do bucket. Desde a correção de20/11/2026, o serviço local `public-site` emlocalhost:3001 serve esse HTML e a raiz estática sem Next ou banco. O gateway somente lê o prefixo public/events do storage, com JSON/PNGs exportados pelo publicador. As rotas públicas Next da primeira implementação foram removidas. Em produção, hospedagem estática/CDN independente pode cumprir esse contrato. Ver publication.md. Abrir `/event-runtime/index.html` diretamente não é uma URL de evento válida.
 
 Os caminhos dos assets de build são `/event-runtime/*`; preservar esse prefixo no host estático. Manifestos e PNGs não são incluídos no build. Chunks têm hash, entradas usam nomes estáveis; entrega atômica/retenção/cache de deploy ainda precisam ser definidos. Há publicação local de campanhas sem exigir pagamento; nenhuma CDN ou implantação pública foi provisionada.
 

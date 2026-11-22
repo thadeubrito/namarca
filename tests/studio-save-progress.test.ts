@@ -3,9 +3,9 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 test('upload compacto usa contagem real e detalhes acessíveis sem caixa de sucesso', async () => {
-  const component = await readFile('src/components/admin-workspace/studio-save-progress.tsx', 'utf8');
-  const workspace = await readFile('src/components/admin-workspace/studio-workspace.tsx', 'utf8');
-  const css = await readFile('src/components/admin-workspace/studio.css', 'utf8');
+  const component = await readFile('apps/admin/src/components/admin-workspace/studio-save-progress.tsx', 'utf8');
+  const workspace = await readFile('apps/admin/src/components/admin-workspace/studio-workspace.tsx', 'utf8');
+  const css = await readFile('apps/admin/src/components/admin-workspace/studio.css', 'utf8');
   assert.match(component, /phase === 'uploading' && <div[^\n]*role="progressbar"/);
   assert.match(component, /aria-valuenow=\{completed\}/);
   assert.match(component, /\{completed\} de \{total\}/);

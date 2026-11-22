@@ -41,7 +41,7 @@ async function localFile(res, directory, relative) {
 }
 
 // Injected readObject accepts only a canonical public key; no list, write or DB abstraction exists.
-export function createPublicServer({ readObject, runtimeDir = resolve(root, 'public/event-runtime'), siteDir = resolve(root, 'apps/site') }) {
+export function createPublicServer({ readObject, runtimeDir = resolve(root, 'apps/campaign/dist'), siteDir = resolve(root, 'apps/site') }) {
   return createServer(async (req, res) => {
     try {
       if (req.method !== 'GET') {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { sameDraftValue, localMaterialId, draftKey, uploadPool } from '../src/lib/studio-draft';
+import { sameDraftValue, localMaterialId, draftKey, uploadPool } from '../apps/admin/src/lib/studio-draft';
 
 test('fila limita concorrência a três e aguarda sucessos após falha parcial', async () => {
   let active = 0;

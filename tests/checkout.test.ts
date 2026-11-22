@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { checkoutTokenValid, requireMockCheckout } from '../src/lib/checkout';
+import { checkoutTokenValid, requireMockCheckout } from '../apps/admin/src/lib/checkout';
 test('checkout exige token opaco completo, sem IDs enumeráveis', () => {
   assert.equal(checkoutTokenValid('a'.repeat(64)), true);
   for (const token of ['', 'a'.repeat(63), 'A'.repeat(64), '../checkout', 'b'.repeat(65)]) assert.equal(checkoutTokenValid(token), false);

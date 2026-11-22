@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 test('controles ativos usam Select e Calendar shadcn sem mudar names dos formulários', async () => {
-  const controls = await readFile('src/components/admin-workspace/form-controls.tsx', 'utf8');
-  const campaign = await readFile('src/components/admin-workspace/campaign-form.tsx', 'utf8');
-  const financial = await readFile('src/app/(workspace)/financeiro/page.tsx', 'utf8');
+  const controls = await readFile('apps/admin/src/components/admin-workspace/form-controls.tsx', 'utf8');
+  const campaign = await readFile('apps/admin/src/components/admin-workspace/campaign-form.tsx', 'utf8');
+  const financial = await readFile('apps/admin/src/app/(workspace)/financeiro/page.tsx', 'utf8');
   assert.ok(controls.includes("from '@/components/ui/select'"));
   assert.ok(controls.includes("from '@/components/ui/calendar'"));
   assert.ok(controls.includes("from '@/components/ui/popover'"));

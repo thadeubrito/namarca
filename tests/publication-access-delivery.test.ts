@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Readable } from 'node:stream';
 import { createPublicServer } from '../services/public-site/server.mjs';
-import { deliverPublicationAccess } from '../src/lib/publication-access-delivery';
+import { deliverPublicationAccess } from '../apps/admin/src/lib/publication-access-delivery';
 import { loadEvent, MissingEventError, SuspendedEventError, type EventConfig } from '../packages/editor/src/events/events';
 
 const id = '00000000-0000-4000-8000-000000000001';

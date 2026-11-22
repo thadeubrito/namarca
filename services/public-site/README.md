@@ -2,7 +2,7 @@
 
 Servidor Node 24 independente do Next, PostgreSQL e financeiro. É um **gateway de storage local**, substituível por hospedagem estática/CDN + R2 na produção; não é deploy nem migração do site anterior.
 
-Após preparar as dependências no volume `namarca_node_modules` e gerar `public/event-runtime` com `npm run build:event` em container:
+Após preparar as dependências no volume `namarca_node_modules` e gerar `apps/campaign/dist` com `npm run build:campaign` em container:
 
 ```sh
 docker compose up -d public-site

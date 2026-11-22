@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { billingAmountInput, billingDescriptionInput } from '../src/lib/billing-input';
+import { billingAmountInput, billingDescriptionInput } from '../apps/admin/src/lib/billing-input';
 
 test('valor da cobrança converte reais para centavos, com ponto ou vírgula', () => {
   for (const value of ['395,50', '395.50']) assert.equal(billingAmountInput.parse(value), 39550);

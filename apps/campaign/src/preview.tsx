@@ -1,8 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { createRoot } from 'react-dom/client'
-import { PhotoEditor } from '../../../packages/editor/src/editor/PhotoEditor'
-import { eventThemeStyle, parseEvent, type EventConfig } from '../../../packages/editor/src/events/events'
-import '../../../packages/editor/src/styles.css'
+import { PhotoEditor } from '@namarca/editor/photo-editor'
+import { eventThemeStyle, parseEvent, type EventConfig } from '@namarca/editor/events'
+import '@namarca/editor/styles.css'
 import './preview.css'
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

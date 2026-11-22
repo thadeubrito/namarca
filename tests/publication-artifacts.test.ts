@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { defaultCampaignEvent } from '../src/lib/campaign-editor';
-import { publicationArtifacts } from '../src/lib/publication-artifacts';
-import { assertPublicKey } from '../src/lib/storage';
-import { publicSiteUrl } from '../src/lib/public-site';
+import { defaultCampaignEvent } from '../apps/admin/src/lib/campaign-editor';
+import { publicationArtifacts } from '../apps/admin/src/lib/publication-artifacts';
+import { assertPublicKey } from '../apps/admin/src/lib/storage';
+import { publicSiteUrl } from '../apps/admin/src/lib/public-site';
 
 test('numbered JSON uses stable artwork/sticker paths across versions and JSONB order', () => {
   const identity = { name: 'Evento', slug: 'evento', endsAt: new Date('2099-01-01') };
