@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "shadcn": {
+      "command": "bash",
+      "args": ["scripts/react-bits-mcp.sh"]
+    },
     "paceui": {
       "url": "https://paceui.com/api/mcp"
     }

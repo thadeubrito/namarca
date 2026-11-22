@@ -1,97 +1,57 @@
 # Namarca — monorepo
 
-Monorepo do administrativo/checkout, site institucional e página da campanha. O público antigo em produção permanece separado, sem migração de deploy. Next.js 16, React 19, TypeScript, PostgreSQL/Drizzle, Better Auth e S3 compatível com R2. Pagamentos PixGo simulados por padrão. Sem Inngest.
+Administrativo/checkout, campanha pública local, site institucional e editor compartilhado. O público antigo em produção permanece separado. Desenvolvimento com Docker Compose e PixGo mock; nenhum serviço pago é necessário para operar localmente.
+
+## Contexto para agentes
+
+A entrada é [AGENTS.md](AGENTS.md). A base é seletiva, sem diário de implementação:
+
+- [Visão do produto](agents/knowledge/product.md): públicos, proposta, jornada, escopo e princípios.
+- [Memória](agents/knowledge/memory.md): decisões, fronteiras, problemas conhecidos e pendências.
+- [Mapa do código e validação](agents/knowledge/code-map.md): pontos de entrada, ambiente e testes seguros.
+- [Design administrativo](agents/knowledge/design/admin.md) e sua [referência Revolut integral](agents/knowledge/design/revolut.design.md).
+- [Design público](agents/knowledge/design/public.md): escopo e contratos preservados; direção visual ainda a definir.
+
+## Especialistas
+
+Instruções portáveis em `agents/roles/`, adaptadores consultivos para Pi em `.pi/agents/`:
+
+| Papel | Quando usar |
+|---|---|
+| [copywriter](agents/roles/copywriter.md) | Copy comercial, microcopy, mensagens e revisão de linguagem. |
+| [product-experience](agents/roles/product-experience.md) | Jornadas, recorte de escopo, ambiguidades e critérios de aceite. |
+| [quality-security](agents/roles/quality-security.md) | Revisão independente de código, riscos e evidências. |
+| [interface-designer](agents/roles/interface-designer.md) | Composição, interação, acessibilidade e direção visual por escopo. |
+
+No Pi, delegar pelo nome (por exemplo, “use copywriter para revisar os textos desta tela”). A descoberta depende do suporte a agentes locais do cliente; recarregar a sessão se necessário. Em outras ferramentas, pedir para assumir o papel lendo o arquivo correspondente; isso não garante contexto de subagente separado. Não há adaptadores Claude/Codex instalados.
+
+Os adaptadores leem o papel a cada execução e herdam o modelo da sessão. Editar o papel não exige sincronizar cópias. São consultivos e não executam implementação/testes: o agente principal segue responsável por síntese, alterações e validação. Não há workflow automático.
 
 ## Organização
 
-- `apps/admin`: Next.js (administrativo, checkout, APIs e banco/migrations).
-- `apps/campaign`: página da campanha e entrada estática de prévia.
-- `apps/site`: site institucional estático.
-- `packages/editor`: pacote privado `@namarca/editor`, core/UI/contrato compartilhados.
-- `services`: entrega pública local independente e simulador PixGo.
-- `scripts`, `tests`, `e2e`: operação e validações que cruzam aplicações.
+- `apps/admin`: Next.js, administrativo, checkout, APIs, Drizzle/migrations.
+- `apps/campaign`: runtime público e entrada estática da prévia privada.
+- `apps/site`: institucional estático mínimo.
+- `packages/editor`: `@namarca/editor`, core/UI/contrato compartilhados.
+- `services`: host público independente e simulador PixGo.
+- `scripts`, `tests`, `e2e`: operação e validação entre aplicações.
 
-npm workspaces, com um único `package-lock.json`; executar instalações na raiz em containers. `npm run build` compila o admin e prepara sua prévia; `npm run build:campaign` gera somente `apps/campaign/dist`, consumido pelo host público. URLs `/event-runtime`, `/events` e `event.json` são contratos legados preservados, não nomenclatura de produto.
-
-Para futuro deploy na Vercel, selecionar **Root Directory `apps/admin`**, habilitar acesso a arquivos fora desse diretório e usar o build do workspace (Next detectado). A raiz continua responsável pelo lockfile/workspaces; o `prebuild` administrativo inclui a prévia. Não há deploy/provisionamento nesta reorganização; upload direto R2 e demais requisitos de produção continuam pendentes.
+npm workspaces, um `package-lock.json`; instalar na raiz em containers. `npm run build` compila admin e prepara prévia; `npm run build:campaign` gera `apps/campaign/dist`, consumido pelo host público. Contratos técnicos `/events`, `/event-runtime` e `event.json` permanecem.
 
 ## Começar localmente
 
-Requisitos: Docker com Compose. Nenhuma dependência Node precisa ser instalada no computador.
+Requisitos: Docker com Compose. Não instalar dependências Node no host. Em ambiente **novo**, sem sobrescrever configuração/contas existentes:
 
 ```sh
-cd /Users/thadeubrito/workspace/namarca
-# Cria secrets locais aleatórios; não sobrescreve arquivo existente.
+# Secrets locais aleatórios; não sobrescreve arquivo existente.
 docker run --rm -v "$PWD:/app" -w /app node:24.11.1-bookworm-slim node scripts/dev-env.mjs
-# Banco, arquivos e gateway simulados.
 docker compose up -d postgres s3 pixgo-mock
 docker compose run --rm app npm run db:migrate
-# Aplicação.
 docker compose up --build -d
-# Provisiona SUA conta, solicitando senha sem exibir no terminal.
+# Provisionar somente sua conta nova; solicita senha sem exibi-la.
 docker compose exec app npm run admin:create
 ```
 
-Acesse **http://localhost:3000**. O identificador local inicial é `admin@namarca.test`, configurável em `.env.local` antes do provisionamento. Não existe senha padrão. No primeiro login, configure TOTP e guarde os códigos de recuperação; só depois o administrativo é liberado.
+Admin em http://localhost:3000, público local em http://localhost:3001. Identificador inicial `admin@namarca.test`, configurável antes do provisionamento; sem senha padrão, TOTP obrigatório. PostgreSQL5432, S3/SeaweedFS9000 e mock4010 ligados a localhost. Não apagar volumes para resolver problemas de ambiente.
 
-## Serviços locais
-
-| Serviço | Acesso |
-|---|---|
-| App | http://localhost:3000 |
-| PostgreSQL | localhost:5432; credenciais em `.env.local` |
-| S3 privado / SeaweedFS | http://localhost:9000; sem console web |
-| Site público independente | http://localhost:3001 (`docker compose up -d public-site`) |
-| Simulador PixGo | http://localhost:4010; API protegida, sem dinheiro real |
-
-Downloads de imagens/pacotes exigem rede no bootstrap. A operação de desenvolvimento não exige Vercel, Neon, R2, Google ou conta PixGo. Dados persistem em volumes. `docker compose down` para os serviços sem apagar dados. Não use `down -v` se quiser preservá-los.
-
-## Rotas do administrativo
-
-O app administrativo não usa prefixo `/admin`: `/` lista campanhas, `/campanhas/nova` cria, `/campanhas/<id>` abre a campanha, `/clientes` e `/financeiro` são as outras seções. Login em `/login` e TOTP em `/login/verificar`; layout protegido no route group `(workspace)` e `requireAdmin` em cada operação privilegiada. Links antigos `/admin/*` não são mantidos. O site público continua em outro host (`localhost:3001` no desenvolvimento), sem conflito com essas rotas.
-
-## Comandos
-
-```sh
-docker compose exec app npm run typecheck
-docker compose exec app npm run lint
-docker compose exec app npm test
-docker compose exec app npm run db:generate
-docker compose exec app npm run db:migrate
-docker compose exec app npm run admin:reset
-docker compose logs -f app
-```
-
-Migrations em `apps/admin/drizzle/` são versionadas. `db:push` existe somente para exploração local, não substitui migrations. Build deve ser verificado com configuração HTTPS e secrets próprios de teste; nunca usar credenciais reais apenas para compilar.
-
-## Escopo desta base
-
-- Login administrativo com senha, TOTP, códigos de recuperação e cadastro público bloqueado.
-- Cadastro, listagem, detalhes e edição de campanhas em rascunho, com encerramento; consulta de cobranças já registradas.
-- Estúdio: seleção local de artes/figurinhas PNG com recuperação de rascunho após refresh, upload privado ao salvar (até três envios simultâneos), nomes/ordenação, retângulo visual da foto, cores, limpeza manual de materiais não usados e prévia estática isolada com composição/exportação no navegador. Editor e estilos únicos em `packages/editor`, consumidos pelas entradas privada e pública local de `apps/campaign`; público antigo não migrado. [Arquitetura do editor](docs/editor-runtime.md).
-- Cliente leve reutilizável entre campanhas, seleção/cadastro inline com nome e contato opcional; seção Clientes com busca, cadastro, edição e campanhas vinculadas. Observações na campanha, sem contratos. Valores definidos por cobrança na aba Cobrança, permitindo adicionais independentes.
-- Cobrança exclusivamente mock: múltiplos links por campanha com descrição/nome/valor congelados, checkout sem conta, QR simulado, recuperação de tentativa incerta e consulta manual no painel. [Limites do checkout](docs/checkout.md).
-- Financeiro global no menu principal, com filtros por campanha, situação e período de criação, totais por situação e CSV administrativo protegido, sem dados de pagador ou tokens. [Relatório financeiro](docs/financial-report.md).
-- Banco transacional, S3 privado, adapter PixGo e recebimento de webhooks.
-- Confirmação financeira e registro idempotente do evento na própria requisição do webhook, sem worker ou cron.
-- Infra reproduzível e testes.
-
-**Ainda não é o SaaS comercial completo.** O estúdio e a prévia foram integrados, há checkout local, mas não há checkout real homologado nem implantação pública em produção. A aba Publicação permite ao administrador publicar a versão salva sem exigir pagamento, com confirmação explícita, no host público separado `http://localhost:3001/<slug>` (configurável por `PUBLIC_SITE_URL`). O publicador envia PNGs em artworks/stickers, o manifesto imutável versions/vN.json e, por último, `event.json` com `{version:N}` ao storage; a aba permite comparar versões e rascunho salvo, publicar uma versão anterior somente no público ou restaurá-la somente no rascunho; o site público não consulta Next ou banco. A publicação congela somente a versão pública; detalhes e estúdio continuam editáveis como rascunho. Publicar alterações entrega uma nova versão sem interromper a anterior; o endereço já divulgado permanece fixo. Disponibilidade (Ativa/Suspensa/Encerrada) é independente da versão: Suspender campanha interrompe o acesso pelo editor; novas versões mantêm a suspensão e Reativar campanha libera apenas a última versão publicada. O prazo não pausa e arquivos públicos já disponibilizados não são apagados/revogados. Cobranças continuam independentes. Uma confirmação de pagamento não publica a campanha. Registro de data não implementa sozinho o encerramento do editor antigo.
-
-## Guia de design
-
-A referência visual de toda a aplicação está em [`docs/revolut.design.md`](docs/revolut.design.md). Consulte também [`docs/design-system.md`](docs/design-system.md), que define sua aplicação à Namarca, os componentes compartilhados e as exceções operacionais. Toda mudança de UI/UX deve seguir ambos para manter consistência entre telas e estados.
-
-## Lista vigente e limites
-
-Veja [docs/TODO.md](docs/TODO.md) para concluídos, pendências locais e decisões externas. Deploy/implantação em produção está fora do escopo ativo por pedido do fundador; o histórico abaixo não é uma lista de tarefas autorizadas.
-
-## Produção (referência futura, fora do escopo)
-
-Direção aprovada: Next.js na Vercel, PostgreSQL gerenciado, R2 e PixGo real. A autenticação é biblioteca Better Auth, não SaaS. O webhook atualiza o pagamento diretamente, sem agendamento. Notificações perdidas não possuem recuperação automática nesta base. Nenhum recurso remoto foi provisionado. Migração futura para Coolify é possível, com revisão operacional, backups e secrets.
-
-- [Desenvolvimento](docs/development.md)
-- [Autenticação](docs/auth.md)
-- [Arquitetura](docs/architecture.md)
-- [Estúdio da campanha](docs/campaign-editor.md)
-- [Clientes e dados comerciais](docs/contracts.md)
+Operação detalhada e validação: [code-map.md](agents/knowledge/code-map.md). Produção, PixGo real, migração do site antigo e provisionamento exigem pedido específico. Publicação local não equivale a deploy nem homologação comercial.

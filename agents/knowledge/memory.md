@@ -1,0 +1,76 @@
+# Memória operacional — estado atual
+
+Memória seletiva, não diário de entregas. Código e migrations são a fonte da implementação; esta base preserva decisões, exceções e pendências não dedutíveis com segurança. Atualizar por substituição e remover pendências resolvidas. Não acrescentar contagens de testes ou relatos por tarefa.
+
+## Estado e fronteiras
+
+- Monorepo npm workspaces: `apps/admin`, `apps/campaign`, `apps/site`, `packages/editor`; lock único. Administrativo sem prefixo `/admin`; campanha pública em host separado.
+- O novo sistema possui administração, clientes leves, estúdio, prévia privada, checkout mock, financeiro e publicação local versionada. O público antigo em produção continua separado: implementação local não é migração/deploy nem homologação live.
+- `@namarca/editor` é o core compartilhado entre público local e prévia privada. Não criar uma segunda implementação do editor. Contratos técnicos `/events`, `/event-runtime`, `event.json` e nomes `EventConfig` permanecem apesar da terminologia de produto campanha.
+- Design tem diretrizes separadas: administrativo com referência Revolut; público com direção visual ainda a definir em `design/public.md`. Não aplicar Revolut automaticamente ao institucional/campanha. Prévia tem shell administrativo e conteúdo público. Login/TOTP e checkout preservam tratamento atual até definição de associação visual.
+- Aplicação contém componentes legados sem uso. Conferir imports e rotas ativas antes de alterar/remover; existência de arquivo ou tabela não significa funcionalidade vigente.
+
+## Decisões que não devem regredir
+
+### Identidade e privacidade
+
+- Senha (8–128 caracteres) + TOTP obrigatórios; recuperação por códigos de uso único ou reset operacional com revogação. Nunca recriar/resetar conta real para testar.
+- `requireAdmin` em cada operação privilegiada. Better Auth sozinho não substitui a prova própria `session.twoFactorVerified`; sessão autenticada sem segundo fator não é sessão administrativa.
+- Formulários de auth devem falhar fechados sem hidratação, enviar POST e nunca colocar credenciais na URL. Não relaxar Origin/CSRF para corrigir ambiente local.
+- Foto/composição não vão para backend, IndexedDB administrativo, bridge, logs, analytics ou session replay. Rascunhos administrativos guardam materiais da campanha, não fotos de participantes.
+
+### Edição
+
+- Detalhes, Artes, Figurinhas e Cores salvam independentemente. Revisão é global, mas save scoped preserva outras alterações locais. Não recriar “salvar tudo”.
+- Painéis e iframe permanecem montados ao trocar abas; remontar perde a composição local. Aba ativa fica em `aba` na URL. Recuperação inicial considera todas as seções, inclusive Cobrança.
+- Seleção de materiais é local; enviar somente ao salvar, **sequencialmente**, sem reenviar sucessos confirmados em retry. Descartar edições locais só afeta a aba, sem mutação de servidor; restaurar versão é operação distinta.
+- Limpeza precisa proteger configuração atual, publicações/históricos e registros legados retentores. Não excluir bucket/prefixo amplo nem adicionar limpeza automática. Recuperação local não é backup.
+
+### Clientes
+
+- Nome/contato são compartilhados entre campanhas; editar cliente não altera snapshots ou cobranças. Desvincular não exclui cliente. Não deduplicar automaticamente por nome.
+- Busca de clientes pode colocar contato na URL: não compartilhar URLs de busca nem registrar consultas em telemetria. Dados de cliente não pertencem ao manifesto público.
+- Contratos/aprovações e campos organizer/contact legados são preservados, não sincronizados ou reativados como fonte atual.
+
+### Financeiro
+
+- Mock é o padrão e o checkout local não é homologação PixGo. CPF/CNPJ numérico e alfanumérico têm suporte local, não comprovação de aceitação pelo provedor real.
+- Valor/descrição são definidos por cobrança e congelados no link. `campaigns.priceCents` é legado, não o total cobrado.
+- Falha de criação incerta não autoriza POST automático. Decisão vigente permite retry explícito do cliente no mesmo checkout mantendo tentativa unknown para callback tardio; não ressuscitar consultas automáticas ou liberação administrativa removidas.
+- Webhook confirma financeiro na requisição, sem publicar campanha. Idempotência, comparação de IDs/valor e callbacks tardios importam mais que a ordem aparente da UI.
+- PixGo recebe Pix e liquida DePix/Liquid, não BRL em conta bancária. Comunicação jurídica/fiscal continua pendente; não inventar API de reembolso/cancelamento.
+
+### Publicação
+
+- Salvar rascunho não muda público. Publicar não consulta/exige pagamento; primeira publicação exige confirmação explícita. Endereço já publicado permanece fixo.
+- Artefatos públicos estritos, sem cliente/notas/financeiro/tokens/auditoria. PNGs e `versions/vN.json` imutáveis; `event.json` é ponteiro escrito por último, no-store. Retry usa snapshot congelado, nunca draft posterior.
+- Número público atual pode ser menor que o maior histórico. Publicar versão histórica mantém seu número e não muda draft; restaurar no rascunho não muda público. Próxima versão nova é max histórico + 1.
+- S3 e banco não têm transação distribuída. PUT bem-sucedido seguido de commit falho pode divergir até retry explícito. `published` não comprova entrega: conferir `deliveredAt`. Falhas podem deixar assets públicos órfãos acessíveis pela URL.
+- Suspensão preservada em novas publicações; reativação usa versão entregue, não rascunho. Prazo não pausa, versão expirada não reativa. Checks de suspensão em sessões abertas não significam revogação instantânea; offline/cache/clientes antigos podem atrasar. Arquivos publicados/exportados não são apagados por suspensão ou prazo.
+- Compatibilidade legada: backfill de números no DB não materializa bucket. Mudança de acesso pode materializar snapshot já entregue ausente antes do pointer; nunca usar draft para reparar versão antiga.
+- Host público independe de Next/DB/financeiro. Processos Node do gateway/mock não têm hot reload: após mudança nesses módulos, código montado pode ser novo e processo ainda antigo. Reinício deve ser restrito ao serviço necessário, preservando dados.
+
+## Problemas e lacunas conhecidos
+
+Não são tarefas automaticamente autorizadas nem prova de que todo cenário ainda falha. Reproduzir antes de corrigir.
+
+- Upload 422 com materiais reais do fundador foi reportado, mas investigação específica adiada. Mensagens melhores e fixtures sintéticas não diagnosticam esses arquivos; usar somente materiais autorizados.
+- Runner de referência/galeria e disputa de token de aba duplicada tiveram intermitências. Repetição que passa não demonstra correção. Cenários históricos podem pressupor UI removida e exigir adaptação sem relaxar regras.
+- Warnings de hidratação Motion/tabindex e aviso de iframe `web-share` foram observados; fixtures focais sem warnings não comprovam resolução global.
+- Checkout em viewport 320×568 teve conteúdo maior que a tela em estados específicos. Não ocultar overflow para satisfazer gate visual; manter rolagem acessível.
+- Gestos em celular físico, materiais/proporções reais, navegação dirty completa (incluindo Voltar/programática) e fluxo administrativo autenticado integral após as últimas mudanças não têm validação global garantida.
+- Testes estruturais não comprovam aparência; browser com actions/contexts mockados não comprova auth, persistência ou submit Next real. Não reutilizar PASS antigo como resultado atual.
+
+## Fora do escopo autorizado atual
+
+- Deploy, push, migração do público antigo, PixGo real ou provisionamento pago.
+- Upload direto R2 para produção/Vercel: proxy local de 25 MiB não garante suporte na Vercel. Precisa desenho de autorização/finalização/validação antes de prometer produção.
+- Backups/restauração, retenção de longo prazo, rate limiting distribuído, cache/CDN, escala e operação financeira live exigem preparação específica.
+- Novas regras de revogação/reemissão, cancelamento/reembolso, oferta e métricas de participantes exigem escopo/decisão. Não usar backlog antigo como autorização.
+
+Não há uma próxima implementação funcional aprovada apenas por constar aqui. O pedido ativo do usuário define o trabalho.
+
+## Ferramentas de agentes
+
+- React Bits usa servidor MCP **shadcn** conectado ao registry `@react-bits` de `apps/admin/components.json`, não endpoint React Bits independente. `.mcp.json` chama `scripts/react-bits-mcp.sh` em Docker; preservar PaceUI. Requer Docker ativo e cliente com cwd na raiz; recarregar cliente após configuração. Não adiciona componentes automaticamente.
+- Conhecimento compartilhado em `agents/knowledge/`; papéis portáveis em `agents/roles/`: copywriter, product-experience, quality-security e interface-designer. Adaptadores consultivos em `.pi/agents/` leem a fonte a cada execução, sem duplicar o papel; modelo herdado da sessão. Não há adaptadores Claude/Codex nem orquestração automática. O principal continua responsável por síntese, implementação e validação.
