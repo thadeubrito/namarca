@@ -11,6 +11,14 @@ test('carregamento público não exibe a página de marca antes do editor', () =
   assert.match(source, /state.status === 'suspended'/);
 });
 
+test('campanha não encontrada usa somente conteúdo básico sem marca nem tema do editor', () => {
+  const source = readFileSync('apps/campaign/src/main.tsx', 'utf8');
+  assert.match(source, /if \(state.status === 'missing'\) return <main className="campaign-not-found"><h1>Campanha não encontrada<\/h1><p>Confira o link enviado pela organização\.<\/p><\/main>/);
+  const css = readFileSync('apps/campaign/src/status.css', 'utf8');
+  assert.match(css, /html:has\(\.campaign-not-found\) body/);
+  assert.match(css, /all: revert/);
+});
+
 test('prévia aguarda configuração silenciosamente sobre a superfície do host', () => {
   const source = readFileSync('apps/campaign/src/preview.tsx', 'utf8');
   assert.match(source, /!config \? <span className="sr-only" role="status">Aguardando configuração da prévia…<\/span>/);

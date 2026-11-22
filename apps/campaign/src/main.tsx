@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { PhotoEditor } from '@namarca/editor/photo-editor'
 import { checkEventSuspended, eventThemeStyle, loadEvent, MissingEventError, SuspendedEventError, resolveSlug, type EventConfig } from '@namarca/editor/events'
 import '@namarca/editor/styles.css'
+import './status.css'
 
 type State = { status: 'loading' | 'missing' | 'error' | 'suspended' } | { status: 'ready'; event: EventConfig }
 
@@ -77,9 +78,9 @@ function App() {
   }
   // Loading is deliberately quiet: do not flash the branded status page before the editor.
   if (state.status === 'loading') return <span className="sr-only" role="status">Preparando editor…</span>
+  if (state.status === 'missing') return <main className="campaign-not-found"><h1>Campanha não encontrada</h1><p>Confira o link enviado pela organização.</p></main>
   return <div className="event-status-page"><main>
     <p className="brand">na<span>marca</span></p>
-    {state.status === 'missing' && <><h1>Campanha não encontrada</h1><p>Confira o link enviado pela organização.</p></>}
     {state.status === 'suspended' && <><h1>Ativação temporariamente indisponível</h1><p>Entre em contato com a organização para mais informações.</p><button type="button" onClick={() => { setState({ status: 'loading' }); setAttempt(value => value + 1) }}>Tentar novamente</button></>}
     {state.status === 'error' && <><h1>Não foi possível abrir a campanha</h1><p role="alert">Confira sua conexão e tente novamente.</p><button type="button" onClick={() => { setState({ status: 'loading' }); setAttempt(value => value + 1) }}>Tentar novamente</button></>}
     {state.status === 'ready' && <><h1>Ativação encerrada</h1><p>A ativação de {state.event.name} já terminou.</p></>}

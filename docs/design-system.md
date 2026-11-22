@@ -95,6 +95,10 @@ Painel de ajustes em linhas, não mosaico de grandes cartões coloridos. Cabeça
 
 Defaults compartilhados do editor: Fundo #ffffff, Painéis #dedede, Destaque #494fdf, Texto #191c1f, alinhados à identidade Namarca. Valem para nova configuração, tema ausente e Restaurar padrão; temas explícitos já salvos não são migrados nem sobrescritos. Preferência claro/escuro administrativa não troca automaticamente as cores da campanha.
 
+## Campanha não encontrada — provisório
+
+A tela pública de campanha não encontrada mantém somente título e mensagem, sem marca e com estilos padrão do navegador. Reset restrito a esse estado neutraliza CSS legado do editor; não altera erro de rede, suspensão ou encerramento. Estilização definitiva adiada por decisão do fundador.
+
 ## Carregamento silencioso do editor
 
 Enquanto o runtime público busca a campanha ou a prévia privada aguarda configuração, não mostrar marca nem texto de carregamento visível; manter status sr-only acessível. Documento privado transparente preserva a superfície do dispositivo pai até montar o editor; o shell do editor continua com as cores da campanha. Erros, suspensão, encerramento e carregamentos de operações internas permanecem explícitos. Sem timer artificial nem remontagem do iframe.

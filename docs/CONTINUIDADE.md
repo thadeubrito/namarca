@@ -1,5 +1,9 @@
 # Namarca — continuidade de implementação da V1
 
+## Campanha não encontrada — básico sem tema (21/11/2026)
+
+Fundador pediu tela não encontrado sem estilos até futura estilização. Runtime público retorna somente main/h1/p, sem marca, com reset all:revert restrito ao estado para neutralizar CSS legado. Erro/retry/suspensão/encerramento preservados. Typecheck/lint/138testes+1skip/build campanha e cópia runtime aprovados em containers. Chromium com manifesto404 interceptado confirma título, ausência marca, margem8px/fontTimes/padding0 padrões do navegador. Sem Nextbuild novo/auth/E2E integral/migrations(schema inalterado), commit/push/deploy ou dadosvolumes alterados.
+
 ## Editor — carregamento sem tela intermediária (21/11/2026)
 
 Fundador reportou flash Namarca/carregando e pediu espera silenciosa. Entrada pública retorna status sr-only antes da página de marca; prévia privada aguarda configuração com status sr-only e documento transparente, preservando superfície do dispositivo pai. Shell/cores/bridge/editor/erros/suspensão/encerramento e indicadores de operações internas mantidos; sem timer/remontagem. Build campanha recompilado e copiado para runtime administrativo.
