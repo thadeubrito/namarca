@@ -1,5 +1,12 @@
 # Namarca — continuidade de implementação da V1
 
+## Listagem — remover preparação legada (21/11/2026)
+
+Fundador reportou ativa sem mudanças com Preparação/Rascunho e aprovou correção. Diretório remove preparationStatus/rótulos aprovação; mantém Disponibilidade e secundário somente Envio pendente (prioritário) ou Alterações não publicadas. Query única junta editor e snapshot efetivamente entregue (current se delivered, fallback history por deliveredAt/version); compara draft derivado/default pelo mesmo hasUnpublishedChanges do detalhe. Sem inferir diferença só por revisão/timestamp. Filtros agora Todas/Rascunhos/Publicadas por existência entrega, não aprovaçãolegada. Suspensas/encerradas entregues continuam Publicadas. Sem schema/auth/mutações.
+
+Typecheck/lint/buildproduçãoisolado/131testes+1skip/diffcheck aprovados containers. Novo teste estrutural protege ausência legado, helper compartilhado, fallback histórico/prioridade/rótulos filtros; helpers semânticos já cobertos suíte. Sem novo browser/integração SQL focal nesta rodada, não declarar E2E da listagem. Migrations não reexecutadas (schema inalterado). Sem commit/push/deploy/PixGo real/dadosvolumes alterados.
+
+
 ## Header — acompanha tema claro/escuro (21/11/2026)
 
 Fundador aprovou substituir header preto fixo por branco no light/preto no dark. Removidos overrides locais de tokens/cor; header herda background/foreground/line/foco/hover do ThemeScope, mantendo grid/menu/ações/seleção. Canvas html/body com admin-shell agora branco padrão e preto somente dark (atributo pré-paint ou classe), evitando faixa preta no scroll elástico light. Substitui decisão anterior de header sempre preto; referência marketing não impõe contraste fixo no administrativo. Sem auth/actions/schema novos.
