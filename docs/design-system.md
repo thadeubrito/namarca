@@ -41,6 +41,10 @@ A cópia de referência permanece integral; decisões específicas da Namarca fi
 
 Preferência `namarca-admin-theme` é aplicada por script fixo no head em `html[data-admin-theme]` antes da hidratação. Tokens dark das `.ui-scope` respondem também a esse atributo para evitar flash claro no refresh; toggle e eventos entre abas mantêm atributo sincronizado. Sem preferência válida ou armazenamento disponível, padrão claro. Não aplicar paleta administrativa ao runtime/iframe ou checkout fora de `.ui-scope`.
 
+## Criação rápida de campanha
+
+CTA Criar campanha da listagem abre Dialog Radix no padrão compartilhado de Clientes: nome do evento, endereço sugerido pelo nome (editável; edição manual interrompe sugestões) e data de encerramento. Cliente/observações/materiais ficam no workbench após criar. `/campanhas/nova` preserva alternativa por URL com o mesmo CampaignCreateForm básico, sem consultar clientes. Submit mantém createCampaign/requireAdmin/validação/redirect ao detalhe existentes; erro preserva campos controlados, pending desabilita campos e fechamento do modal. Cancelar/Escape fecha sem salvar, clique externo não fecha; reabrir começa vazio. Mobile estreito empilha ações, portais/data/tema e foco seguem primitives compartilhados.
+
 ## Skeletons da campanha
 
 A fronteira `campanhas/[id]/loading.tsx` apresenta cabeçalho e navegação responsiva, com conteúdo correspondente à `aba` da URL (fallback Detalhes). Detalhes espelha grupos de campos; Cobrança, emissão e registros; Publicação, visão atual/próxima e dois expansíveis. Artes/Figurinhas espelham miniaturas160px e rodapé com duas/uma ações; Cores, quatro linhas de ajustes e amostras circulares. Estúdio compartilha o mesmo skeleton por seção entre bundle e configuração, sem tabs internas antigas, índices ou controles fictícios. Prévia usa geometria atual de dispositivo28px. Blocos usam tokens, status acessível único, decoração aria-hidden, sem controles focáveis e sem pulsação em reduced-motion. Trocas de abas já carregadas e salvamentos não introduzem atrasos artificiais nem substituem conteúdo por skeleton.

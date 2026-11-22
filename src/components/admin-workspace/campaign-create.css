@@ -1,0 +1,8 @@
+.ws-campaign-create-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:16px; }
+.ui-scope .ws-campaign-create-heading h2 { font-size:20px;font-weight:500; }
+.ws-campaign-create-heading p { margin-top:8px;color:var(--muted);font-size:14px;line-height:1.5; }
+.ui-scope .ws-campaign-create-close { flex:none;width:44px;height:44px;padding:0; }
+.ws-campaign-create-form { display:grid;gap:24px;min-width:0;width:100%;max-width:520px; }
+.ws-campaign-create-fields { display:grid;gap:20px;min-width:0;padding:0;margin:0;border:0; }
+.ws-campaign-create-actions { display:flex;justify-content:flex-end;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:20px; }
+@media(max-width:380px) { .ws-campaign-create-actions { flex-direction:column-reverse;align-items:stretch; } }

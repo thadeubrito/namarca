@@ -1,5 +1,12 @@
 # Namarca — continuidade de implementação da V1
 
+## Campanha — criação básica em modal (21/11/2026)
+
+Fundador aprovou modal só básico. Listagem CTA abre CampaignCreateDialog Radix/tema compartilhado; CampaignCreateForm com nome/endereço sugerido normalizado+editável/data, Cancelar/Criar. Endereço manual não sobrescrito por nome posterior; nome/slug/data controlados preservam falha. Pending protege campos/fechamento; Escape/cancel semsave, fora nãofecha, reabrir vazio. Sucesso usa createCampaign existente→redirect detalhe; cliente/notes ficam edição. /campanhas/nova usa mesmoform sem consultar clientes. Sem alterar action/auth/schema/financeiro/recoveryedição. Helper sugestão limitado80/testes.
+
+Typecheck/lint/133testes+1skip/buildproduçãoisolado/diffcheck aprovados containers. Browserfocal componentes React/Radix/DatePicker/CSSreais com actionmock:6cenários1440/390/320claroescuro sugestão/manual/nomeposterior/calendárioportal/Escape/reset/cancelzeromutação/zerooverflow aprovados. Capturas /tmp/namarca-create-review; principal observou320dark. Fixture precisou process.envshim Next e aguardar fechamento animado popover antesEscapepai; sem alteraçãoproduto para isso. Limites: semsubmit criação real/SQL/redirect autenticado, semE2E, semnova integraçãoauth/migrations(schema inalterado). Runner editor histórico que cria com cliente/notes na rota básica precisa adaptação antes reexecução. Sem commit/push/deploy/PixGo real/contasdadosvolumes alterados.
+
+
 ## Listagem — remover preparação legada (21/11/2026)
 
 Fundador reportou ativa sem mudanças com Preparação/Rascunho e aprovou correção. Diretório remove preparationStatus/rótulos aprovação; mantém Disponibilidade e secundário somente Envio pendente (prioritário) ou Alterações não publicadas. Query única junta editor e snapshot efetivamente entregue (current se delivered, fallback history por deliveredAt/version); compara draft derivado/default pelo mesmo hasUnpublishedChanges do detalhe. Sem inferir diferença só por revisão/timestamp. Filtros agora Todas/Rascunhos/Publicadas por existência entrega, não aprovaçãolegada. Suspensas/encerradas entregues continuam Publicadas. Sem schema/auth/mutações.
