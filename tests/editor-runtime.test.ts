@@ -79,5 +79,6 @@ test('prévia sem arte mantém shell real e quadriculado apenas na composição'
   assert.match(workspace, /!compositionReady && \(name === 'Foto' \|\| name === 'Salvar'\)/);
   assert.match(css, /repeating-conic-gradient/);
   assert.match(css, /data-admin-theme=dark/);
-  assert.doesNotMatch(css, /--theme-border|--theme-surface|background: transparent/);
+  assert.doesNotMatch(css, /--theme-border|--theme-surface/);
+  assert.doesNotMatch(css, /\.editor-page\[data-admin-theme[^}]*background: transparent/);
 });

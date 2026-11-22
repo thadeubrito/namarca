@@ -1,5 +1,11 @@
 # Namarca — continuidade de implementação da V1
 
+## Editor — carregamento sem tela intermediária (21/11/2026)
+
+Fundador reportou flash Namarca/carregando e pediu espera silenciosa. Entrada pública retorna status sr-only antes da página de marca; prévia privada aguarda configuração com status sr-only e documento transparente, preservando superfície do dispositivo pai. Shell/cores/bridge/editor/erros/suspensão/encerramento e indicadores de operações internas mantidos; sem timer/remontagem. Build campanha recompilado e copiado para runtime administrativo.
+
+Typecheck/lint aprovados em containers; suíte137 aprovados+1skip e build campanha aprovados. Teste estrutural anterior proibia qualquer transparência: refinado para preservar proibição no shell temático, permitindo documento transparente. Browser Chromium real semauth: prévia antes configuração confirma status1px/backgroundtransparente; público com manifesto retido confirma ausência página/marca no loading. Sem browser autenticado/composição/exportação/E2E integral ou build Next novo. Schema/auth inalterados, migrations não reexecutadas. Sem commit/push/deploy/PixGo real/dadosvolumes alterados.
+
 ## Monorepo — admin, campanha e editor como workspaces (21/11/2026)
 
 Fundador autorizou padronizar monorepo e definiu campanha como nome oficial da entidade (evento é contexto, não sinônimo). Next/src/configs/public e Drizzle/migrations agora em apps/admin; apps/event renomeado apps/campaign; apps/site permanece institucional mínimo. npm workspaces apps/* e packages/*, lock único sem alterações de versões de dependências. @namarca/editor privado com exports events/photo-editor/styles.css, consumidos pelas entradas estáticas/admin sem alias para implementação. tsconfig base+porworkspace e validação raiz de scripts/testes; configs Next tracing/Turbopack na raiz do monorepo e transpilePackages. Sem Turborepo/Nx nem extração especulativa de domínio.

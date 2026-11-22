@@ -95,6 +95,10 @@ Painel de ajustes em linhas, não mosaico de grandes cartões coloridos. Cabeça
 
 Defaults compartilhados do editor: Fundo #ffffff, Painéis #dedede, Destaque #494fdf, Texto #191c1f, alinhados à identidade Namarca. Valem para nova configuração, tema ausente e Restaurar padrão; temas explícitos já salvos não são migrados nem sobrescritos. Preferência claro/escuro administrativa não troca automaticamente as cores da campanha.
 
+## Carregamento silencioso do editor
+
+Enquanto o runtime público busca a campanha ou a prévia privada aguarda configuração, não mostrar marca nem texto de carregamento visível; manter status sr-only acessível. Documento privado transparente preserva a superfície do dispositivo pai até montar o editor; o shell do editor continua com as cores da campanha. Erros, suspensão, encerramento e carregamentos de operações internas permanecem explícitos. Sem timer artificial nem remontagem do iframe.
+
 ## Prévia vazia
 
 Sem arte, a prévia privada mantém PhotoEditor/EditorWorkspace reais: menu, ajuda, histórico (desabilitado), Artes e Stickers visíveis. Apenas a área da composição mostra quadriculado12px neutro, sem instrução textual; Foto/Salvar e adicionar sticker ficam desabilitados sem composição. Cores do shell continuam da campanha. Bridge envia adminTheme como enum light/dark para o quadriculado usar os neutros das thumbs (#e2e2e7/#fff ou branco12%/#16181a); não aceita CSS arbitrário. Ao remover última arte, limpa composição/histórico e invalida leitura pendente; ao adicionar a primeira, carrega normalmente sem remontar iframe/PhotoEditor. CSS do vazio é exclusivo da entrada privada; contrato público continua exigindo arte.

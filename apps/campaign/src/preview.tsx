@@ -59,7 +59,7 @@ function Preview() {
   if (failed) return <main><h1>Prévia indisponível</h1><p role="alert">Não foi possível carregar esta prévia. Confira o endereço e sua sessão administrativa.</p></main>
   return <>
     {warning && <p className="preview-warning" role="alert">Prévia pausada: corrija os campos inválidos. A última configuração válida permanece visível.</p>}
-    {!config ? <p role="status">Aguardando configuração da prévia…</p> :
+    {!config ? <span className="sr-only" role="status">Aguardando configuração da prévia…</span> :
       <div className="editor-page" data-admin-theme={config.adminTheme} style={eventThemeStyle(config.event) as CSSProperties}>
         <PhotoEditor event={config.event} assetUrls={config.assetUrls} assetBase={`/api/campaigns/${campaignId}/assets`} preferredArtworkId={config.selectedArtworkId} />
       </div>}

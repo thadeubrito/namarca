@@ -1,4 +1,6 @@
-/* Private preview only; shared admin tokens, independent of campaign colours. */
+/* Private preview only; keep the host surface visible until configuration arrives. */
+html, body, html:has(.editor-page) { background: transparent; }
+/* Shared admin neutrals, independent of campaign colours. */
 .editor-page[data-admin-theme] { --preview-checker-line: #e2e2e7; --preview-checker-surface: #fff; }
 .editor-page[data-admin-theme=dark] { --preview-checker-line: rgba(255,255,255,.12); --preview-checker-surface: #16181a; }
 .preview-empty-artwork {

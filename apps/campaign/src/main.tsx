@@ -75,9 +75,10 @@ function App() {
   if (state.status === 'ready' && Date.parse(state.event.endsAt) > now) {
     return <div className="editor-page" style={eventThemeStyle(state.event) as CSSProperties}><PhotoEditor event={state.event} /></div>
   }
+  // Loading is deliberately quiet: do not flash the branded status page before the editor.
+  if (state.status === 'loading') return <span className="sr-only" role="status">Preparando editor…</span>
   return <div className="event-status-page"><main>
     <p className="brand">na<span>marca</span></p>
-    {state.status === 'loading' && <p role="status">Preparando editor…</p>}
     {state.status === 'missing' && <><h1>Campanha não encontrada</h1><p>Confira o link enviado pela organização.</p></>}
     {state.status === 'suspended' && <><h1>Ativação temporariamente indisponível</h1><p>Entre em contato com a organização para mais informações.</p><button type="button" onClick={() => { setState({ status: 'loading' }); setAttempt(value => value + 1) }}>Tentar novamente</button></>}
     {state.status === 'error' && <><h1>Não foi possível abrir a campanha</h1><p role="alert">Confira sua conexão e tente novamente.</p><button type="button" onClick={() => { setState({ status: 'loading' }); setAttempt(value => value + 1) }}>Tentar novamente</button></>}
