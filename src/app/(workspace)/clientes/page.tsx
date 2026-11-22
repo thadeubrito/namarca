@@ -17,7 +17,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     .groupBy(clients.id).orderBy(asc(clients.name), asc(clients.id));
 
   return <Workspace>
-    <PageIntro eyebrow="Contatos" title="Clientes" description="Encontre um contato e acompanhe suas campanhas." action={<ClientCreateDialog />} />
+    <PageIntro title="Clientes" description="Encontre um contato e acompanhe suas campanhas." action={<ClientCreateDialog />} />
     <ClientDirectory rows={rows} query={q} />
   </Workspace>;
 }

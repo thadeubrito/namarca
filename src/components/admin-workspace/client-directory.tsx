@@ -15,12 +15,11 @@ export function ClientDirectory({ rows, query }: { rows: { id: string; name: str
         <label className="ws-client-directory-search" htmlFor="client-search">
           <span className="sr-only">Buscar por nome ou contato</span>
           <Search size={18} aria-hidden="true" />
-          <TextInput id="client-search" name="q" defaultValue={query} maxLength={254} placeholder="Buscar nome ou contato" aria-describedby="client-search-privacy" />
+          <TextInput id="client-search" name="q" defaultValue={query} maxLength={254} placeholder="Buscar nome ou contato" />
         </label>
         <Action type="submit" variant="secondary">Buscar</Action>
         {query && <ActionLink href="/clientes" variant="ghost">Limpar busca</ActionLink>}
       </div>
-      <p id="client-search-privacy" className="ws-client-directory-privacy">A busca pode conter dados pessoais. Não compartilhe a URL.</p>
     </form>
 
     <section className="ws-client-directory-results" aria-labelledby="client-directory-heading">
