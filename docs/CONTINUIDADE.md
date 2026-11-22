@@ -1,5 +1,12 @@
 # Namarca — continuidade de implementação da V1
 
+## Tema — dark antes da hidratação (21/11/2026)
+
+Fundador reportou flash light no refresh com dark salvo. Causa: ThemeScope SSR/useSyncExternalStore inicia claro, preferência só após hidratação. Script fixo no head lê somente namarca-admin-theme e aplica data-admin-theme ao html antes de pintar; exceção storage/valor inválido mantém claro. CSS aplica tokens dark às ui-scope pelo atributo, sem depender da classe pós-hidratação. suppressHydrationWarning restrito ao html pelo atributo pré-paint. Toggle e eventos storage/custom mantêm atributo sincronizado; classes/portais/useDarkTheme existentes preservados. Sem cookie/auth/backend/schema novos.
+
+Typecheck/lint/130testes+1skip/buildproduçãoisolado/diffcheck aprovados containers. Chromium login real com bundles JS bloqueados confirma background preto/color-scheme dark antes hidratação para preferência dark, branco/light para light; com JS normal toggle dark→light+reload persiste light. Runner /tmp/namarca-campaign-skeleton-review/theme-check.cjs. Primeira asserção reload falhou porque addInitScript da fixture sobrescrevia preferência em toda navegação; corrigido fixture para inicializar somente ausente e PASS. Sem login/submits/contas reais, sem authintegração (lógica inalterada)/migrations/browser autenticado; verifica tokens pré-hidratação, não gravação quadroaquadro de FCP. Sem commit/push/deploy/PixGo real/dadosvolumesalterados.
+
+
 ## Campanha — skeletons por seção e carregamento da página (21/11/2026)
 
 Pedido fundador: atualizar página e abas. Nova fronteira loading.tsx usa aba da URL e CampaignPageSkeleton (cabeçalho/nav desktop lateral e mobile horizontal), com CampaignTabSkeleton próprio Detalhes/Cobrança/Publicação e visual compartilhado. StudioSkeleton substitui tabs internas/índices/ações antigas por cartões160px+rodapé duas ações Artes/uma Figurinhas ou quatro linhas Cores, preview28px. Contexto leve no launcher entrega activeSection ao fallback dynamic sem remontar workspace; GET também usa seção atual. CSS legado dos skeletons removido, tokens compartilhados/aria-busy/status único/decoração ariahidden/zero controles/reducedmotion. Sem alterar fetch/actions/auth/recovery/instânciaiframe ou introduzir loading artificial nas trocas já carregadas.

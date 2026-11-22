@@ -9,10 +9,14 @@ const clientReady = () => true;
 const serverReady = () => false;
 const key = 'namarca-admin-theme';
 const event = 'namarca-theme-change';
+function applyDocumentTheme() {
+  document.documentElement.dataset.adminTheme = snapshot() ? 'dark' : 'light';
+}
 function subscribe(callback: () => void) {
-  window.addEventListener('storage', callback);
-  window.addEventListener(event, callback);
-  return () => { window.removeEventListener('storage', callback); window.removeEventListener(event, callback); };
+  const update = () => { applyDocumentTheme(); callback(); };
+  window.addEventListener('storage', update);
+  window.addEventListener(event, update);
+  return () => { window.removeEventListener('storage', update); window.removeEventListener(event, update); };
 }
 function snapshot() { try { return localStorage.getItem(key) === 'dark'; } catch { return false; } }
 
@@ -28,6 +32,7 @@ export function ThemeToggle() {
   const dark = useSyncExternalStore(subscribe, snapshot, () => false);
   function toggle() {
     try { localStorage.setItem(key, dark ? 'light' : 'dark'); } catch { /* Preference storage may be disabled. */ }
+    applyDocumentTheme();
     window.dispatchEvent(new Event(event));
   }
   return <Button variant="ghost" size="icon" type="button" disabled={!ready} onClick={toggle} aria-label={dark ? 'Ativar tema claro' : 'Ativar tema escuro'} title={dark ? 'Ativar tema claro' : 'Ativar tema escuro'}>{dark ? <Sun /> : <Moon />}</Button>;

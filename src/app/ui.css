@@ -27,7 +27,7 @@
 }
 /* Revolut reference adapted to operational UI. Semantic aliases stay stable.
    Aeonik Pro is not bundled/licensed; use a locally available sans fallback. */
-.ui-scope.dark {
+.ui-scope.dark, html[data-admin-theme=dark] .ui-scope {
  --paper:#000; --background:#000; --surface:#16181a; --card:#16181a; --ink:#fff; --foreground:#fff;
  --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.12); --accent:#fff; --primary:#fff; --primary-foreground:#000;
  --secondary:#16181a; --control-secondary:#24272a; --muted-surface:#16181a; --interaction:#303438; --input-border:rgba(255,255,255,.24); --popover:#16181a;

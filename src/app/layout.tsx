@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { adminThemeScript } from '@/lib/admin-theme';
 import './globals.css';
 import './ui.css';
 
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="pt-BR"><body><a className="skip" href="#conteudo">Pular para o conteúdo</a>{children}</body></html>;
+  return <html lang="pt-BR" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: adminThemeScript }} /></head><body><a className="skip" href="#conteudo">Pular para o conteúdo</a>{children}</body></html>;
 }
