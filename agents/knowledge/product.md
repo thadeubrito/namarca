@@ -2,11 +2,13 @@
 
 ## Propósito e posicionamento
 
-Namarca é uma ativação digital para antes, durante e depois de eventos. A prioridade comercial é o pré-evento, por orientação do fundador — não por evidência de uso já medida. O participante combina sua foto com identidade oficial e figurinhas para anunciar participação, criar expectativa e compartilhar sua experiência.
+Namarca é uma ativação digital para campanhas de marketing, apresentada institucionalmente como **boca a boca digital**: “Sua campanha. As pessoas ajudam a divulgar.” Participação e pertencimento motivam a pessoa; a divulgação voluntária é o valor para quem contrata. Com a própria foto, molduras e figurinhas, cada pessoa cria uma imagem, salva no dispositivo e, se quiser, compartilha nas redes sociais. Não se trata de recomendação ou endosso, nem de uma comunidade com cadastro ou coleta de fotos.
+
+O institucional fala com o contratante: a equipe configura a campanha de forma assistida, o cliente compartilha o link e o participante compõe e exporta no navegador, sem cadastro nem aplicativo. Eventos são um contexto de uso antes, durante e depois; nesse contexto, a prioridade comercial continua sendo o pré-evento, por orientação do fundador — não por evidência de uso já medida.
 
 Não posicionar como souvenir, lembrança ou recordação. Não prometer alcance, inscrições, vendas ou postagem em redes sociais. Exportar uma imagem não comprova compartilhamento nem pessoa única.
 
-Corridas são o foco inicial, não um limite técnico ou definitivo do produto. **Campanha** é o nome da entidade; evento é seu contexto.
+Corridas são um foco inicial de uso, não um limite técnico, definitivo ou da comunicação institucional. **Campanha** é o nome da entidade; evento é um possível contexto.
 
 ## Públicos e responsabilidades
 

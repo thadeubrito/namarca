@@ -3,13 +3,172 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Namarca</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Namarca — imagens personalizadas para campanhas de marketing</title>
+    <meta name="description" content="Com o Namarca, as pessoas criam imagens personalizadas combinando suas próprias fotos com a identidade visual da sua campanha de marketing e figurinhas." />
+    <style>
+      :root { color-scheme: light; --block: #e6e6e6; --dark-block: #d2d2d2; font-family: system-ui, sans-serif; color: #242424; line-height: 1.6; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #fff; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+      .wrap { width: min(1080px, calc(100% - 40px)); margin-inline: auto; }
+      .header { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+      .header-items { display: flex; align-items: center; }
+      .hero { text-align: center; }
+      /* Demonstrative hero only; independent of the page skeleton. */
+      .hero .scene { --photo-w: min(61vw, 248px); --photo-h: calc(var(--photo-w) * 16 / 9); position: relative; width: 100%; max-width: 1000px; height: calc(var(--photo-h) + 40px); margin: 20px auto; overflow: hidden; perspective: 1700px; perspective-origin: 50% 50%; touch-action: pan-y pinch-zoom; cursor: grab; isolation: isolate; mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent); }
+      .hero .scene[data-dragging] { cursor: grabbing; }
+      .hero .photo-canvas, .hero .sticker-layer, .hero .frame { position: absolute; width: var(--photo-w); height: var(--photo-h); top: 20px; left: calc(50% - var(--photo-w) / 2); }
+      .hero .photo-canvas { z-index: 1; pointer-events: none; }
+      .hero .photo { position: absolute; background: #d9d9d9; transition: left 220ms ease, top 220ms ease, width 220ms ease, height 220ms ease, border-radius 220ms ease; }
+      .hero .sticker-layer { pointer-events: none; z-index: 2000; }
+      .hero .sticker { position: absolute; background: #bcbcbc; border: 1px solid #c9c9c9; border-radius: 5px; box-shadow: 0 3px 6px #00000014; }
+      .hero .track { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform-style: preserve-3d; }
+      .hero .frame { border-radius: 2%; will-change: transform; }
+      .hero .scene:focus-visible { outline: 3px solid #333; outline-offset: -4px; }
+      .actions { display: flex; justify-content: center; }
+      .section { border-top: 1px solid #e8e8e8; }
+      .steps { display: grid; grid-template-columns: repeat(3, 1fr); }
+      footer { border-top: 1px solid #f1f1f1; }
+      @media (prefers-reduced-motion: reduce) {
+        .hero .photo { transition: none; }
+        .hero .frame { will-change: auto; }
+      }
+      /* Layout provisório: hierarquia e conteúdo, não identidade visual final. */
+      a { color: inherit; text-underline-offset: 4px; }
+      a:focus-visible, summary:focus-visible { outline: 2px solid #333; outline-offset: 4px; }
+      .skip { position: absolute; top: 8px; left: 20px; z-index: 3000; padding: 10px 16px; background: white; transform: translateY(-150%); }
+      .skip:focus { transform: none; }
+      .brand { width: auto; height: auto; font-weight: 700; font-size: 23px; text-decoration: none; }
+      .header { height: auto; min-height: 88px; }
+      .header-items { gap: 22px; }
+      .header-items a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; font-size: 14px; }
+      .header-items a:hover { text-decoration: underline; }
+      .header-items .header-cta { border: 1px solid #ccc; padding: 8px 16px; border-radius: 4px; }
+      .mobile-nav { display: none; position: relative; }
+      .mobile-nav summary { min-height: 44px; padding: 10px; cursor: pointer; }
+      .mobile-nav nav { position: absolute; right: 0; top: 48px; z-index: 3000; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 12px; width: 210px; box-shadow: 0 8px 24px #0000000d; }
+      .mobile-nav a { display: flex; align-items: center; min-height: 44px; padding-inline: 8px; }
+      h1, h2, h3, p { margin: 0; }
+      h1, h2, h3 { line-height: 1.18; text-wrap: balance; }
+      h1 { font-size: clamp(32px, 4vw, 52px); letter-spacing: -.04em; max-width: 780px; margin: auto; padding-inline: 20px; }
+      h2 { font-size: clamp(28px, 3vw, 38px); letter-spacing: -.025em; max-width: 660px; }
+      h3 { font-size: 20px; letter-spacing: -.015em; }
+      .hero { padding-top: 26px; padding-bottom: 76px; }
+      .eyebrow { margin: 0 auto 10px; padding-inline: 20px; font-size: 14px; font-weight: 600; color: #555; }
+      .description { display: block; max-width: 630px; margin-inline: auto; padding-inline: 20px; font-size: 17px; }
+      .actions { flex-wrap: wrap; gap: 12px; margin-top: 22px; padding-inline: 20px; }
+      .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 20px; border: 1px solid #c9c9c9; border-radius: 4px; text-decoration: none; font-size: 15px; font-weight: 600; }
+      .cta.primary { background: #dedede; border-color: #dedede; }
+      .cta:hover { background: #ececec; }
+      .micro { margin-top: 16px; font-size: 14px; color: #555; }
+      .section { padding-block: 88px; border-color: #e8e8e8; scroll-margin-top: 24px; }
+      .section-heading { margin-bottom: 40px; }
+      .steps { gap: 36px; }
+      .step { display: block; }
+      .step h3 { margin: 24px 0 12px; }
+      .step p, .layers p, .process p { color: #505050; }
+      .sketch { position: relative; height: 220px; background: #f1f1f1; border-radius: 5px; overflow: hidden; }
+      .mini-browser { position: absolute; inset: 32px 30px; background: #dedede; border: 1px solid #d1d1d1; border-radius: 4px; }
+      .mini-browser::before { content: ''; position: absolute; inset: 12px 12px auto; height: 12px; background: #eee; border-radius: 2px; }
+      .mini-browser::after { content: ''; position: absolute; inset: 42px 30% 18px; background: #bfbfbf; border-radius: 3px; }
+      .compose .mini-browser::after { inset: 48px 28% 18px; border-radius: 45% 45% 8px 8px; }
+      .mini-sticker { position: absolute; width: 42px; height: 30px; background: #aaa; right: 42px; bottom: 40px; transform: rotate(-10deg); border-radius: 3px; }
+      .save .mini-browser { inset: 30px 32%; }
+      .save .mini-browser::before { inset: auto 12px 12px; height: 8px; background: #aaa; }
+      .save .mini-browser::after { inset: 16px 12px 36px; }
+      .personal { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+      .personal .intro { margin: 24px 0 32px; color: #505050; }
+      .layers { list-style: none; padding: 0; margin: 0; }
+      .layers li { padding-block: 20px; border-top: 1px solid #e3e3e3; }
+      .layers h3 { margin-bottom: 8px; font-size: 18px; }
+      .composition-sketch { background: #f3f3f3; min-height: 540px; display: grid; place-items: center; border-radius: 5px; }
+      .static-canvas { width: 240px; aspect-ratio: 9 / 16; position: relative; background: #dedede; border-radius: 4px; }
+      .static-photo { position: absolute; inset: 20% 14% 15%; background: #bfbfbf; border-radius: 45% 45% 5px 5px; }
+      .static-sticker { position: absolute; width: 88px; height: 44px; left: -12px; top: 13%; background: #a9a9a9; border-radius: 4px; transform: rotate(-10deg); }
+      .static-sticker:last-child { width: 68px; height: 68px; left: auto; right: -12px; top: auto; bottom: 9%; transform: rotate(10deg); }
+      .process { list-style: none; padding: 0; margin: 0; counter-reset: process; }
+      .process li { display: grid; grid-template-columns: 60px 1fr 1.3fr; gap: 28px; padding: 28px 0; border-top: 1px solid #e3e3e3; counter-increment: process; align-items: baseline; }
+      .process li::before { content: '0' counter(process); font-size: 15px; color: #666; }
+      .faq { display: grid; grid-template-columns: .8fr 1.2fr; gap: 80px; }
+      .faq details { border-bottom: 1px solid #ddd; }
+      .faq summary { cursor: pointer; padding: 22px 8px 22px 0; min-height: 44px; font-size: 18px; font-weight: 600; }
+      .faq details p { padding: 0 24px 24px 0; color: #505050; }
+      .contact { background: #f3f3f3; border-radius: 5px; padding: 56px; }
+      .contact p { max-width: 580px; margin-top: 20px; }
+      .contact .note { font-size: 14px; color: #555; padding-top: 20px; border-top: 1px solid #d7d7d7; }
+      footer { font-size: 14px; color: #555; padding-block: 32px; }
+      footer p + p { font-size: 12px; margin-top: 12px; }
+      @media (max-width: 800px) {
+        .header { min-height: 72px; }
+        .header-items { display: none; }
+        .mobile-nav { display: block; }
+        .hero { padding-top: 22px; padding-bottom: 56px; }
+        .section { padding-block: 56px; }
+        .steps { grid-template-columns: 1fr; gap: 36px; }
+        .sketch { height: 200px; }
+        .mini-browser { max-width: 240px; margin-inline: auto; }
+        .personal, .faq { grid-template-columns: 1fr; gap: 36px; }
+        .composition-sketch { min-height: 460px; }
+        .personal .intro { margin-bottom: 24px; }
+        .process li { grid-template-columns: 28px 1fr; gap: 12px 20px; }
+        .process p { grid-column: 2; }
+        .contact { padding: 32px 24px; }
+      }
+      @media (max-width: 380px) {
+        .actions { flex-direction: column; }
+        .static-canvas { width: 210px; }
+        .composition-sketch { min-height: 420px; }
+      }
+    </style>
+    <script src="/estudos/perspectiva/perspectiva.js" defer></script>
   </head>
   <body>
-    <main>
-      <h1>Namarca</h1>
-      <p>Ativação digital antes, durante e depois do evento, com foco no pré-evento.</p>
-      <p>Para participar, abra o link da campanha enviado pelo organizador. Se ainda não recebeu, peça o endereço ao responsável pelo evento.</p>
+    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+    <header class="header wrap">
+      <a class="brand" href="#hero-title">Namarca</a>
+      <nav class="header-items" aria-label="Principal">
+        <a href="#como-funciona">Como funciona</a><a href="#personalizacao">Personalização</a><a href="#duvidas">Dúvidas</a><a class="header-cta" href="#contato">Conversar sobre minha campanha</a>
+      </nav>
+      <details class="mobile-nav"><summary>Menu</summary><nav aria-label="Principal móvel"><a href="#como-funciona">Como funciona</a><a href="#personalizacao">Personalização</a><a href="#duvidas">Dúvidas</a></nav></details>
+    </header>
+    <main id="conteudo">
+      <section class="hero" aria-labelledby="hero-title">
+        <p class="eyebrow">Campanhas de marketing participativas</p>
+        <h1 id="hero-title">Sua campanha, com o rosto de quem participa.</h1>
+        <div class="scene" data-perspective tabindex="0" role="group" aria-label="Demonstração de três composições. Deslize na horizontal ou use as setas do teclado." data-active="0" data-settled="true">
+          <div class="photo-canvas"><div class="photo" role="img" aria-label="Espaço reservado para foto"></div></div>
+          <div class="track" aria-hidden="true"></div>
+        </div>
+        <p class="sr-only" role="status" aria-live="off">Composição 1 de 3</p>
+        <p class="description">Com o Namarca, as pessoas criam imagens personalizadas combinando suas próprias fotos com a identidade visual da sua campanha e figurinhas.</p>
+        <div class="actions"><a class="cta primary" href="#contato">Conversar sobre minha campanha</a><a class="cta" href="#como-funciona">Ver como funciona</a></div>
+        <p class="micro">Sem cadastro. Sem instalar aplicativo.</p>
+      </section>
+      <section class="section wrap" id="como-funciona" aria-labelledby="steps-title">
+        <h2 class="section-heading" id="steps-title">Do link à imagem, no próprio navegador.</h2>
+        <div class="steps">
+          <article class="step"><div class="sketch" aria-hidden="true"><div class="mini-browser"></div></div><h3>Acesse a campanha</h3><p>Você divulga o link. Cada pessoa abre e começa sua composição, sem criar uma conta.</p></article>
+          <article class="step"><div class="sketch compose" aria-hidden="true"><div class="mini-browser"></div><div class="mini-sticker"></div></div><h3>Personalize a imagem</h3><p>A pessoa escolhe uma arte, adiciona sua foto e combina as figurinhas disponíveis.</p></article>
+          <article class="step"><div class="sketch save" aria-hidden="true"><div class="mini-browser"></div></div><h3>Salve e escolha onde compartilhar</h3><p>A imagem é exportada no próprio dispositivo. Quem participa decide se e onde quer publicar.</p></article>
+        </div>
+      </section>
+      <section class="section wrap personal" id="personalizacao" aria-labelledby="personal-title">
+        <div class="composition-sketch" aria-hidden="true"><div class="static-canvas"><div class="static-photo"></div><div class="static-sticker"></div><div class="static-sticker"></div></div></div>
+        <div><h2 id="personal-title">A identidade é da campanha. O toque pessoal é de cada um.</h2><p class="intro">Fundos, espaço para a foto e figurinhas fazem parte da mesma composição. A campanha mantém sua identidade visual, enquanto cada pessoa cria sua versão.</p>
+          <ul class="layers"><li><h3>Fundos da campanha</h3><p>Artes que dão o contexto e o visual da composição.</p></li><li><h3>Foto de quem participa</h3><p>O rosto da pessoa integrado à imagem da campanha.</p></li><li><h3>Figurinhas para combinar</h3><p>Elementos que cada participante pode escolher e posicionar.</p></li></ul>
+        </div>
+      </section>
+      <section class="section wrap" id="contratacao" aria-labelledby="contract-title">
+        <h2 class="section-heading" id="contract-title">Você conversa com a gente. A gente prepara a campanha.</h2>
+        <ol class="process"><li><h3>Conversamos sobre a ideia</h3><p>Conte o que você quer comunicar. Alinhamos os materiais, o período de acesso e as condições da contratação.</p></li><li><h3>Preparamos a experiência</h3><p>Organizamos as artes e figurinhas combinadas para que as pessoas possam criar suas imagens.</p></li><li><h3>Você divulga o link</h3><p>Com a campanha disponível, você recebe o endereço para convidar as pessoas a participar.</p></li></ol>
+      </section>
+      <section class="section wrap faq" id="duvidas" aria-labelledby="faq-title">
+        <h2 id="faq-title">Antes de começar</h2>
+        <div><details><summary>É preciso criar conta ou instalar aplicativo?</summary><p>Não. Quem participa acessa o link e cria a imagem no navegador.</p></details><details><summary>O que acontece com a foto de quem participa?</summary><p>A foto e a composição ficam no navegador, sem envio aos nossos servidores. A imagem é exportada no próprio dispositivo, sem postagem automática.</p></details><details><summary>Quais materiais preciso ter?</summary><p>As artes de fundo e figurinhas compõem o visual da campanha. Na conversa, alinhamos quais materiais você já tem e o que será usado.</p></details><details><summary>Como faço para contratar?</summary><p>A contratação começa em uma conversa pelo WhatsApp. Alinhamos a proposta e as condições para a sua campanha, sem compra automática pelo site.</p></details></div>
+      </section>
+      <section class="section wrap" id="contato" aria-labelledby="contact-title"><div class="contact"><h2 id="contact-title">Vamos conversar sobre a sua campanha de marketing?</h2><p>Conte sua ideia e o que você quer que as pessoas expressem nas imagens.</p><p class="note">Canal WhatsApp em configuração neste protótipo.</p></div></section>
     </main>
+    <footer><div class="wrap"><p>Namarca — imagens personalizadas para campanhas de marketing.</p><p>Skeleton com textos propostos para avaliação. Identidade visual e oferta final ainda em definição.</p></div></footer>
   </body>
 </html>

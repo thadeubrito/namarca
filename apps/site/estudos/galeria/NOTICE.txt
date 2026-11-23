@@ -1,0 +1,9 @@
+Manrope — Copyright 2018 The Manrope Project Authors.
+Licença: SIL Open Font License 1.1, integral em OFL.txt.
+Fonte oficial: https://github.com/googlefonts/manrope
+Distribuição Google Fonts (WOFF2 variável, subconjunto latino, sem modificações):
+https://fonts.gstatic.com/s/manrope/v23/xn7gYHE41ni1AdIRggexSg.woff2
+Licença obtida de https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/OFL.txt
+Um único arquivo local (24.532 bytes) atende aos pesos 400/500/700/800.
+Nenhum serviço externo é consultado pelo navegador. Materiais geométricos e
+placeholder são demonstrativos próprios, sem fotografias ou campanha real.

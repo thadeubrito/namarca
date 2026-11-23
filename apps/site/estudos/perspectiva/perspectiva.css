@@ -1,0 +1,35 @@
+* { box-sizing: border-box; }
+:root { color: #363636; background: #f5f5f5; font-family: 'Helvetica Neue', Helvetica, sans-serif; }
+body { margin: 0; }
+a { color: inherit; text-underline-offset: 4px; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 26px 6vw; font-size: 12px; }
+header span { color: #686868; }
+main { padding-top: 30px; }
+h1 { margin: 0 24px; font-size: clamp(24px, 3vw, 38px); line-height: 1.12; font-weight: 400; letter-spacing: -.045em; text-align: center; }
+.instruction { text-align: center; font-size: 13px; color: #666; margin: 18px 20px 8px; }
+.scene { --photo-w: min(61vw, 280px); --photo-h: calc(var(--photo-w) * 16 / 9); position: relative; width: 100%; height: calc(var(--photo-h) + 112px); overflow: hidden; perspective: 1700px; perspective-origin: 50% calc(44px + var(--photo-h) / 2); touch-action: pan-y pinch-zoom; cursor: grab; outline-offset: -4px; }
+.scene {
+  --edge-fade: 10%;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--edge-fade), #000 calc(100% - var(--edge-fade)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--edge-fade), #000 calc(100% - var(--edge-fade)), transparent);
+}
+.scene[data-dragging] { cursor: grabbing; }
+.photo-canvas, .sticker-layer, .frame { position: absolute; width: var(--photo-w); height: var(--photo-h); top: 44px; left: calc(50% - var(--photo-w) / 2); }
+/* Keep the 3D track in its own stacking context, below the stationary photo.
+   Do not flatten the track: adjacent materials retain their perspective. */
+.photo-canvas { z-index: 1; pointer-events: none; }
+.photo { position: absolute; background: #d9d9d9; transition: left 220ms ease, top 220ms ease, width 220ms ease, height 220ms ease, border-radius 220ms ease; }
+.sticker-layer { pointer-events: none; z-index: 2000; }
+.sticker { position: absolute; background: #bcbcbc; border: 1px solid #c9c9c9; border-radius: 5px; box-shadow: 0 3px 6px #00000014; }
+.track { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform-style: preserve-3d; }
+.frame { border-radius: 2%; will-change: transform; }
+.controls { display: flex; justify-content: center; gap: clamp(12px, 3vw, 24px); align-items: center; }
+.autoplay { width: 76px; flex: 0 0 76px; font-size: 12px; }
+button { border: 1px solid #c8c8c8; color: #444; background: transparent; width: 44px; height: 44px; font-size: 20px; cursor: pointer; border-radius: 6px; }
+button:hover { background: #e9e9e9; }
+button:focus-visible, .scene:focus-visible, a:focus-visible { outline: 2px solid #444; outline-offset: 4px; }
+.counter { font-size: 11px; letter-spacing: .12em; font-variant-numeric: tabular-nums; }
+footer { padding: 72px 24px 48px; text-align: center; font-size: 12px; color: #666; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (min-width: 800px) { main { padding-top: 24px; } .scene { --photo-w: 280px; --edge-fade: 12%; max-width: 1060px; margin-inline: auto; } }
+@media (prefers-reduced-motion: reduce) { .frame { will-change: auto; } .photo { transition: none; } }

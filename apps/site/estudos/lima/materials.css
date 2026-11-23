@@ -1,0 +1,35 @@
+/* Café pilot in slot zero; other materials remain unapproved transition placeholders. */
+/* Exact inner window: center (537.564825,1045.821871), r=427.373168 on 1080×1920.
+   Outer green radius 435.896280, border 8.523112. Photo overlays the opaque art. */
+.lima .hero .scene{--perspective-photo-0-left:10.20293122886133%;--perspective-photo-0-top:32.2108699736941%;--perspective-photo-0-width:79.14317925591883%;--perspective-photo-0-height:44.51803833145434%;--perspective-photo-0-radius:50%}
+.lima .hero .frame.variant-0{background-image:url('/estudos/lima/materials/cafe-story-approved.webp');background-size:100% 100%;background-blend-mode:normal}
+.lima .hero .frame.variant-0::before,.lima .hero .frame.variant-0::after{content:none}
+.lima .hero .photo[data-shape='0'] img{object-position:50% 36%}
+.lima .hero .sticker[data-set='0']{background:transparent center/contain no-repeat;filter:none}
+.lima .hero .sticker[data-set='0']:nth-child(odd){background-image:url('/estudos/lima/materials/cafe-sticker-cup.webp');left:1%!important;top:64%!important;width:33%!important;height:21%!important;rotate:-9deg}
+.lima .hero .sticker[data-set='0']:nth-child(even){background-image:url('/estudos/lima/materials/cafe-sticker-croissant.webp');left:65%!important;top:72%!important;width:34%!important;height:15%!important;rotate:9deg}
+.lima .hero .sticker[data-set='0']::after{content:none!important}
+.lima .hero .frame{overflow:hidden;border-radius:12px;background-image:url('/estudos/lima/materials/halftone-paper.webp');background-size:auto 100%;background-position:center;background-repeat:no-repeat}
+.lima .hero .frame::before{content:'';position:absolute;inset:0;background:linear-gradient(168deg,transparent 57%,#151606 58%);opacity:.94}
+.lima .hero .frame::after{content:'EU FAÇO PARTE';position:absolute;left:7%;right:7%;bottom:3.5%;color:#e5f33c;font:700 calc(var(--photo-w)*.087)/1.1 Poppins,sans-serif;letter-spacing:-.045em;text-align:left}
+.lima .hero .frame.variant-1{background-color:#151606!important;background-blend-mode:luminosity;background-position:50% 0;background-size:auto 100%}
+.lima .hero .frame.variant-1::before{background:linear-gradient(10deg,#151606 0 33%,transparent 65%)}
+.lima .hero .frame.variant-1::after{content:'TÔ NESSA';bottom:5%;font-size:calc(var(--photo-w)*.125)}
+.lima .hero .frame.variant-2{background-color:#ff624b!important;background-blend-mode:multiply;background-position:50% 100%;background-size:auto 100%}
+.lima .hero .frame.variant-2::before{background:linear-gradient(174deg,#ff624b 0 29%,transparent 30%);opacity:1}
+.lima .hero .frame.variant-2::after{content:'JUNTO É MELHOR';top:6%;bottom:auto;color:#151606;font-size:calc(var(--photo-w)*.12);max-width:80%}
+.lima .hero .photo{overflow:hidden;background:#42451c}
+.lima .hero .photo img{width:100%;height:100%;object-fit:cover;object-position:50% 38%;display:block;pointer-events:none}
+.lima .hero .photo::after{content:none}
+.lima .hero .sticker{background:transparent url('/estudos/lima/materials/torn-tape.webp') center/100% 100% no-repeat;border:0;border-radius:0;box-shadow:none;filter:drop-shadow(0 2px 2px #15160625)}
+.lima .hero .sticker:nth-child(odd){width:32%!important;height:9%!important}
+.lima .hero .sticker[data-set='1']:nth-child(3){top:2%!important;left:61%!important}
+.lima .hero .sticker::after{content:'TÔ NESSA';color:#fffbea;font:700 calc(var(--photo-w)*.045)/1.05 Poppins,sans-serif;letter-spacing:-.025em;text-align:center;padding:12%}
+.lima .hero .sticker:nth-child(even){width:26%!important;height:14.6%!important;background-image:url('/estudos/lima/materials/coral-seal.webp')}
+.lima .hero .sticker:nth-child(even)::after{content:'EU FAÇO PARTE';color:#151606;font-size:calc(var(--photo-w)*.036);padding:20%}
+.lima .hero .sticker[data-set='1']:nth-child(odd)::after{content:'JUNTO É MELHOR'}
+.lima .hero .sticker[data-set='2']:first-child{height:10%!important;background-image:url('/estudos/lima/materials/angular-cuts.webp')}
+.lima .hero .sticker[data-set='2']:first-child::after{content:''}
+.lima .hero .demo-credit{font-size:11px;line-height:1.6;color:#42451c;max-width:580px;margin:16px auto 0;padding-inline:24px}
+.lima .hero .demo-credit a{text-underline-offset:3px}
+@media(max-width:350px){.lima .hero .sticker::after{font-size:calc(var(--photo-w)*.037)}}

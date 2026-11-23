@@ -1,0 +1,26 @@
+* { box-sizing: border-box; }
+:root { color: #303030; background: #f4f3f0; font-family: 'Helvetica Neue', Helvetica, sans-serif; }
+body { margin: 0; }
+a { color: inherit; text-underline-offset: 4px; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 26px 4vw; font-size: 12px; }
+header span { color: #686868; }
+main { padding-top: 34px; }
+h1 { margin: 0 24px; font-size: clamp(28px, 3.2vw, 44px); line-height: 1.08; font-weight: 400; letter-spacing: -.055em; text-align: center; }
+.instruction { text-align: center; font-size: 13px; color: #666; margin: 18px 20px 12px; }
+.scene { --photo-w: min(64vw, 340px); position: relative; width: 100%; height: calc(var(--photo-w) * 1.25 + 100px); overflow: hidden; touch-action: pan-y pinch-zoom; cursor: grab; outline-offset: -4px; }
+.scene[data-dragging] { cursor: grabbing; }
+.photo, .frame { position: absolute; width: var(--photo-w); height: calc(var(--photo-w) * 1.25); top: 40px; left: calc(50% - var(--photo-w) / 2); }
+.photo { background: #d5d4d1; }
+.track { position: absolute; inset: 0; pointer-events: none; }
+.frame { background: transparent; border: 9px solid #81817e; will-change: transform; }
+.frame.variant-1 { border: 4px double #666663; outline: 5px solid #aaa9a5; outline-offset: -9px; }
+.frame.variant-2 { border: 7px solid #92928e; border-top-width: 14px; border-bottom-width: 27px; border-radius: 18px 0 18px 0; }
+.controls { display: flex; justify-content: center; gap: 24px; align-items: center; margin-top: -8px; }
+button { border: 1px solid #c6c5c0; color: #424240; background: transparent; width: 44px; height: 44px; font-size: 20px; cursor: pointer; border-radius: 0; }
+button:hover { background: #e8e7e3; }
+button:focus-visible, .scene:focus-visible, a:focus-visible { outline: 2px solid #424240; outline-offset: 4px; }
+.counter { font-size: 11px; letter-spacing: .12em; font-variant-numeric: tabular-nums; }
+footer { padding: 48px 24px 30px; text-align: center; font-size: 11px; color: #686868; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (min-width: 800px) { main { padding-top: 18px; } .scene { --photo-w: min(30vw, 320px); max-width: 920px; margin-inline: auto; } }
+@media (prefers-reduced-motion: reduce) { .frame { will-change: auto; } }

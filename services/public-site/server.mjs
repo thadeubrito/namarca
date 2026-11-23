@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { createHash } from 'node:crypto';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +14,7 @@ const imageRoute = new RegExp(`^/events/(${slug})/(?:releases/[0-9a-f]{64}|artwo
 const slugRoute = new RegExp(`^/(${slug})$`);
 const reserved = new Set(['admin', 'api', 'login', 'seguranca', 'checkout', 'events', 'event-runtime', 'private']);
 const immutable = 'public, max-age=31536000, immutable';
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
 const security = {
   'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self'; font-src 'self'; worker-src 'self' blob:; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'none'",
   'X-Content-Type-Options': 'nosniff',
@@ -33,10 +34,19 @@ async function localFile(res, directory, relative) {
   if (!candidate.startsWith(base + sep)) return reply(res, 404, 'Não encontrado.');
   const file = await realpath(candidate);
   if (!file.startsWith(base + sep) || !(await stat(file)).isFile()) return reply(res, 404, 'Não encontrado.');
-  const type = types[extname(file)];
+  const type = ['estudos/NOTICE.txt', 'estudos/galeria/OFL.txt', 'estudos/galeria/NOTICE.txt', 'estudos/lima/OFL.txt', 'estudos/lima/NOTICE.txt'].includes(relative) && directory === resolve(root, 'apps/site')
+    ? 'text/plain; charset=utf-8' : types[extname(file)];
   if (!type) return reply(res, 404, 'Não encontrado.');
   const bytes = await readFile(file);
-  res.writeHead(200, { ...security, 'Content-Type': type, 'Cache-Control': relative.startsWith('chunks/') && /-[a-zA-Z0-9]{8,}\./.test(relative) ? immutable : 'no-store', 'Content-Length': bytes.length });
+  // Permit only the exact inline prototype shipped with the institutional HTML.
+  // Campaign/runtime responses retain their original, stricter script policy.
+  const headers = { ...security };
+  if (directory === resolve(root, 'apps/site') && relative === 'index.html') {
+    const hashes = [...bytes.toString('utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)]
+      .map(match => `'sha256-${createHash('sha256').update(match[1]).digest('base64')}'`);
+    if (hashes.length) headers['Content-Security-Policy'] = headers['Content-Security-Policy'].replace("script-src 'self'", `script-src 'self' ${hashes.join(' ')}`);
+  }
+  res.writeHead(200, { ...headers, 'Content-Type': type, 'Cache-Control': relative.startsWith('chunks/') && /-[a-zA-Z0-9]{8,}\./.test(relative) ? immutable : 'no-store', 'Content-Length': bytes.length });
   res.end(bytes);
 }
 
@@ -53,7 +63,19 @@ export function createPublicServer({ readObject, runtimeDir = resolve(root, 'app
       if (!raw.startsWith('/') || raw.startsWith('//')) return reply(res, 404, 'Não encontrado.');
       const path = decodeURIComponent(raw);
       if (path.includes('\\') || path.includes('\0') || path.split('/').some(part => part === '.' || part === '..' || part.startsWith('.'))) return reply(res, 404, 'Não encontrado.');
-      if (path === '/') return await localFile(res, siteDir, 'index.html');
+      // The approved institutional page has one source; the study URL remains available.
+      if (path === '/') return await localFile(res, siteDir, 'estudos/lima/index.html');
+      // Exact study assets only: do not expose the site directory or shadow campaign slugs.
+      if (path === '/estudos/') return await localFile(res, siteDir, 'estudos/index.html');
+      if (path === '/estudos/molduras/') return await localFile(res, siteDir, 'estudos/molduras/index.html');
+      if (path === '/estudos/perspectiva/') return await localFile(res, siteDir, 'estudos/perspectiva/index.html');
+      if (path === '/estudos/galeria/') return await localFile(res, siteDir, 'estudos/galeria/index.html');
+      if (path === '/estudos/lima/') return await localFile(res, siteDir, 'estudos/lima/index.html');
+      if (['/estudos/lima/materials/cafe-story-approved.webp', '/estudos/lima/materials/cafe-sticker-cup.webp', '/estudos/lima/materials/cafe-sticker-croissant.webp', '/estudos/lima/materials.css', '/estudos/lima/materials/torn-tape.webp', '/estudos/lima/materials/coral-seal.webp', '/estudos/lima/materials/angular-cuts.webp', '/estudos/lima/materials/halftone-paper.webp', '/estudos/lima/materials/michael-dam-portrait.webp', '/estudos/lima/lima.css', '/estudos/lima/lima.js', '/estudos/lima/poppins-300-latin.woff2', '/estudos/lima/poppins-400-latin.woff2', '/estudos/lima/poppins-500-latin.woff2', '/estudos/lima/poppins-600-latin.woff2', '/estudos/lima/poppins-700-latin.woff2', '/estudos/lima/OFL.txt', '/estudos/lima/NOTICE.txt'].includes(path)) return await localFile(res, siteDir, path.slice(1));
+      if (path === '/estudos/azul/') return await localFile(res, siteDir, 'estudos/azul/index.html');
+      if (path === '/estudos/azul/azul.css') return await localFile(res, siteDir, 'estudos/azul/azul.css');
+      if (['/estudos/galeria/galeria.css', '/estudos/galeria/manrope-latin.woff2', '/estudos/galeria/OFL.txt', '/estudos/galeria/NOTICE.txt'].includes(path)) return await localFile(res, siteDir, path.slice(1));
+      if (['/estudos/estudos.css', '/estudos/estudos.js', '/estudos/NOTICE.txt', '/estudos/molduras/molduras.css', '/estudos/molduras/molduras.js', '/estudos/perspectiva/perspectiva.css', '/estudos/perspectiva/perspectiva.js'].includes(path)) return await localFile(res, siteDir, path.slice(1));
       if (path.startsWith('/event-runtime/')) return await localFile(res, runtimeDir, path.slice('/event-runtime/'.length));
       const manifest = manifestRoute.exec(path);
       const version = versionRoute.exec(path);

@@ -1,6 +1,8 @@
 # Design público — Namarca
 
-**Status: direção visual ainda não definida.** Este arquivo reserva o escopo e preserva contratos existentes; não é um design público aprovado nem autorização para redesenhar/publicar.
+- Assinatura visual da marca: **namarca**, inteiramente em minúsculas. Aplicar ao logotipo no cabeçalho e rodapé do institucional; não implica substituir automaticamente todas as menções editoriais ou redesenhar outras aplicações.
+
+**Status: direção visual e organização do institucional aprovadas pelo fundador na versão `/estudos/lima/`**, com lima + quase preto, Poppins, composição e entradas inspiradas em Mojo home-2 e hero interativo próprio. Primeira aplicação de materiais demonstrativos aprovada para evolução local no hero; liberação final de direitos para produção e configuração do WhatsApp continuam pendentes. A aprovação é do institucional; não aplicar automaticamente ao editor, campanhas, checkout ou autenticação, nem interpretar como autorização de deploy.
 
 ## Escopo e fronteiras
 
@@ -9,12 +11,12 @@
 - Login/TOTP e checkout permanecem com tratamento existente registrado em `admin.md` até decisão explícita de associação visual. Não redesenhá-los incidentalmente ao trabalhar no institucional ou na campanha.
 - [revolut.design.md](revolut.design.md) é referência administrativa. Não importar automaticamente sua paleta, tipografia, componentes ou composição para a parte pública.
 
-## Até a direção ser definida
+## Fronteiras da direção aprovada
 
 - Manter aparência e comportamento existentes nas correções pontuais. Um novo layout/identidade deve ter escopo e direção confirmados com o fundador, não ser apresentado como regra já aprovada.
 - Não criar nova paleta pública por inferência a partir do administrativo. Reutilizar implementação compartilhada onde fizer sentido funcional, sem acoplar as duas diretrizes visuais.
 - Preservar acessibilidade, responsividade, foco, contraste e reduced-motion; não cortar conteúdo para caber numa tela.
-- Copy segue [product.md](../product.md): ativação digital, prioridade pré-evento, sem souvenir nem promessas de alcance.
+- Copy segue o posicionamento institucional aprovado em [product.md](../product.md), sem souvenir nem promessas de alcance.
 
 ## Contratos existentes a preservar
 
@@ -28,9 +30,68 @@ Estes são comportamentos/proteções atuais, não uma proposta estética futura
 - QR e transparência têm função, não são decoração. Não prejudicar leitura óptica, canvas, coordenadas, resolução ou exportação para seguir referência estética.
 - Publicação/suspensão/encerramento e privacidade são regras de produto, não decisões de estilo. Ver [memory.md](../memory.md).
 
+## Direção de comunicação do institucional
+
+- A landing explicita a categoria **campanhas de marketing**, com o enquadramento aprovado de boca a boca digital, sem restringir a mensagem a eventos ou corridas. Páginas específicas por subnicho são possibilidade futura, não escopo de implementação aprovado. Esse enquadramento não amplia funcionalidades do produto.
+- A conversão inicial depende de conversa humana via WhatsApp; não apresentar autosserviço ou compra autônoma como oferta vigente. Número e mensagem de abertura ainda a definir; a copy institucional vigente foi aprovada.
+- Ainda não há materiais próprios disponíveis para a landing. O fundador autorizou usar fotografias de fontes públicas gratuitas (verificar licença de cada ativo; acesso público não equivale a permissão) e IA para gerar molduras e figurinhas. Usar campanha demonstrativa, sem atribuir clientes, depoimentos ou resultados reais e sem sugerir endosso das pessoas fotografadas. Não enviar fotos/composições de participantes à IA ou a outros servidores.
+
+## Estudo de composição aprovado para evolução local
+
+- `/estudos/perspectiva/` preserva canvas externo Stories 9:16, carrossel em perspectiva rotateY e fade nas bordas. A evolução autorizada usa três fundos inteiros opacos, sem janela ou recorte; a foto placeholder acima deles tem shape animado com três formas, tamanhos e posições diferentes, sem acompanhar lateralmente o carrossel. Laterais mostram só fundos neutros, sem foto duplicada; o morph da foto permanece visível e independente do alinhamento dos fundos. Figurinhas neutras trocam por composição com pop-out/pop-in discreto e alternativa sem movimento.
+- O motor do estudo também serve o hero institucional Lima em `/` e `/estudos/lima/`: canvas 9:16, entrada de 1,12 s, autoplay a cada 5 s e retomada após 8 s de interação. O skeleton anterior não é mais servido na raiz; a direção e os materiais vigentes estão descritos abaixo. CTAs apontam para `#contato`; o canal WhatsApp permanece em configuração, com nota explícita e sem link/número fictício nem ação que simule uma conversa.
+- Por decisão explícita do fundador, a landing não tem botões, toolbar, setas, contador visível ou controle de pausa/retomada, inclusive oculto ou por gesto alternativo. Preservar autoplay, swipe horizontal, rolagem vertical, teclado e reduced-motion (autoplay desligado); o estudo mantém seus controles de comparação. Hover, foco por teclado, saída da viewport e aba oculta suspendem o autoplay; interação adia a retomada por 8 s.
+- Limite de acessibilidade conhecido: autoplay contínuo sem mecanismo de pausa persistente na landing não atende ao requisito de pausar/parar/ocultar movimento do WCAG 2.2.2. Suspensões temporárias e reduced-motion não substituem esse mecanismo; não adicionar controles contra a decisão explícita acima.
+- O comportamento do hero foi aprovado e incorporado à direção institucional vigente em `/estudos/lima/`. Isso não autoriza migrar o editor/campanhas ou publicar conteúdo real.
+
+## Prévia anterior — Galeria participativa
+
+Tentativa anterior, considerada sóbria demais pelo fundador; não é aprovação final. Preservada para comparação.
+
+- `/estudos/galeria/` apresenta somente o topo aprovado e a primeira seção de três passos, com nota de contato e retorno discreto ao skeleton. `/` e demais estudos mantêm sua aparência. Título acima, composição central e descrição/CTAs abaixo; não transformar em hero split.
+- Direção candidata: branco #FFFFFF, superfície #F4F4F1, texto #20211F, secundário #575A54, borda #DDDFD8 e pequenos acentos lima #D8F36A. Manrope 400/500/700/800 local em WOFF2 latino, licença OFL junto ao arquivo. Botões de pelo menos 48px com raio 10px; cards com raio 16px. Sem dependência de Google Fonts em runtime.
+- Cobalto/lima, coral/rosa e verde/areia são materiais demonstrativos do hero, não tokens globais nem cores do editor. Placeholder da foto permanece neutro, sem rosto, fotos novas, clientes ou resultados inventados. Ilustrações abstratas dos passos não são screenshots do produto.
+- Motor compartilhado em `perspectiva.js`, com custom properties `--perspective-material-0/1/2` escopadas à prévia e defaults cinza preservados. Movimento e a limitação de acessibilidade do autoplay acima continuam vigentes.
+- Identidade integral, ativos finais e associação com campanha/editor continuam pendentes de validação. WhatsApp permanece em configuração, sem número fictício.
+
+## Nova prévia isolada — Azul elétrico
+
+- `/estudos/azul/` mantém apenas topo e primeira seção, sem substituir `/`, `/estudos/galeria/`, editor ou checkout. Comparação com a tentativa anterior disponível no rodapé.
+- Branco, texto escuro #151D30, destaque azul #2154EF no trecho “com o rosto de quem participa”, CTA azul com leve gradação e luz, campo suave conectado do hero à seção de passos. Manrope variável local existente, título semibold 600; licença OFL em `/estudos/galeria/OFL.txt`. Sem CDN de fontes.
+- Hierarquia central preservada: título, carrossel, descrição e CTAs. Materiais coloridos, profundidade/sombras leves e ilustrações abstratas próprias em camadas; nenhuma arte, símbolo, código ou funil da referência Dropship é reutilizado.
+- Reutiliza `perspectiva.js` sem alterar o motor/defaults. Mantém 9:16, rotateY, morph, pop-out/pop-in, autoplay, swipe e ausência de controles; a limitação WCAG 2.2.2 acima permanece.
+- Foto placeholder e materiais provisórios explicitados no rodapé. WhatsApp ainda pendente; CTAs levam à nota de contato do protótipo, sem número inventado. Validação pelo fundador e gestos em dispositivo físico continuam pendentes; esta escolha não aprova aplicação integral da identidade.
+
+## Direção institucional aprovada — Lima
+
+- `/estudos/lima/` e a raiz compartilham header, cinco blocos aprovados (hero, boca a boca, funcionamento + entrega, FAQ e contato) e footer. Direção autorizada: referência visual Mojo home-2, lima #E5F33C, quase preto #151606, secundário #42451C, branco e #F7F7F7; Poppins local 300/400/500/600/700 (WOFF2 latino, OFL e procedência junto aos arquivos). Não reutiliza código, assets nem símbolos de assinatura do template.
+- Logos do cabeçalho e do rodapé Lima sem fundo colorido nem padding horizontal. Não propagar para outros escopos.
+- Estados interativos dos links de navegação, links de seção, skip e summaries Lima usam raio cápsula sem transformar links textuais/FAQ em CTAs preenchidos. A nota de WhatsApp em configuração é texto simples sem fundo ou padding de botão: informação não acionável não deve simular botão. Cards, cenas e figurinhas mantêm sua geometria própria.
+- Carregamento Poppins restrito ao institucional Lima: preloads locais antes do CSS para 700 (marca/H1), 300 (texto) e 500 (eyebrow/CTA/Menu); 600 antecipado apenas acima de 900px, onde a navegação é visível. Peso 400 não é antecipado. `font-display:block` usa o bloqueio curto nativo do navegador só nos glifos, sem ocultar a página/imagens nem aguardar fontes via JS. Em atrasos superiores ao período nativo (aproximadamente 3s no Chromium), fallback continua acessível e pode trocar depois: não há garantia de ausência de FOUT em qualquer rede. URLs absolutas idênticas em preload/CSS preservam reutilização na raiz e na prévia; sem fonte externa ou mudança em outros escopos.
+- Hero com copy literal aprovada: eyebrow “Boca a boca digital”; H1 “Sua campanha. As pessoas ajudam a divulgar.”; descrição “Com a própria foto, molduras e figurinhas, cada pessoa faz parte da sua campanha e leva essa participação às redes sociais.”; CTA “Conversar sobre minha campanha”; micro “Sem cadastro. Sem instalar aplicativo.”. Não reescrever esses textos nem inserir quebras rígidas no H1: quebra responsiva natural por CSS. Título acima → carrossel 9:16 central → descrição/CTAs abaixo permanece obrigatório. Motor `perspectiva.js` compartilhado, sem alteração; materiais são custom properties locais. Sem controles visíveis, preservando a limitação WCAG 2.2.2 já registrada.
+- Componentes públicos: botões e CTAs usam cantos totalmente arredondados, em cápsula (`border-radius: 999px`); links e CTAs não levam setas decorativas ao final do texto, inclusive em spans. Não usar o símbolo decorativo ↗ em nenhum trecho do institucional, inclusive notas e figurinhas demonstrativas. Preservar apenas indicadores funcionais de navegação/teclado. Aplicação vigente no institucional (`/` e `/estudos/lima/`, mesma fonte); não reestilizar estudos históricos nem propagar automaticamente para campanha/editor, checkout, login ou administrativo, que mantêm suas fronteiras de direção.
+- Organização vigente aprovada: (1) hero integral; (2) “Uma pessoa participa. Outras podem vir com ela.”; (3) “Como funciona e o que você recebe.”; (4) “Dúvidas frequentes.”; (5) “Vamos conversar sobre sua campanha.”. A seção de aplicações foi rejeitada e removida integralmente, sem substituição: boca a boca passa diretamente a funcionamento + entrega. Navegação desktop e móvel usa `#como-funciona`, `#duvidas` e `#contato`; boca a boca tem `#boca-a-boca`. Não manter seções antigas ou âncoras fantasmas de Personalização/Experiência/Contratação para satisfazer testes históricos.
+- Funcionamento reúne em um split o caminho link/composição/salvamento/postagem voluntária e a divisão de trabalho: namarca configura materiais, visual e período e entrega endereço; contratante divulga e convida; participante decide salvar/postar manualmente. FAQ concentra materiais disponíveis, período combinado, ausência de cadastro/app, privacidade local e contratação assistida. Contato funde a conversa comercial, sem etapas ou CTA falso. Removidos ingredientes, vantagens, showcase repetitivo, personalização isolada e contratação em três passos. Estrelas, sublinhados, cores, fontes e containers generosos permanecem; sem clientes, métricas ou resultados inventados.
+- Entradas locais em `lima.js`, uma vez por elemento: texto com fade escalonado, placas com deslocamento lateral curto, peças em stagger e estrelas com rotação. Implementação própria IntersectionObserver/WAAPI, sem scrolljacking ou loop decorativo; conteúdo visível sem JS e com reduced-motion, liberação imediata por foco/âncora. A coreografia adapta a referência, não importa seu JavaScript. Foto placeholder e WhatsApp em configuração são explícitos; sem formulário ou contato fictício.
+- `/` serve a direção Lima aprovada, com fonte única em `apps/site/estudos/lima/index.html`, HTTP 200 sem redirecionamento ou iframe. `/estudos/lima/` e os demais estudos permanecem acessíveis. `noindex, nofollow` e cache `no-store` continuam: promoção local não é lançamento SEO. Galeria e Azul são tentativas anteriores preservadas para comparação, não alternativas vigentes. A aprovação não autoriza aplicar a identidade no editor, campanhas, checkout ou autenticação; gestos em celular físico e materiais finais seguem pendentes.
+
+### Seção de boca a boca Lima
+
+- “Uma pessoa participa. Outras podem vir com ela.” ocupa o segundo bloco, imediatamente após o hero, preservando a seção aprovada que substituiu a antiga privacidade. A narrativa apresenta compartilhamento voluntário e novos convites como possibilidade, nunca resultado garantido.
+- Rede ilustrativa local com três camadas, linhas sem setas e composições distintas com retratos abstratos sintéticos; identificação demonstrativa explícita, sem fotos, pessoas reais, métricas ou endossos. Entradas únicas em stagger pelo sistema `data-reveal`, incluindo desenho das conexões; reduced-motion e ausência de JS mostram a composição estática completa. Não há CTA novo nem publicação automática. Privacidade fica no FAQ, com geração no navegador, salvamento no dispositivo e compartilhamento manual opcionais explícitos.
+- A organização vigente em cinco blocos, sem seção de aplicações, foi explicitamente autorizada; não amplia funcionalidades, libera novas gerações de arte nem autoriza publicação real.
+
+### Materiais demonstrativos do hero Lima
+
+- A aplicação “Eu faço parte” foi rejeitada após visualização: variações parecidas demais. A direção vigente exige **campanhas demonstrativas com identidades próprias**, cenários ilustrados ligados ao tema, janelas de foto integradas com shapes/tamanhos distintos e figurinhas cartoon com contorno branco largo, sombra e detalhe sutil de descolamento. Textura pode complementar, não uniformizar todos os exemplos. Não usar corrida nem festival; “Corrida Horizonte” foi apenas exemplo explicativo explicitamente proibido de reproduzir.
+- Temas aceitos para exploração: Clube do Café, Adote um Amigo, casamento, campanha de igreja, de comunidade e política. Nomes/briefs específicos dos quatro últimos ainda não aprovados; não inventar clientes/endossos reais. Campanhas políticas ou religiosas não devem usar a pessoa da foto de banco como se fosse apoiadora/fiel; preferir representação sem pessoa identificável nesses exemplos ou material especificamente autorizado.
+- Primeiro slot do hero implementa o piloto **Clube do Café para revisão**, com fundo aprovado 1080×1920 inteiro e opaco, foto sobreposta ao círculo interno exato (centro 537,564825 / 1045,821871; raio 427,373168 px) e duas figurinhas próprias xícara/croissant com alpha, borda branca e canto descolado. Não há nova geração: derivados locais das artes fornecidas (IA somente texto, modelo informado `cx/gpt-image-2.5`). Slots 1/2 são composições legadas reprovadas mantidas temporariamente como placeholders de transição, não campanhas aprovadas; nota explícita no hero. Não afirmar licença MIT, exclusividade ou direitos garantidos da IA: licença/proveniência jurídica do modelo não comprovada. Não enviar fotos para IA.
+- Foto estática de banco Michael Dam / Unsplash, fonte individual `https://unsplash.com/photos/mEZ3PoFGs_k`, licença Unsplash verificada em 2026-11-22, uso comercial/modificação permitidos. Crédito e nota explícita de demonstração fictícia sem vínculo/endosso junto ao hero. Licença autoral não comprova model release; reavaliar direitos de personalidade antes de publicidade em produção. Procedência, termos, derivados e limites em `apps/site/estudos/lima/NOTICE.txt`.
+- Apenas o hero recebeu foto/materiais; cenas das demais seções continuam placeholders. Motor compartilhado aceita custom properties opcionais `--perspective-photo-{índice}-{left,top,width,height,radius}` por raiz, preservando defaults dos demais estudos. Café configura apenas geometria do primeiro slot; entradas, autoplay, swipe, morph e pop de três sets separados permanecem. Promoção local para `/` autorizada e implementada com a mesma fonte da prévia; nenhuma migração do editor ou deploy autorizado.
+
 ## A definir com o fundador
 
-Quando começar o trabalho público, substituir esta seção por decisões aprovadas:
+Consolidar nesta fonte as decisões aprovadas durante o trabalho público:
 
 - Objetivos e hierarquia do institucional versus experiência do participante.
 - Referências visuais públicas e ativos/fontes com direitos de uso.

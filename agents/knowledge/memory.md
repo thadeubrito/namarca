@@ -2,6 +2,12 @@
 
 Memória seletiva, não diário de entregas. Código e migrations são a fonte da implementação; esta base preserva decisões, exceções e pendências não dedutíveis com segurança. Atualizar por substituição e remover pendências resolvidas. Não acrescentar contagens de testes ou relatos por tarefa.
 
+## Preferência de colaboração do fundador
+
+- Ao precisar de esclarecimentos, conduzir em pingue-pongue: uma pergunta por mensagem, com progresso explícito (ex.: **Pergunta 1 de 4**). Informar o total previsto no início e reajustá-lo se o escopo mudar.
+- Acompanhar cada pergunta de sugestão/recomendação de resposta, sem tratá-la como decisão aprovada.
+- Permitir respostas livres, materiais e intervenções no processo, inclusive reduzir/pular perguntas ou mudar de direção; não exigir uma opção ou resposta antes de acolher essas intervenções. Aplicar também em sessões futuras.
+
 ## Estado e fronteiras
 
 - Monorepo npm workspaces: `apps/admin`, `apps/campaign`, `apps/site`, `packages/editor`; lock único. Administrativo sem prefixo `/admin`; campanha pública em host separado.
