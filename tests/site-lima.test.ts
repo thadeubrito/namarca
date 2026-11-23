@@ -22,8 +22,20 @@ test('landing lima integral na raiz e na prévia, fontes locais e allow-list fec
     assert.doesNotMatch(html, /↗/);
     assert.match(html, /Uma pessoa participa\. <span class="underline">Outras podem vir com ela\./);
     assert.doesNotMatch(html, /privacy-|A foto é pessoal/);
-    assert.equal((html.match(/class="network-card /g) || []).length, 7);
-    assert.equal((html.match(/data-reveal="line"/g) || []).length, 2);
+    assert.equal((html.match(/class="network-card"/g) || []).length, 7);
+    assert.equal((html.match(/<path data-from=/g) || []).length, 6);
+    assert.doesNotMatch(html, /<img[^>]+mouth-sharing-young/);
+    for (const name of ['artista','tecnologia','financeiro','esporte','musica','estudante','cafe']) {
+      const crop = await fetch(base + `/estudos/lima/materials/compartilhamento-${name}.webp`);
+      assert.equal(crop.status, 200);
+      assert.equal(crop.headers.get('content-type'), 'image/webp');
+    }
+    assert.equal((await fetch(base + '/estudos/lima/materials/compartilhamento-outro.webp')).status, 404);
+    assert.match(html, /Imagem ilustrativa gerada por IA; pessoas fictícias\./);
+    const art = await fetch(base + '/estudos/lima/materials/mouth-sharing-young.webp');
+    assert.equal(art.headers.get('content-type'), 'image/webp');
+    assert.equal(Buffer.from(await art.arrayBuffer()).toString('ascii', 8, 12), 'WEBP');
+    assert.equal((await fetch(base + '/estudos/lima/materials/original.png')).status, 404);
     assert.doesNotMatch(html, /marker-end|<image\b/);
     assert.match(html, /A foto e a composição não são enviadas aos nossos servidores\. A imagem é gerada no navegador e salva no dispositivo\./);
     assert.equal((html.match(/<section\b/g) || []).length, 5);
@@ -43,7 +55,7 @@ test('landing lima integral na raiz e na prévia, fontes locais e allow-list fec
     assert.match(await (await fetch(base + '/estudos/lima/OFL.txt')).text(), /SIL OPEN FONT LICENSE/);
     assert.equal((await fetch(base + '/estudos/lima/lima.js')).status, 200);
     assert.ok(html.includes('class="participant-path"') && html.includes('class="delivery"'));
-    assert.equal((html.match(/data-reveal=/g) || []).length, 18); // Quatro entradas removidas com aplicações.
+    assert.equal((html.match(/data-reveal=/g) || []).length, 9); // A rede usa um motor independente, sem reveal pai.
     const motion = await readFile('apps/site/estudos/lima/lima.js', 'utf8');
     assert.match(motion, /IntersectionObserver/);
     assert.match(motion, /prefers-reduced-motion/);
@@ -51,6 +63,10 @@ test('landing lima integral na raiz e na prévia, fontes locais e allow-list fec
     for (const file of ['index.html','secret.txt','hero.tmp','lima.tmp.js']) assert.equal((await fetch(base + '/estudos/lima/' + file)).status,404);
     const css = await readFile('apps/site/estudos/lima/lima.css', 'utf8');
     assert.doesNotMatch(css, /https?:/);
+    assert.match(css, /grid-template-columns:minmax\(0,\.42fr\) minmax\(0,\.58fr\)/);
+    assert.match(css, /border-radius:var\(--portrait-shape\)/);
+    assert.equal((css.match(/--portrait-shape:/g) || []).length, 7);
+    assert.doesNotMatch(css, /animation:.*infinite/);
     const faces = [...css.matchAll(/@font-face\{([^}]+)\}/g)];
     assert.equal(faces.length, 5);
     for (const [,face] of faces) assert.match(face, /font-display:block/);

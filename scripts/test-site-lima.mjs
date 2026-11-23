@@ -8,7 +8,7 @@ await mkdir(out,{recursive:true});
 const browser=await chromium.launch();
 const errors=[];
 try {
- for(const width of [1440,768,390,320]) for(const reducedMotion of ['no-preference','reduce']) {
+ for(const width of [1440,1024,768,390,320]) for(const reducedMotion of ['no-preference','reduce']) {
   const context=await browser.newContext({viewport:{width,height:width===1440?1200:width===768?1024:width===320?568:844},hasTouch:true,isMobile:width<800,reducedMotion});
   const page=await context.newPage();
   page.on('pageerror',e=>errors.push(e.message));
@@ -34,7 +34,7 @@ try {
   await page.evaluate(()=>scrollTo(0,0));
   await page.screenshot({path:`${out}/${width}-${reducedMotion}-hero.png`});
   const reveals=page.locator('[data-reveal]');
-  assert.equal(await reveals.count(),18); // Quatro entradas removidas com aplicações.
+  assert.equal(await reveals.count(),9); // A rede não participa do reveal genérico.
   assert.deepEqual(await page.locator('main>section').evaluateAll(nodes=>nodes.map(e=>e.getAttribute('aria-labelledby'))),['hero-title','mouth-title','workings-title','faq-title','contact-title']);
   assert.equal(await page.locator('.application,#aplicacoes,a[href="#aplicacoes"]').count(),0);
   assert.deepEqual(await page.locator('a[href^="#"]').evaluateAll(links=>links.filter(a=>!document.getElementById(a.hash.slice(1))).map(a=>a.hash)),[]);
@@ -53,10 +53,13 @@ try {
   await page.locator('.mouth').scrollIntoViewIfNeeded();
   await page.waitForTimeout(reducedMotion==='reduce'?0:2200);
   assert.equal(await page.locator('.network-card').count(),7);
-  assert.equal(await page.locator('.mouth a,.mouth button,.mouth img').count(),0);
+  assert.equal(await page.locator('.sharing-lines path').count(),6);
+  assert.equal(await page.locator('.mouth a,.mouth button').count(),0);
+  assert.equal(await page.locator('.mouth img').count(),7);
+  const art=await page.locator('.mouth-art img').evaluateAll(imgs=>imgs.map(e=>{const b=e.getBoundingClientRect();return {loaded:e.complete&&e.naturalWidth>=280&&e.naturalHeight>0,ratio:b.width/b.height,intrinsic:e.naturalWidth/e.naturalHeight,left:b.left,right:b.right,width:b.width};}));
+  for(const image of art){assert.ok(image.loaded);assert.ok(Math.abs(image.ratio-image.intrinsic)<.001);assert.ok(image.left>=0&&image.right<=width);assert.ok(image.width>=(width<600?90:width===1024?120:140));}
+  console.log(`${route} ${width} ${reducedMotion}: seven independent portraits`);
   assert.equal(await page.locator('.mouth [data-reveal]').evaluateAll(nodes=>nodes.every(e=>getComputedStyle(e).opacity==='1')),true);
-  assert.equal(await page.locator('.network-lines g').evaluateAll(nodes=>nodes.every(e=>getComputedStyle(e).strokeDashoffset==='0px'||getComputedStyle(e).strokeDashoffset==='0')),true);
-  assert.equal(await page.locator('.network-card').evaluateAll(nodes=>nodes.every(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;})),true);
   await page.locator('.mouth').screenshot({path:`${out}/${width}-${reducedMotion}-mouth.png`});
   for(const id of ['como-funciona','duvidas','contato']){await page.locator('#'+id).screenshot({path:`${out}/${width}-${reducedMotion}-${id}.png`});}
   await page.locator('.scene').scrollIntoViewIfNeeded();

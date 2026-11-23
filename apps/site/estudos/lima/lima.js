@@ -9,13 +9,79 @@
     right: { opacity: 0, translate: `${gutter}px 0` },
     up: { opacity: 0, translate: '0 40px' },
     fade: { opacity: 0 },
-    piece: { opacity: 0, translate: '0 55px', scale: '.92' },
     star: { opacity: 0, rotate: '-35deg', scale: '.75' },
-    line: { opacity: 0, strokeDashoffset: '1' },
   };
   document.querySelector('.mobile-nav')?.addEventListener('click', (event) => {
     if (event.target.closest('a')) event.currentTarget.open = false;
   });
+  // The network has one independent timeline, never a nested generic reveal.
+  const network = document.querySelector('.sharing-network');
+  if (network) {
+    const cards = [...network.querySelectorAll('.network-card')];
+    const paths = [...network.querySelectorAll('path')];
+    const svg = network.querySelector('svg');
+    let animations = [], played = false, queued = 0;
+    const complete = () => {
+      animations.forEach(a => a.cancel());
+      animations = [];
+      network.dataset.motion = 'complete';
+    };
+    const measure = () => {
+      queued = 0;
+      const base = network.getBoundingClientRect();
+      svg.setAttribute('viewBox', `0 0 ${base.width} ${base.height}`);
+      const boxes = cards.map(c => { const b = c.getBoundingClientRect(); return {x:b.left-base.left,y:b.top-base.top,w:b.width,h:b.height}; });
+      const mobile = innerWidth <= 600;
+      for (const path of paths) {
+        const from = Number(path.dataset.from), to = Number(path.dataset.to);
+        const a = boxes[from], b = boxes[to];
+        let d;
+        if (!mobile) {
+          const x=a.x+a.w, y=a.y+a.h*.5, endX=b.x, endY=b.y+b.h*.5, mid=(x+endX)/2;
+          d=`M ${x} ${y} C ${mid} ${y} ${mid} ${endY} ${endX} ${endY}`;
+        } else if (to===4 || to===6) {
+          // The second recipient in each column has its own outside route,
+          // so the connection never runs through the first photograph.
+          const left = to===4, x=left?a.x:a.x+a.w, y=a.y+a.h*.5;
+          const endX=left?b.x:b.x+b.w, endY=b.y+b.h*.5;
+          const rail=left?Math.min(x,endX)-7:Math.max(x,endX)+7;
+          d=`M ${x} ${y} C ${rail} ${y} ${rail} ${y+20} ${rail} ${y+32} L ${rail} ${endY-18} Q ${rail} ${endY} ${endX} ${endY}`;
+        } else {
+          const x=a.x+a.w*.5,y=a.y+a.h,endX=b.x+b.w*.5,endY=b.y,mid=(y+endY)/2;
+          d=`M ${x} ${y} C ${x} ${mid} ${endX} ${mid} ${endX} ${endY}`;
+        }
+        path.setAttribute('d',d);
+      }
+    };
+    const schedule = () => { if (!queued) queued=requestAnimationFrame(measure); };
+    measure();
+    addEventListener('resize', schedule);
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(schedule).observe(network);
+    document.fonts?.ready.then(schedule);
+    document.fonts?.addEventListener('loadingdone', schedule);
+    if (Element.prototype.animate && typeof IntersectionObserver !== 'undefined' && !reduced.matches) {
+      try {
+        const add = (element, frames, duration, delay) => {
+          const a=element.animate(frames,{duration,delay,easing:'cubic-bezier(.22,.61,.36,1)',fill:'both'});
+          a.pause(); animations.push(a);
+        };
+        cards.forEach((card,i) => add(card.firstElementChild,[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'translateY(0)'}],560,[0,850,1060,2100,2290,2480,2670][i]));
+        paths.forEach((path,i) => {
+          path.setAttribute('pathLength','1');
+          add(path,[{strokeDasharray:'1',strokeDashoffset:1},{strokeDasharray:'1',strokeDashoffset:0}],650,i<2?350+i*100:1400+(i-2)*120);
+        });
+        network.dataset.motion='pending';
+        const trigger = new IntersectionObserver(entries => {
+          if (!entries.some(e=>e.isIntersecting) || played) return;
+          played=true; trigger.disconnect(); network.dataset.motion='playing';
+          animations.forEach(a=>a.play());
+          Promise.all(animations.map(a=>a.finished)).then(complete).catch(()=>{});
+        },{threshold:0,rootMargin:'0px 0px -70px 0px'});
+        trigger.observe(cards[0]);
+        reduced.addEventListener('change', () => { if(reduced.matches){played=true;trigger.disconnect();complete();} });
+      } catch { complete(); }
+    }
+  }
   // Only WAAPI holds an initial state: without JS or WAAPI all content stays visible.
   if (!Element.prototype.animate || reduced.matches) return;
   const finish = (element) => {
@@ -38,7 +104,7 @@
   }, { threshold: .12 });
   for (const element of document.querySelectorAll('[data-reveal]')) {
     const start = frames[element.dataset.reveal] || frames.fade;
-    const animation = element.animate([start, { opacity: 1, translate: '0 0', rotate: '0deg', scale: '1', strokeDashoffset: '0' }], {
+    const animation = element.animate([start, { opacity: 1, translate: '0 0', rotate: '0deg', scale: '1' }], {
       duration: element.dataset.reveal === 'fade' ? 650 : 850,
       delay: Number(element.dataset.delay || 0), easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'both',
     });
