@@ -9,7 +9,8 @@
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const counter = scope.querySelector('.counter');
   const status = scope.querySelector('[role="status"]');
-  const wrap = n => ((n % 3) + 3) % 3;
+  const count = root.dataset.compositions === '4' ? 4 : 3;
+  const wrap = n => ((n % count) + count) % count;
   // Independent photo geometry in a 900 × 1600 Stories canvas.
   // Solid materials need no second clipping shape to align.
   const compositions = [
@@ -17,6 +18,8 @@
     { shape: [130, 170, 700, 1170, 350, 585], material: '#a2a2a2', stickers: [[30, 320, 200, 150, -12], [598, 1190, 245, 135, 11], [100, 1400, 155, 100, -5]] },
     { shape: [74, 420, 670, 930, 140, 140], material: '#747474', stickers: [[535, 190, 250, 165, 10], [28, 1230, 210, 160, -7]] }
   ];
+  // Opt-in fourth composition; historical studies remain three-slot rings.
+  if (count === 4) compositions.push({ shape: [440, 490, 400, 590, 70, 90], material: '#452080', stickers: [[54, 1240, 160, 106, -8], [570, 1390, 180, 120, 8]] });
   const photo = root.querySelector('.photo');
   const stickerLayer = document.createElement('div');
   stickerLayer.className = 'sticker-layer'; stickerLayer.setAttribute('aria-hidden', 'true');
@@ -61,13 +64,13 @@
     photo.dataset.shape = String(index);
     stickers(index, entering);
     root.dataset.active = String(index);
-    if (counter) counter.textContent = `0${index + 1} / 03`;
-    if (status) status.textContent = `Composição ${index + 1} de 3`;
+    if (counter) counter.textContent = `0${index + 1} / 0${count}`;
+    if (status) status.textContent = `Composição ${index + 1} de ${count}`;
   }
   function material(el, index) {
     el.style.backgroundColor = `var(--perspective-material-${index}, ${compositions[index].material})`;
   }
-  // Nine instances, only three materials. Recycle exclusively beyond the clipped
+  // Nine recycled instances, with root-scoped composition count. Recycle exclusively beyond the clipped
   // viewport: at the half-slot boundary the outgoing slot is >3.5 gaps away.
   const pool = Array.from({ length: 9 }, () => {
     const el = document.createElement('div');

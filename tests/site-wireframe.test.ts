@@ -33,7 +33,7 @@ test('landing estática é entregue na raiz sem consultar storage ou alterar rot
     assert.match(html, /<details class="mobile-nav"><summary>Menu<\/summary>/);
     assert.match(html, /Canal WhatsApp em configuração neste protótipo\./);
     assert.doesNotMatch(html, /href="tel:|api\.whatsapp|wa\.me|data-autoplay/);
-    assert.match(html, /Piloto fictício Clube do Café; demais exemplos em revisão/);
+    assert.match(html, /Campanhas fictícias Clube Sol, Órbita, Adote um Amigo e Ritmo de Rua/);
     assert.equal([...html.matchAll(/data-perspective/g)].length, 1);
     assert.doesNotMatch(html, /<button\b|role="button"|data-autoplay-label|pause-icon|\.autoplay/);
     assert.match(html, /src="\/estudos\/perspectiva\/perspectiva.js" defer/);
@@ -41,7 +41,7 @@ test('landing estática é entregue na raiz sem consultar storage ou alterar rot
     for (const asset of ['/estudos/lima/lima.css', '/estudos/lima/materials.css', '/estudos/lima/lima.js', '/estudos/perspectiva/perspectiva.js', '/estudos/lima/materials/michael-dam-portrait.webp']) {
       assert.equal((await fetch(origin + asset)).status, 200, asset);
     }
-    assert.match(html, /data-perspective tabindex="0" role="group"/);
+    assert.match(html, /data-perspective data-compositions="4" tabindex="0" role="group"/);
     assert.doesNotMatch(response.headers.get('content-security-policy')!, /sha256-/);
     assert.doesNotMatch(response.headers.get('content-security-policy')!, /script-src[^;]*unsafe-inline/);
     assert.doesNotMatch(html, /<form\b|<input\b|<iframe\b|<canvas\b|wa\.me|shimmer|fetch\(|setInterval/i);

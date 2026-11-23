@@ -1,0 +1,30 @@
+---
+import '../styles/global.css';
+import WarpDemo from '../components/warp-demo';
+import { CAMPAIGN_CARDS } from '../components/campaign-cards';
+---
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>namarca — campanhas no Warp Carousel</title>
+    <meta name="description" content="Experimento isolado com quatro artes do hero público em formato vertical." />
+  </head>
+  <body>
+    <main>
+      <header><span class="lab-tag">namarca / laboratório</span></header>
+      <h1>As campanhas.<br />Um novo movimento.</h1>
+      <p>Quatro artes prontas do hero público namarca.com, com o efeito Warp nas laterais. Proporção original preservada, sem números ou brilhos sobre as imagens.</p>
+      <WarpDemo client:load />
+      <p class="note">Arraste, use as setas do teclado ou os controles. O automático avança uma arte por vez. A landing local e o site público permanecem intactos.</p>
+      <details class="gallery">
+        <summary>Ver as quatro artes sem animação</summary>
+        <ul class="examples">{CAMPAIGN_CARDS.map(card => <li><img src={card.imageSrc} alt={card.imageAlt} width="480" height="853" loading="lazy" /><span>{card.title}</span></li>)}</ul>
+      </details>
+      <noscript><p>JavaScript está desativado. Abra a galeria acima para ver as artes completas.</p></noscript>
+      <footer><p class="note">Warp Carousel por Louis Studios — <a href="https://studios.lou15.com/?ref=21st-code">origem do componente</a>. Artes copiadas do hero público para este teste local, sem atribuição de clientes ou endossos. Direitos de uso em produção e licença do componente ainda pendentes de confirmação. Build estático com React no navegador; sem deploy.</p></footer>
+    </main>
+  </body>
+</html>

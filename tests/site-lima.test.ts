@@ -42,7 +42,7 @@ test('landing lima integral na raiz e na prévia, fontes locais e allow-list fec
     const sections = [...html.matchAll(/<section\b[^>]*aria-labelledby="([^"]+)"/g)].map(match => match[1]);
     assert.deepEqual(sections, ['hero-title','mouth-title','workings-title','faq-title','contact-title']);
     assert.doesNotMatch(html, /id="personalizacao"|id="contratacao"|advantages-grid|class="ingredients|class="showcase/);
-    assert.doesNotMatch(html, /aplicacoes|applications-title|class="application|Como isso se encaixa|Adote um Amigo|Comunidade do bairro/);
+    assert.doesNotMatch(html, /aplicacoes|applications-title|class="application|Como isso se encaixa|Comunidade do bairro/);
     for (const [,id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(html.includes(`id="${id}"`), `âncora existente: ${id}`);
     assert.ok(html.includes('Sua campanha. As pessoas ajudam a divulgar.') && html.includes('Com a própria foto, molduras e figurinhas, cada pessoa faz parte da sua campanha e leva essa participação às redes sociais.'));
     const root = await (await fetch(base + '/')).text();
