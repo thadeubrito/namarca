@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { csvCell, financialCsv, summarizePayments, type ReportPayment } from '../apps/admin/src/lib/financial-report';
+import { csvCell, financialCsv, summarizePayments, type ReportPayment } from '../src/lib/financial-report';
 const row = (status: ReportPayment['status'], amountCents = 4321): ReportPayment => ({ status, amountCents, externalId: 'test-reference', createdAt: new Date('2026-01-01T12:00:00Z'), updatedAt: new Date('2026-01-02T12:00:00Z'), paidAt: status === 'paid' || status === 'refunded' ? new Date('2026-01-01T13:00:00Z') : null });
 test('totais separam estados sem contar reembolso como pago ou tentativa como venda', () => {
   const totals = summarizePayments([row('paid'), row('paid', 1000), row('refunded'), row('pending'), row('expired'), row('cancelled')]);

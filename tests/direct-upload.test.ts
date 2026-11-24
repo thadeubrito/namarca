@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { assertUploadBinding, assertUploadBytes, parseUploadAuthorization, temporaryUploadKey } from '../apps/admin/src/lib/direct-upload';
+import { assertUploadBinding, assertUploadBytes, parseUploadAuthorization, temporaryUploadKey } from '../src/lib/direct-upload';
 
 const campaignId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -27,7 +27,7 @@ test('immutable authorization binds campaign, admin, kind, size and exact file h
   assert.throws(() => assertUploadBytes(Buffer.from('test!'), binding));
 });
 test('both upload operations enforce admin and origin, bounded authorization and validated promotion', async () => {
-  const root = 'apps/admin/src/app/api/campaigns/[id]/assets/uploads/';
+  const root = 'src/app/api/campaigns/[id]/assets/uploads/';
   const authorize = await readFile(`${root}route.ts`, 'utf8');
   const complete = await readFile(`${root}[uploadId]/complete/route.ts`, 'utf8');
   for (const source of [authorize, complete]) {

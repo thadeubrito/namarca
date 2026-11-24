@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { financialDateBounds, financialFilterQuery, financialFiltersSchema } from '../apps/admin/src/lib/financial-filters';
-import { financialCsv } from '../apps/admin/src/lib/financial-report';
+import { financialDateBounds, financialFilterQuery, financialFiltersSchema } from '../src/lib/financial-filters';
+import { financialCsv } from '../src/lib/financial-report';
 
 test('filtros financeiros aceitam vazios e rejeitam status, campanha, datas e intervalos inválidos', () => {
   assert.deepEqual(financialFiltersSchema.parse({ campaign: '', status: '', from: '', to: '' }), { campaign: undefined, status: undefined, from: undefined, to: undefined });
@@ -18,7 +18,7 @@ test('período financeiro inclui dias completos de criação em São Paulo', () 
   assert.equal(financialFilterQuery({ status: 'paid', from: '2026-11-01' }), 'status=paid&from=2026-11-01');
 });
 test('página e CSV global exigem admin antes de consultar e não acionam gateway', async () => {
-  for (const path of ['apps/admin/src/app/(workspace)/financeiro/page.tsx', 'apps/admin/src/app/api/financial-report/route.ts']) {
+  for (const path of ['src/app/admin/(workspace)/financeiro/page.tsx', 'src/app/api/financial-report/route.ts']) {
     const source = await readFile(path, 'utf8');
     assert.ok(source.includes('await requireAdmin('));
     assert.ok(source.indexOf('await requireAdmin(') < source.indexOf('await globalFinancialRows('));

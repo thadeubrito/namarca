@@ -3,8 +3,8 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 test('biblioteca vazia tem ação única contextual sem caixa genérica', async () => {
-  const studio = await readFile('apps/admin/src/components/admin-workspace/studio-workspace.tsx', 'utf8');
-  const css = await readFile('apps/admin/src/components/admin-workspace/studio.css', 'utf8');
+  const studio = await readFile('src/components/admin-workspace/studio-workspace.tsx', 'utf8');
+  const css = await readFile('src/components/admin-workspace/studio.css', 'utf8');
   assert.match(studio, /items.length > 0 && <div className="ws-studio-upload-tools"/);
   assert.match(studio, /!items.length \? <div className="ws-studio-library-empty"/);
   assert.match(studio, /Adicione a primeira arte/);

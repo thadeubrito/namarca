@@ -1,0 +1,23 @@
+import type { NextConfig } from 'next';
+
+const config: NextConfig = {
+  output: 'standalone',
+  outputFileTracingRoot: process.cwd(),
+  turbopack: { root: process.cwd() },
+  poweredByHeader: false,
+  allowedDevOrigins: ['localhost', '127.0.0.1', 'app', 'namarca-editor-test'],
+  async headers() {
+    return [{ source: '/:path*', headers: [
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+    ] }, { source: '/checkout/:path*', headers: [
+      { key: 'Cache-Control', value: 'private, no-store' },
+      { key: 'Referrer-Policy', value: 'no-referrer' },
+      { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+    ] }];
+  },
+};
+export default config;

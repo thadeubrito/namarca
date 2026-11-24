@@ -3,9 +3,9 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 test('clientes vazios seguem composição centralizada sem caixa genérica', async () => {
-  const motion = await readFile('apps/admin/src/components/admin-workspace/client-motion.tsx', 'utf8');
-  const directory = await readFile('apps/admin/src/components/admin-workspace/client-directory.tsx', 'utf8');
-  const css = await readFile('apps/admin/src/components/admin-workspace/workspace.css', 'utf8');
+  const motion = await readFile('src/components/admin-workspace/client-motion.tsx', 'utf8');
+  const directory = await readFile('src/components/admin-workspace/client-directory.tsx', 'utf8');
+  const css = await readFile('src/components/admin-workspace/workspace.css', 'utf8');
   assert.doesNotMatch(motion, /EmptyState/);
   assert.match(motion, /className="ws-client-empty"/);
   assert.match(motion, /<h3>\{title\}<\/h3>/);

@@ -42,7 +42,7 @@ Cobrança e publicação são jornadas independentes: pagamento não publica e p
 
 ## Direção futura e decisões abertas
 
-- Produção pretendida: administrativo Next na Vercel, PostgreSQL gerenciado, R2 e PixGo, com entrega pública estática independente. É direção, não autorização de provisionamento/deploy nem homologação financeira.
+- Produção pretendida: uma aplicação Next na Vercel para institucional, campanhas, administrativo e checkout, com PostgreSQL gerenciado, R2 para imagens e PixGo. Separação de hosts não implica deploys separados. É direção, não autorização de provisionamento/deploy nem homologação financeira.
 - Autosserviço de clientes pode ser uma evolução posterior; não faz parte da V1 atual.
 - Métricas de participantes e relatório de ativação ainda precisam de implementação/escopo. Financeiro não substitui resultados de participação.
 - Oferta, preço, condições comerciais, regras de cancelamento/reembolso, termos/privacidade e comunicação jurídica/fiscal do recebimento DePix precisam de decisão externa ao código.

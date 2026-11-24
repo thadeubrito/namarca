@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assetIdFromKey, campaignAssetKey, CLEANUP_BATCH_LIMIT, CLEANUP_MIN_AGE_MS, oldEnough, referencedAssetIds, removedAssetIds } from "../apps/admin/src/lib/asset-cleanup-policy";
+import { assetIdFromKey, campaignAssetKey, CLEANUP_BATCH_LIMIT, CLEANUP_MIN_AGE_MS, oldEnough, referencedAssetIds, removedAssetIds } from "../src/lib/asset-cleanup-policy";
 
 const campaign = "11111111-1111-4111-8111-111111111111";
 const other = "22222222-2222-4222-8222-222222222222";

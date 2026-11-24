@@ -1,0 +1,10 @@
+# Clube Sol — demonstração fictícia local
+
+Fixture estática isolada, sem cliente, campanha real, publicação, cobrança ou registro em banco/S3. URL: `/exemplo-clube-sol`. O editor compartilhado começa sem foto; a pessoa escolhe sua própria imagem, processada e exportada somente no navegador. Não contém a fotografia ilustrativa do hero.
+
+A arte vem de `public/landing/materials/clube-sol-story-approved.webp` (1080×1920), original editorial aprovado gerado por texto, modelo informado `cx/gpt-image-2.5`. Direitos de produção, exclusividade e procedência jurídica do modelo não comprovados; esta integração não autoriza deploy. O derivado PNG preserva o exterior opaco e remove apenas o polígono fotográfico aprovado em `photo-geometry.js`, com antialias.
+
+As cinco figurinhas — Eu vou, Cérebro criativo, Bora?, Sol e Boa ideia — são uma proposta editorial serigráfica em avaliação, alinhada às cores e aos grafismos da arte Clube Sol: amarelo, laranja, creme e quase preto, asteriscos e campos tipográficos fortes. Sem lilás, rostos, mãos, pés ou personagens kawaii. IDs preservados: 001, 002, 004, 006 e 007; 003/005/008 foram retirados somente deste namespace. Fonte única em `tests/support/clube-sol-seals.mjs`; SVGs em `sources/` e PNGs transparentes 640×640 reproduzidos com Sharp. Lettering usa contornos da Poppins Bold local (OFL, licença em `public/landing/OFL.txt`); contornos tipográficos preservados, contornos em `tests/support/clube-sol-type.json`. Ilustrações autorais locais, sem IA/API, downloads de ícones ou emojis de plataforma. Granulação determinística moderada incorporada ao raster; borda branca de aproximadamente 22px, suavizada após dilatação 10+10+2, com sombra mínima e margem transparente. Sem pixel art, gradientes ou cantos dobrados. Aprovação estética ainda depende do fundador; arte e materiais do hero intactos.
+
+
+O gateway expõe somente `campaign.json`, um PNG de arte e cinco PNGs de figurinhas explicitamente enumerados. Este aviso e SVGs locais não são endpoints públicos. Nomes desconhecidos deste namespace retornam 404 sem consulta S3.

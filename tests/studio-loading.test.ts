@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 test('estúdio compartilha skeleton entre bundle e configuração sem esconder erros', async () => {
   const [launcher, workspace, skeleton, css] = await Promise.all([
     'studio.tsx', 'studio-workspace.tsx', 'studio-skeleton.tsx', 'studio.css',
-  ].map(file => readFile(`apps/admin/src/components/admin-workspace/${file}`, 'utf8')));
+  ].map(file => readFile(`src/components/admin-workspace/${file}`, 'utf8')));
   assert.match(launcher, /loading: \(\) => <StudioLoading \/>/);
   assert.match(launcher, /<StudioSkeleton activeSection=\{useContext\(LoadingSection\)\}/);
   assert.match(workspace, /if \(!failure\) return <StudioSkeleton activeSection=\{activeSection\}/);

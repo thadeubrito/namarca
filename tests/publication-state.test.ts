@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultCampaignConfig } from '../apps/admin/src/lib/campaign-editor';
-import { publicationArtifacts } from '../apps/admin/src/lib/publication-artifacts';
-import { hasUnpublishedChanges } from '../apps/admin/src/lib/publication-state';
+import { defaultCampaignConfig } from '../src/lib/campaign-editor';
+import { publicationArtifacts } from '../src/lib/publication-artifacts';
+import { hasUnpublishedChanges } from '../src/lib/publication-state';
 import { readFile } from 'node:fs/promises';
 
 const base = { ...defaultCampaignConfig({ name: 'Evento', slug: 'evento', endsAt: new Date('2099-01-01') }), artworks: [{ id: '10000000-0000-4000-8000-000000000001', name: 'Arte', file: '10000000-0000-4000-8000-000000000001.png', width: 2, height: 2, reference: { x: 0, y: 0, width: 2, height: 2 } }] };
@@ -17,8 +17,8 @@ test('publicação compara conteúdo público, não caminhos de release nem orde
   assert.equal(hasUnpublishedChanges({ ...base, notes: 'somente interno' } as typeof base, published), false);
 });
 test('primeira publicação usa diálogo explícito e servidor verifica confirmação' , async () => {
-  const ui = await readFile('apps/admin/src/components/admin-workspace/publication.tsx', 'utf8');
-  const action = await readFile('apps/admin/src/app/(workspace)/campanhas/[id]/publication-actions.ts', 'utf8');
+  const ui = await readFile('src/components/admin-workspace/publication.tsx', 'utf8');
+  const action = await readFile('src/app/admin/(workspace)/campanhas/[id]/publication-actions.ts', 'utf8');
   assert.doesNotMatch(ui, /type="checkbox"|sem exigir pagamento/);
   assert.match(ui, /!published && <input type="hidden" name="confirm" value="yes"/);
   assert.match(ui, /setConfirmation\('publish'\)/);

@@ -2,30 +2,24 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile, access } from 'node:fs/promises';
 
-const json = async (file: string) => JSON.parse(await readFile(file, 'utf8'));
-
-test('workspaces declaram aplicações e exports do editor sem aliases para implementação', async () => {
-  const root = await json('package.json');
-  assert.deepEqual(root.workspaces, ['apps/*', 'packages/*']);
-  const admin = await json('apps/admin/package.json');
-  const campaign = await json('apps/campaign/package.json');
-  const editor = await json('packages/editor/package.json');
-  assert.equal(admin.dependencies['@namarca/editor'], '*');
-  assert.equal(campaign.dependencies['@namarca/editor'], '*');
-  assert.equal(editor.exports['./campaigns'], './src/campaigns/campaigns.ts');
-  assert.match(admin.scripts.prebuild, /build:preview/);
-  assert.equal((await json('apps/admin/tsconfig.json')).compilerOptions.paths['@namarca/editor/campaigns'], undefined);
-  await access('apps/admin/drizzle/meta/_journal.json');
+test('um único Next na raiz sem workspaces e com migrations versionadas', async () => {
+  const root = JSON.parse(await readFile('package.json', 'utf8'));
+  assert.equal(root.workspaces, undefined);
+  assert.equal(root.scripts.dev, 'next dev --webpack --hostname 0.0.0.0');
+  assert.equal(root.dependencies['@namarca/editor'], undefined);
+  assert.equal(root.scripts.predev, undefined);
+  assert.equal(root.scripts.prebuild, undefined);
+  assert.equal(root.scripts['build:public'], undefined);
+  assert.equal(root.scripts.build, 'next build');
+  await access('src/editor/PhotoEditor.tsx');
+  await access('drizzle/meta/_journal.json');
 });
-
-test('artefato público é independente do Next e a prévia mantém contrato publicado', async () => {
-  const build = await readFile('apps/campaign/build.mjs', 'utf8');
-  const copy = await readFile('apps/admin/scripts/copy-preview.mjs', 'utf8');
-  const host = await readFile('services/public-site/server.mjs', 'utf8');
-  assert.match(build, /apps\/campaign\/dist/);
-  assert.doesNotMatch(build, /apps\/admin/);
-  assert.match(copy, /campaign\/dist/);
-  assert.match(copy, /public\/campaign-runtime/);
-  assert.match(host, /runtimeDir = resolve\(root, 'apps\/campaign\/dist'\)/);
-  assert.match(host, /\/campaign-runtime\//);
+test('editor público e prévia são componentes Next sem build ou runtime paralelo', async () => {
+  for (const retired of ['src/runtime', 'scripts/build-public.mjs', 'public/campaign-runtime']) {
+    await assert.rejects(access(retired), { code: 'ENOENT' });
+  }
+  await access('src/app/[slug]/page.tsx');
+  await access('src/editor/PublicCampaignEditor.tsx');
+  await access('src/editor/CampaignPreview.tsx');
+  await access('src/proxy.ts');
 });

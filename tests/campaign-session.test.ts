@@ -3,10 +3,10 @@ import test from 'node:test';
 import { build } from 'esbuild';
 import { chromium } from '@playwright/test';
 
-// Isolated runtime session: real App/loadCampaign, local composition stand-in (no photo/upload).
+// Native React session: real PublicCampaignEditor/loadCampaign, local stand-in (no photo/upload).
 test('sessão preserva composição ativa, limita checks, suspende e só reativa por retry explícito', { skip: process.env.EVENT_BROWSER_TEST !== '1' }, async () => {
-  const bundle = await build({ entryPoints: ['apps/campaign/src/main.tsx'], bundle: true, write: false, loader: { '.css': 'empty' }, plugins: [{ name: 'local-editor', setup(builder) {
-    builder.onLoad({ filter: /\/editor\/PhotoEditor\.tsx$/ }, () => ({ contents: `import React from 'react'; export function PhotoEditor(){return <input aria-label="Composição local" defaultValue=""/>}`, loader: 'tsx' }));
+  const bundle = await build({ stdin: { contents: `import React from 'react'; import {createRoot} from 'react-dom/client'; import {PublicCampaignEditor} from './src/editor/PublicCampaignEditor'; createRoot(document.getElementById('root')).render(<PublicCampaignEditor slug="teste"/>);`, resolveDir: process.cwd(), loader: 'tsx' }, bundle: true, write: false, loader: { '.css': 'empty' }, plugins: [{ name: 'local-editor', setup(builder) {
+    builder.onLoad({ filter: /\/editor\/CampaignEditorClient\.tsx$/ }, () => ({ contents: `import React from 'react'; export function CampaignEditorClient(){return <input aria-label="Composição local" defaultValue=""/>}`, loader: 'tsx' }));
   } }] });
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   try {
@@ -59,9 +59,14 @@ test('sessão preserva composição ativa, limita checks, suspende e só reativa
     await page.getByRole('heading', { name: 'Não foi possível abrir a campanha' }).waitFor();
     assert.equal(await composition.count(), 0);
     offline = false;
+    event.endsAt = new Date(await page.evaluate(() => Date.now()) + 2_000).toISOString();
     await page.getByRole('button', { name: 'Tentar novamente' }).click();
     await composition.waitFor();
     assert.equal(await composition.inputValue(), '');
+    assert.equal(versions, 2);
+    await page.clock.runFor(3_000);
+    await page.getByRole('heading', { name: 'Ativação encerrada' }).waitFor();
+    assert.equal(await composition.count(), 0);
     assert.equal(versions, 2);
   } finally { await browser.close(); }
 });

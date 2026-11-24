@@ -4,15 +4,15 @@ Diretriz vigente para o administrativo e shell do estúdio. Leia também [revolu
 
 Login/TOTP e checkout preservam provisoriamente o tratamento existente descrito aqui; sua associação visual definitiva deve ser confirmada antes de redesenhar essas jornadas. Ser rota pública não define por si só a linguagem visual do checkout.
 
-Para site institucional, campanha e conteúdo do iframe, consultar [public.md](public.md). O dispositivo/controles externos da prévia seguem este documento; seu conteúdo reproduz a experiência da campanha. Componentes/tokens locais prevalecem sobre marketing em densidade, acessibilidade e operação.
+Para site institucional, campanha e conteúdo da prévia React, consultar [public.md](public.md). O dispositivo/controles externos da prévia seguem este documento; seu conteúdo reproduz a experiência da campanha. Componentes/tokens locais prevalecem sobre marketing em densidade, acessibilidade e operação.
 
 ## Fontes de implementação
 
-- Tokens/tema: `apps/admin/src/app/ui.css`; estilos globais legados não são a fonte para novas paletas.
-- Composições: `apps/admin/src/components/admin-workspace/{workspace,studio}.css` e primitives compartilhados.
+- Tokens/tema: `src/app/ui.css`; estilos globais legados não são a fonte para novas paletas.
+- Composições: `src/components/admin-workspace/{workspace,studio}.css` e primitives compartilhados.
 - Campos/portais: `admin-workspace/form-controls.tsx`, componentes locais shadcn/Radix e `components/ui/alert-dialog.tsx`.
-- Checkout: `apps/admin/src/app/checkout/[token]/checkout.css`, separado do shell administrativo.
-- Editor: `packages/editor`; prévia privada em `apps/campaign`. Não impor tema administrativo à campanha.
+- Checkout: `src/app/checkout/[token]/checkout.css`, separado do shell administrativo.
+- Editor: `src/editor`; prévia privada em `src/editor/CampaignPreview.tsx`. Não impor tema administrativo à campanha.
 
 Código é a fonte de medidas detalhadas. Este arquivo guarda intenção, exceções e invariantes; não duplicar aqui cada seletor CSS.
 
@@ -37,7 +37,7 @@ Código é a fonte de medidas detalhadas. Este arquivo guarda intenção, exceç
 ## Workbench e formulários
 
 - Campanha: voltar/nome/situação agrupados à esquerda, sem versão no header. Secundário somente Envio pendente ou Alterações não publicadas, quando aplicável. Não repetir dados de Detalhes num resumo permanente.
-- Abas laterais acima1100px, horizontais abaixo, acessíveis por setas/Home/End e com orientação ARIA correta. Uma instância persistente de cada painel/iframe. URL `aba` restaura seleção sem salvar/remontar.
+- Abas laterais acima1100px, horizontais abaixo, acessíveis por setas/Home/End e com orientação ARIA correta. Uma instância persistente de cada painel/editor React. URL `aba` restaura seleção sem salvar/remontar.
 - Pendência local: ponto discreto na aba com descrição acessível; estado junto a Salvar, sem banner. Sucesso breve só após confirmação real. Salvamento e descarte são por seção.
 - Recuperação inicial é uma decisão única para os rascunhos de todas as abas; descartar pede confirmação. Não perder arquivos/alterações de outra seção ao salvar ou descartar uma aba.
 - Criação rápida em modal: nome, endereço sugerido/editável e encerramento. Edição manual do endereço interrompe sugestões. Cliente/notas ficam para edição posterior. Cancelar/Escape sem salvar, fora não fecha, pending protege campos/fechamento; reabrir vazio.
@@ -69,8 +69,8 @@ Código é a fonte de medidas detalhadas. Este arquivo guarda intenção, exceç
 - Cards tonais: miniatura160px/contain/quadriculado, nome secundário editável no rodapé e ações44px. Arte selecionada tem borda cobalto única; figurinhas não inventam seleção. Ordenação dnd-kit por alça; overlay usa mesmo renderer/geometria do original, inert/aria-hidden, sem controles duplicados. Teclado Espaço/setas/Espaço, Escape cancela; reduced-motion remove inclinação/transições.
 - Modal da referência preserva proporções/coordenadas da arte e área quadrada; altura pelo conteúdo e viewport, sem mínimo100dvh herdado de ui-scope. Não resolver com corte de canvas ou conteúdo inacessível.
 - Envio sequencial ao salvar: feedback no rodapé com nome/situação atual, falhas e contagem/barra por arquivos processados, não bytes ou sucesso. Sem brilho, cartão de etapas ou progresso fictício na seleção local. Retry preserva sucessos.
-- Sem arte, prévia privada mantém editor real e quadriculado neutro só na composição; foto/exportação/figurinhas desabilitadas sem composição. Bridge envia apenas adminTheme enum para neutros; shell continua com cores da campanha. Não remontar ao adicionar/remover primeira/última arte.
-- A prévia preserva os contratos de carregamento do editor descritos em [public.md](public.md); não introduzir uma tela intermediária administrativa no iframe.
+- Sem arte, prévia privada mantém editor real e quadriculado neutro só na composição; foto/exportação/figurinhas desabilitadas sem composição. Props React fornecem apenas adminTheme enum para neutros; shell continua com cores da campanha. Não remontar ao adicionar/remover primeira/última arte.
+- A prévia preserva os contratos de carregamento do editor descritos em [public.md](public.md); não introduzir uma tela intermediária administrativa na prévia React.
 - Skeletons acompanham a seção ativa e geometria real, status único/aria-busy, decoração aria-hidden, sem controles focáveis e sem animação em reduced-motion. Não introduzir skeleton/atraso em abas já carregadas ou em saves.
 
 ## Validação

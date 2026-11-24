@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { CampaignEditorError, defaultCampaignConfig, editorSaveInput, resolveEditorSave } from "../apps/admin/src/lib/campaign-editor";
-import { removedAssetIds } from "../apps/admin/src/lib/asset-cleanup-policy";
+import { CampaignEditorError, defaultCampaignConfig, editorSaveInput, resolveEditorSave } from "../src/lib/campaign-editor";
+import { removedAssetIds } from "../src/lib/asset-cleanup-policy";
 
 const campaign = { name: "Campanha", slug: "campanha", endsAt: new Date("2030-01-01T12:00:00Z") };
 const artworkId = "01234567-89ab-4cde-8fab-0123456789ab";

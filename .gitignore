@@ -1,9 +1,9 @@
 node_modules/
 .next/
 out/
-apps/admin/public/campaign-runtime/
+public/campaigns/
 # Legacy generated preview; never version build output.
-apps/admin/public/event-runtime/
+public/event-runtime/
 .env*
 !.env.example
 *.tsbuildinfo
@@ -11,7 +11,3 @@ coverage/
 test-results/
 .tmp/
 .DS_Store
-
-apps/campaign/dist/
-apps/site-lab/dist/
-apps/site-lab/.astro/

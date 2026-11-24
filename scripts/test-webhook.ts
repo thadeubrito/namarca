@@ -30,7 +30,7 @@ async function main() {
   localOnly();
   stage = "module imports";
   const [{ db, pool }, { campaigns, payments, webhookReceipts }, { eq }, { createPixgoClient, isValidCpf }] = await Promise.all([
-    import("../apps/admin/src/db"), import("../apps/admin/src/db/schema"), import("drizzle-orm"), import("../apps/admin/src/lib/pixgo"),
+    import("../src/db"), import("../src/db/schema"), import("drizzle-orm"), import("../src/lib/pixgo"),
   ]);
   const campaignId = randomUUID();
   const paymentRowId = randomUUID();

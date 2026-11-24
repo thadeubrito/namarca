@@ -3,12 +3,12 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 test('UI salva escopo explícito e mantém pendências das outras seções', async () => {
-  const source = await readFile('apps/admin/src/components/admin-workspace/studio-workspace.tsx', 'utf8');
+  const source = await readFile('src/components/admin-workspace/studio-workspace.tsx', 'utf8');
   assert.match(source, /JSON.stringify\(\{ event, revision: snapshot.revision, scope \}\)/);
   assert.match(source, /const merged = \{ \.\.\.event, \[scope\]: value.event\[scope\] \}/);
   assert.match(source, /revision: value.revision, materials: remaining/);
   assert.match(source, /scope === 'theme' \? \[\] : event\[scope\].map/);
-  const sections = await readFile('apps/admin/src/components/admin-workspace/campaign-sections.tsx', 'utf8');
+  const sections = await readFile('src/components/admin-workspace/campaign-sections.tsx', 'utf8');
   assert.match(sections, /export function CampaignSections/);
   assert.match(sections, /label="Seções da campanha" initialId=\{active\} layout="workbench" activeId=\{active\}/);
   assert.match(sections, /<CampaignStudio[^>]*activeSection=\{active\}[^>]*onPendingChange=\{report\}/);
@@ -26,13 +26,13 @@ test('UI salva escopo explícito e mantém pendências das outras seções', asy
   assert.match(sections, /id: 'cobranca', label: 'Cobrança'/);
   assert.doesNotMatch(sections, /label: 'Estúdio'|Configuração do estúdio/);
   assert.doesNotMatch(source, /Salvar configuração/);
-  const tabs = await readFile('apps/admin/src/components/admin-workspace/primitives.tsx', 'utf8');
-  const css = await readFile('apps/admin/src/components/admin-workspace/studio.css', 'utf8');
+  const tabs = await readFile('src/components/admin-workspace/primitives.tsx', 'utf8');
+  const css = await readFile('src/components/admin-workspace/studio.css', 'utf8');
   assert.match(tabs, /ws-tab-pending[^>]*title="Alterações não salvas"/);
   assert.doesNotMatch(tabs, />Não salvo<\/span>/);
   assert.ok(tabs.includes('aria-describedby={item.pending'));
   assert.ok(source.includes('<SaveStatus dirty={sectionDirty(scope)}'));
-  const status = await readFile('apps/admin/src/components/admin-workspace/save-status.tsx', 'utf8');
+  const status = await readFile('src/components/admin-workspace/save-status.tsx', 'utf8');
   assert.ok(status.includes('3500'));
   assert.ok(status.includes('role="status"'));
   assert.ok(status.includes('shownToken.current === successToken'));

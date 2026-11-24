@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { checkCampaignSuspended, loadCampaign, MissingCampaignError, SuspendedCampaignError } from '../packages/editor/src/campaigns/campaigns';
+import { checkCampaignSuspended, loadCampaign, MissingCampaignError, SuspendedCampaignError } from '../src/lib/campaigns/campaigns';
 
 const event = { slug: 'teste', name: 'Teste', color: '#123456', demo: false, endsAt: '2099-12-31T23:59:59Z', artworks: [{ id: 'a', name: 'Arte', file: 'releases/abc/a.png', width: 10, height: 10, reference: { x: 0, y: 0, width: 10, height: 10 } }], stickers: [] };
 

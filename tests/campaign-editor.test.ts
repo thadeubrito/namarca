@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PNG } from "pngjs";
-import { assertEditable, assertMutationOrigin, CampaignEditorError, decodeAssetName, defaultCampaignConfig, deriveCampaignConfig, editorSaveInput, MAX_UPLOAD_BYTES, readLimitedBody, validateCampaignConfig, validatePng } from "../apps/admin/src/lib/campaign-editor";
+import { assertEditable, assertMutationOrigin, CampaignEditorError, decodeAssetName, defaultCampaignConfig, deriveCampaignConfig, editorSaveInput, MAX_UPLOAD_BYTES, readLimitedBody, validateCampaignConfig, validatePng } from "../src/lib/campaign-editor";
 
 const campaign = { name: "Campanha real", slug: "campanha-real", endsAt: new Date("2030-01-01T12:00:00Z") };
 const id = "01234567-89ab-4cde-8fab-0123456789ab";

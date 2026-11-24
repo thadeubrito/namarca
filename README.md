@@ -1,4 +1,4 @@
-# Namarca — monorepo
+# Namarca
 
 Administrativo/checkout, campanha pública local, site institucional e editor compartilhado. O público antigo em produção permanece separado. Desenvolvimento com Docker Compose e PixGo mock; nenhum serviço pago é necessário para operar localmente.
 
@@ -29,14 +29,9 @@ Os adaptadores leem o papel a cada execução e herdam o modelo da sessão. Edit
 
 ## Organização
 
-- `apps/admin`: Next.js, administrativo, checkout, APIs, Drizzle/migrations.
-- `apps/campaign`: runtime público e entrada estática da prévia privada.
-- `apps/site`: institucional estático mínimo.
-- `packages/editor`: `@namarca/editor`, core/UI/contrato compartilhados.
-- `services`: host público independente e simulador PixGo.
-- `scripts`, `tests`, `e2e`: operação e validação entre aplicações.
+Uma aplicação Next.js na raiz, sem npm workspaces, serve institucional, campanhas, administrativo e checkout no mesmo deploy. O editor é único e compartilhado com a prévia privada. PostgreSQL guarda a versão publicada; o bucket guarda imagens. A landing é uma página Next/React em `src/app/page.tsx`, com componentes em `src/components/site/` e assets próprios em `public/landing/`. As antigas pastas de estudos `site/` e `experiments/` foram removidas.
 
-npm workspaces, um `package-lock.json`; instalar na raiz em containers. `npm run build` compila admin e prepara prévia; `npm run build:campaign` gera `apps/campaign/dist`, consumido pelo host público. Contratos técnicos `/campaigns`, `/campaign-runtime` e `campaign.json` permanecem.
+O [mapa do código](agents/knowledge/code-map.md) concentra caminhos, roteamento por host, geração dos arquivos públicos e comandos de validação. Instalar dependências somente na raiz, em containers, com o `package-lock.json`.
 
 ## Começar localmente
 
@@ -52,6 +47,14 @@ docker compose up --build -d
 docker compose exec app npm run admin:create
 ```
 
-Admin em http://localhost:3000, público local em http://localhost:3001. Identificador inicial `admin@namarca.test`, configurável antes do provisionamento; sem senha padrão, TOTP obrigatório. PostgreSQL5432, S3/SeaweedFS9000 e mock4010 ligados a localhost. Não apagar volumes para resolver problemas de ambiente.
+Admin em http://admin.localhost:3000, público local em http://localhost:3000. Identificador inicial `admin@namarca.test`, configurável antes do provisionamento; sem senha padrão, TOTP obrigatório. PostgreSQL5432, S3/SeaweedFS9000 e mock4010 ligados a localhost. Não apagar volumes para resolver problemas de ambiente.
 
 Operação detalhada e validação: [code-map.md](agents/knowledge/code-map.md). Produção, PixGo real, migração do site antigo e provisionamento exigem pedido específico. Publicação local não equivale a deploy nem homologação comercial.
+
+### Campanha de exemplo da landing
+
+Crie a campanha pelo admin, prepare os materiais e publique explicitamente. Depois configure `EXAMPLE_CAMPAIGN_SLUG` com o slug dessa campanha e reinicie/reconstrua o app para exibir “Ver um exemplo”. Sem configuração o botão fica oculto. Não há campanha estática embutida no build; fixtures de teste não são publicações.
+
+O editor também é nativo do Next: página pública `src/app/[slug]/page.tsx` e prévia `CampaignPreview` usam o mesmo `PhotoEditor`, carregado somente no cliente. Não há runtime HTML, iframe ou build esbuild separado. Fotos e composições permanecem no navegador.
+
+Materiais usam um único objeto definitivo imutável no bucket para rascunho e publicação. Publicar grava referências, sem duplicar PNGs. A URL de um material pode ser acessada antes da publicação; o bucket não precisa estar aberto. A entrega não possui fallback para cópias públicas antigas; objetos antigos não foram apagados.

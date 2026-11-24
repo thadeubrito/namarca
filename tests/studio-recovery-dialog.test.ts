@@ -3,9 +3,9 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 test('recuperação usa dialog modal, resumo e confirmação não destrutiva por Escape', async () => {
-  const source = await readFile('apps/admin/src/components/admin-workspace/studio-recovery-dialog.tsx', 'utf8');
-  const workspace = await readFile('apps/admin/src/components/admin-workspace/studio-workspace.tsx', 'utf8');
-  const css = await readFile('apps/admin/src/components/admin-workspace/studio.css', 'utf8');
+  const source = await readFile('src/components/admin-workspace/studio-recovery-dialog.tsx', 'utf8');
+  const workspace = await readFile('src/components/admin-workspace/studio-workspace.tsx', 'utf8');
+  const css = await readFile('src/components/admin-workspace/studio.css', 'utf8');
   assert.match(source, /AlertDialog.Content/);
   assert.match(source, /AlertDialog.Title/);
   assert.match(source, /AlertDialog.Description/);

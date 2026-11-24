@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { contrastText, themeDefaults, campaignThemeStyle, parseCampaign, resolveSlug, type CampaignConfig } from '../packages/editor/src/campaigns/campaigns';
+import { contrastText, themeDefaults, campaignThemeStyle, parseCampaign, resolveSlug, type CampaignConfig } from '../src/lib/campaigns/campaigns';
 
 const event: CampaignConfig = { slug: 'evento-teste', name: 'Evento teste', color: '#123456', demo: false, endsAt: '2099-12-31T23:59:59Z', artworks: [{ id: 'arte', name: 'Arte', file: 'arte.png', width: 400, height: 600, reference: { x: 20, y: 20, width: 360, height: 560 } }], stickers: [] };
 
@@ -51,26 +51,34 @@ test('público rejeita manifesto vazio; rascunho da prévia pode ficar sem mater
   assert.throws(() => parseCampaign(event, 'outro-evento'));
 });
 
-test('duas entradas importam uma única implementação e CSS, sem depender de Next no runtime', async () => {
-  for (const entry of ['main', 'preview']) {
-    const source = await readFile(`apps/campaign/src/${entry}.tsx`, 'utf8');
-    assert.match(source, /@namarca\/editor\/photo-editor/);
-    assert.match(source, /@namarca\/editor\/styles\.css/);
-    assert.doesNotMatch(source, /from ['"]next\//);
+test('entradas Next compartilham editor client-only, CSS isolado e rota slug nativa', async () => {
+  for (const entry of ['PublicCampaignEditor', 'CampaignPreview']) {
+    const source = await readFile(`src/editor/${entry}.tsx`, 'utf8');
+    assert.match(source, /['"]use client['"]/);
+    assert.match(source, /\.\/isolated\.css/);
+    assert.match(source, /campaign-editor-scope/);
+    assert.doesNotMatch(source, /postMessage|addEventListener\(['"]message|createRoot|<iframe/);
   }
-  const previewSource = await readFile('apps/campaign/src/preview.tsx', 'utf8');
-  assert.doesNotMatch(previewSource, /fetch\(|\/api\/campaigns\/.*\/packages\//);
-  assert.match(previewSource, /!query\.has\('packageId'\)/);
-  const publicSource = await readFile('apps/campaign/src/main.tsx', 'utf8');
-  assert.doesNotMatch(publicSource, /postMessage|addEventListener\(['"]message/);
+  const client = await readFile('src/editor/CampaignEditorClient.tsx', 'utf8');
+  const preview = await readFile('src/editor/CampaignPreview.tsx', 'utf8');
+  for (const source of [client, preview]) {
+    assert.match(source, /dynamic\(/);
+    assert.match(source, /import\(['"]\.\/PhotoEditor['"]\)/);
+    assert.match(source, /ssr:\s*false/);
+  }
+  assert.doesNotMatch(preview, /fetch\(|\/packages\//);
+  const page = await readFile('src/app/[slug]/page.tsx', 'utf8');
+  assert.match(page, /PublicCampaignEditor/);
+  assert.match(page, /slug=\{slug\}/);
+  assert.doesNotMatch(page, /iframe|campaign-runtime|readFile/);
 });
 
 
 test('prévia sem arte mantém shell real e quadriculado apenas na composição', async () => {
-  const preview = await readFile('apps/campaign/src/preview.tsx', 'utf8');
-  const css = await readFile('apps/campaign/src/preview.css', 'utf8');
-  const editor = await readFile('packages/editor/src/editor/PhotoEditor.tsx', 'utf8');
-  const workspace = await readFile('packages/editor/src/editor/EditorWorkspace.tsx', 'utf8');
+  const preview = await readFile('src/editor/CampaignPreview.tsx', 'utf8');
+  const css = await readFile('src/editor/isolated.css', 'utf8');
+  const editor = await readFile('src/editor/PhotoEditor.tsx', 'utf8');
+  const workspace = await readFile('src/editor/EditorWorkspace.tsx', 'utf8');
   assert.match(preview, /<PhotoEditor event=/);
   assert.doesNotMatch(preview, /artworks.length \?|Adicione uma arte PNG para experimentar/);
   assert.match(editor, /if \(!event.artworks.length\)/);
@@ -79,6 +87,8 @@ test('prévia sem arte mantém shell real e quadriculado apenas na composição'
   assert.match(workspace, /!compositionReady && \(name === 'Foto' \|\| name === 'Salvar'\)/);
   assert.match(css, /repeating-conic-gradient/);
   assert.match(css, /data-admin-theme=dark/);
-  assert.doesNotMatch(css, /--theme-border|--theme-surface/);
+  assert.match(css, /\.campaign-editor-scope/);
+  assert.match(css, /@container/);
+  assert.doesNotMatch(css, /(?:^|\})\s*(?:html|body|:root)\s*\{/);
   assert.doesNotMatch(css, /\.editor-page\[data-admin-theme[^}]*background: transparent/);
 });

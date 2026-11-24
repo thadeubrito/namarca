@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatPixCountdown, pixRemainingSeconds } from '../apps/admin/src/lib/pix-countdown';
+import { formatPixCountdown, pixRemainingSeconds } from '../src/lib/pix-countdown';
 
 test('contagem usa expiração absoluta, arredonda segundos e não fica negativa', () => {
   const expiry = '2026-11-20T12:00:00Z';

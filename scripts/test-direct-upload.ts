@@ -59,10 +59,10 @@ async function main() {
   assert.ok((await pool.query('select count(*)::int n from drizzle.__drizzle_migrations')).rows[0].n > 0);
   await pool.query('select id from campaign_asset_uploads limit 0');
   stage = 'load real handlers';
-  const { auth } = await import('../apps/admin/src/lib/auth');
-  const domain = await import('../apps/admin/src/db'); closeDomain = () => domain.pool.end();
-  const authorize = (await import('../apps/admin/src/app/api/campaigns/[id]/assets/uploads/route')).POST;
-  const complete = (await import('../apps/admin/src/app/api/campaigns/[id]/assets/uploads/[uploadId]/complete/route')).POST;
+  const { auth } = await import('../src/lib/auth');
+  const domain = await import('../src/db'); closeDomain = () => domain.pool.end();
+  const authorize = (await import('../src/app/api/campaigns/[id]/assets/uploads/route')).POST;
+  const complete = (await import('../src/app/api/campaigns/[id]/assets/uploads/[uploadId]/complete/route')).POST;
   const id = randomUUID(), campaignId = randomUUID(), otherCampaign = randomUUID();
   const password = randomBytes(30).toString('base64url');
   await pool.query('insert into auth_user (id,name,email,email_verified,created_at,updated_at) values ($1,$2,$3,true,now(),now())', [id, 'Direct upload integration', email]);

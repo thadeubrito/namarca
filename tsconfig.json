@@ -1,20 +1,31 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
       "@/*": [
-        "./apps/admin/src/*"
+        "./src/*"
       ]
     }
   },
   "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "scripts/**/*.ts",
     "tests/**/*.ts",
     "e2e/**/*.ts",
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
     "playwright.config.ts"
   ],
   "exclude": [
     "node_modules",
-    "apps/*/dist"
+    "public/campaign-runtime"
   ]
 }

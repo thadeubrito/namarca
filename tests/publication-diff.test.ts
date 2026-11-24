@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { comparePublicationCampaigns } from '../apps/admin/src/lib/publication-diff';
-import { hasUnpublishedChanges } from '../apps/admin/src/lib/publication-state';
-import { themeDefaults, type CampaignConfig } from '@namarca/editor/campaigns';
+import { comparePublicationCampaigns } from '../src/lib/publication-diff';
+import { hasUnpublishedChanges } from '../src/lib/publication-state';
+import { themeDefaults, type CampaignConfig } from '@/lib/campaigns/campaigns';
 
 const art = (id: string) => ({ id, name: `Arte ${id}`, file: `${id}.png`, width: 100, height: 100, reference: { x: 0, y: 0, width: 50, height: 50 } });
 const base: CampaignConfig = { slug: 'evento', name: 'Evento', color: '#494fdf', demo: false, endsAt: '2099-01-01T00:00:00Z', artworks: [art('a'), art('b')], stickers: [{ id: 's', name: 'Figurinha', file: 's.png' }, { id: 't', name: 'Outra', file: 't.png' }] };

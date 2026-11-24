@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPaymentSchema, isValidCnpj, isValidPayerDocument, normalizePayerDocument } from '../apps/admin/src/lib/pixgo';
+import { createPaymentSchema, isValidCnpj, isValidPayerDocument, normalizePayerDocument } from '../src/lib/pixgo';
 
 test('documento do pagador aceita CPF e CNPJ numérico/alfanumérico com dígitos válidos', () => {
   for (const value of ['52998224725', '11222333000181', '12ABC34501DE35']) {

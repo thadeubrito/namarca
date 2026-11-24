@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 test('publicação separa ações de conteúdo e acesso, com confirmação e sem ativação implícita', () => {
-  const ui = readFileSync('apps/admin/src/components/admin-workspace/publication.tsx', 'utf8');
+  const ui = readFileSync('src/components/admin-workspace/publication.tsx', 'utf8');
   assert.match(ui, /published \? 'Publicar alterações' : 'Publicar campanha'/);
   assert.match(ui, /A campanha permanece suspensa ao publicar alterações/);
   assert.doesNotMatch(ui, /<Notice>Acesso público suspenso/);
@@ -15,7 +15,7 @@ test('publicação separa ações de conteúdo e acesso, com confirmação e sem
   assert.match(ui, /\{delivered && <form ref=\{accessForm\} hidden action=\{accessSubmit\}/);
   assert.match(ui, /disabled=\{working\}/);
   assert.match(ui, /Alterações não publicadas não serão incluídas/);
-  const sections = readFileSync('apps/admin/src/components/admin-workspace/campaign-sections.tsx', 'utf8');
+  const sections = readFileSync('src/components/admin-workspace/campaign-sections.tsx', 'utf8');
   assert.match(sections, /id: 'publicacao', label: 'Publicação'/);
   assert.doesNotMatch(sections, /Publicação · alterações|Publicação pendente/);
   assert.match(ui, /A campanha permanece suspensa/);
@@ -34,7 +34,7 @@ test('publicação separa ações de conteúdo e acesso, com confirmação e sem
   assert.ok(ui.indexOf('<PublicationDiff') < ui.indexOf('<PublicationVersions'), 'Comparison precedes historical maintenance');
   assert.doesNotMatch(ui, /ArrowRight|ws-publication-versions/);
   assert.doesNotMatch(ui, /Versão publicada: v/);
-  const page = readFileSync('apps/admin/src/app/(workspace)/campanhas/[id]/page.tsx', 'utf8');
+  const page = readFileSync('src/app/admin/(workspace)/campanhas/[id]/page.tsx', 'utf8');
   const heading = page.slice(page.indexOf('<header className="ws-campaign-heading"'), page.indexOf('</header>'));
   assert.match(heading, /Alterações não publicadas/);
   assert.match(heading, /Envio pendente/);

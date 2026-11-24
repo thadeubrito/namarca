@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { campaignSection, campaignSectionUrl } from '../apps/admin/src/lib/campaign-section';
+import { campaignSection, campaignSectionUrl } from '../src/lib/campaign-section';
 
 test('campaign sections restore available tabs from the URL', () => {
   for (const section of ['dados', 'artes', 'stickers', 'cores', 'cobranca', 'publicacao']) {

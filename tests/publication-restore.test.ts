@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { resolvePublishedRestore } from '../apps/admin/src/lib/publication-restore';
-import { defaultCampaignConfig } from '../apps/admin/src/lib/campaign-editor';
+import { resolvePublishedRestore } from '../src/lib/publication-restore';
+import { defaultCampaignConfig } from '../src/lib/campaign-editor';
 
 const id = '11111111-1111-4111-8111-111111111111';
 const campaign = { name: 'Private edit', slug: 'fixed', endsAt: new Date('2099-01-01'), updatedAt: new Date('2026-01-01'), preparationStatus: 'draft', publicationStatus: 'published' };
@@ -54,7 +54,7 @@ test('restore revalidates ownership, dimensions, reference, slug and editability
 });
 
 test('discard action requires admin, exact single form values, safe canonical integers and both revalidations', () => {
-  const source = readFileSync(new URL('../apps/admin/src/app/(workspace)/campanhas/[id]/publication-actions.ts', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/app/admin/(workspace)/campanhas/[id]/publication-actions.ts', import.meta.url), 'utf8');
   const action = source.slice(source.indexOf('export async function discardUnpublishedChanges'), source.indexOf('export type AccessState'));
   assert.match(action, /await requireAdmin\(\)/);
   assert.match(action, /form.getAll/);
@@ -62,6 +62,6 @@ test('discard action requires admin, exact single form values, safe canonical in
   assert.match(action, /Number.isSafeInteger/);
   assert.match(action, /toISOString\(\) !== updatedAt/);
   assert.match(action, /restorePublishedDraft\(id, Number\(revision\), updatedAt, Number\(version\)\)/);
-  assert.match(action, /revalidatePath\('\/'\)/);
+  assert.match(action, /revalidatePath\('\/admin'\)/);
   assert.match(action, /revalidatePath\(`\/campanhas\/\$\{id\}`\)/);
 });

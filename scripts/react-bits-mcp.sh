@@ -8,6 +8,6 @@ project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # Não usar -t: stdout é reservado ao protocolo MCP stdio.
 exec docker run --rm -i \
   --mount "type=bind,source=${project_root},target=/app" \
-  --workdir /app/apps/admin \
+  --workdir /app \
   node:24.11.1-bookworm-slim \
   npx --yes shadcn@latest mcp

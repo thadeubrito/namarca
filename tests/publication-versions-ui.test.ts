@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 test('ações de versões separam público e rascunho com confirmação e proteção local', () => {
-  const ui = readFileSync('apps/admin/src/components/admin-workspace/publication-versions.tsx', 'utf8');
+  const ui = readFileSync('src/components/admin-workspace/publication-versions.tsx', 'utf8');
   assert.match(ui, /<details className="ws-publication-history">/);
   assert.match(ui, /Versões publicadas/);
   assert.match(ui, /Não cria uma nova versão nem altera o rascunho/);
@@ -20,10 +20,10 @@ test('ações de versões separam público e rascunho com confirmação e prote�
   assert.match(ui, /origin\.current\?\.focus\(\)/);
   assert.match(ui, /state\.restored\) window\.location\.reload\(\)/);
   assert.doesNotMatch(ui, /window\.(confirm|alert|prompt)/);
-  const publication = readFileSync('apps/admin/src/components/admin-workspace/publication.tsx', 'utf8');
+  const publication = readFileSync('src/components/admin-workspace/publication.tsx', 'utf8');
   assert.match(publication, /<PublicationDiff key=\{`diff:/);
   assert.match(publication, /<PublicationVersions key=\{`versions:/);
-  const actions = readFileSync('apps/admin/src/app/(workspace)/campanhas/[id]/publication-actions.ts', 'utf8');
+  const actions = readFileSync('src/app/admin/(workspace)/campanhas/[id]/publication-actions.ts', 'utf8');
   const action = actions.slice(actions.indexOf('export async function useHistoricalVersion'), actions.indexOf('export type AccessState'));
   assert.match(action, /await requireAdmin\(\)/);
   assert.match(action, /form\.getAll\(key\)/);

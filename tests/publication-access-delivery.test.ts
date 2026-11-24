@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Readable } from 'node:stream';
-import { createPublicServer } from '../services/public-site/server.mjs';
-import { deliverPublicationAccess } from '../apps/admin/src/lib/publication-access-delivery';
-import { loadCampaign, MissingCampaignError, SuspendedCampaignError, type CampaignConfig } from '../packages/editor/src/campaigns/campaigns';
+import { createPublicServer } from './support/public-site-gateway.mjs';
+import { deliverPublicationAccess } from '../src/lib/publication-access-delivery';
+import { loadCampaign, MissingCampaignError, SuspendedCampaignError, type CampaignConfig } from '../src/lib/campaigns/campaigns';
 
 const id = '00000000-0000-4000-8000-000000000001';
 const file = `releases/${'a'.repeat(64)}/${id}.png`;

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assertIdenticalUpload, uploadAssetId } from "../apps/admin/src/lib/asset-upload";
-import { CampaignEditorError, UUID } from "../apps/admin/src/lib/campaign-editor";
+import { assertIdenticalUpload, uploadAssetId } from "../src/lib/asset-upload";
+import { CampaignEditorError, UUID } from "../src/lib/campaign-editor";
 
 test("upload uses stable client UUID and generates UUID only without header", () => {
   const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";

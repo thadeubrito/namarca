@@ -6,6 +6,8 @@ services:
     env_file: .env.local
     environment:
       NODE_ENV: development
+      BETTER_AUTH_URL: http://admin.localhost:3000
+      PUBLIC_SITE_URL: http://localhost:3000
       NEXT_TELEMETRY_DISABLED: '1'
       # Signed before sending to the browser; never rewrite a signed hostname.
       S3_UPLOAD_ENDPOINT: ${S3_UPLOAD_ENDPOINT:-http://localhost:9000}
@@ -15,7 +17,7 @@ services:
     volumes:
       - .:/app
       - node_modules:/app/node_modules
-      - next:/app/apps/admin/.next
+      - next:/app/.next
     command: sh -c 'npm ci --no-audit --no-fund && npm run dev -- --port 3000'
     depends_on:
       postgres: {condition: service_healthy}
@@ -27,25 +29,6 @@ services:
       timeout: 5s
       start_period: 120s
       retries: 12
-  public-site:
-    image: node:24.11.1-bookworm-slim
-    init: true
-    working_dir: /app
-    env_file: .env.local
-    environment:
-      PORT: '3001'
-    command: ['node', 'services/public-site/server.mjs']
-    ports: ['127.0.0.1:3001:3001']
-    read_only: true
-    cap_drop: [ALL]
-    security_opt: ['no-new-privileges:true']
-    volumes:
-      - ./services/public-site:/app/services/public-site:ro
-      - ./apps/campaign/dist:/app/apps/campaign/dist:ro
-      - ./apps/site:/app/apps/site:ro
-      - node_modules:/app/node_modules:ro
-    depends_on:
-      s3: {condition: service_healthy}
   postgres:
     image: postgres:17.6-bookworm
     env_file: .env.local

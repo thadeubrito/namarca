@@ -1,7 +1,0 @@
-/* Temporary browser-default presentation; do not inherit the editor's legacy theme. */
-html:has(.campaign-not-found),
-html:has(.campaign-not-found) body,
-.campaign-not-found,
-.campaign-not-found * {
-  all: revert;
-}

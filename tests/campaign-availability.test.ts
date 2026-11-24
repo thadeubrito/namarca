@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { campaignAvailability } from '../apps/admin/src/lib/campaign-availability';
+import { campaignAvailability } from '../src/lib/campaign-availability';
 
 test('disponibilidade distingue rascunho, ativa, suspensa e encerrada sem confundir versões', () => {
   const now = Date.parse('2026-11-20T12:00:00Z');

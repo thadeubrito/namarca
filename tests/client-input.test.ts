@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { clientInput, clientSearchPattern } from '../apps/admin/src/lib/client-input';
+import { clientInput, clientSearchPattern } from '../src/lib/client-input';
 
 test('cliente independente exige nome, normaliza campos e mantém contato opcional', () => {
   assert.deepEqual(clientInput.parse({ name: '  Cliente teste  ', contact: '  ' }), { name: 'Cliente teste', contact: '' });
