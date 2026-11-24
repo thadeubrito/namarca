@@ -33,6 +33,8 @@ Uma aplicação Next.js na raiz, sem npm workspaces, serve institucional, campan
 
 O [mapa do código](agents/knowledge/code-map.md) concentra caminhos, roteamento por host, geração dos arquivos públicos e comandos de validação. Instalar dependências somente na raiz, em containers, com o `package-lock.json`.
 
+Documentação do fluxo de materiais, configuração e limites: [uploads](docs/uploads.md).
+
 ## Começar localmente
 
 Requisitos: Docker com Compose. Não instalar dependências Node no host. Em ambiente **novo**, sem sobrescrever configuração/contas existentes:
@@ -53,7 +55,7 @@ Operação detalhada e validação: [code-map.md](agents/knowledge/code-map.md).
 
 ### Campanha de exemplo da landing
 
-Crie a campanha pelo admin, prepare os materiais e publique explicitamente. Depois configure `EXAMPLE_CAMPAIGN_SLUG` com o slug dessa campanha e reinicie/reconstrua o app para exibir “Ver um exemplo”. Sem configuração o botão fica oculto. Não há campanha estática embutida no build; fixtures de teste não são publicações.
+Crie a campanha pelo admin, prepare os materiais e publique explicitamente. O botão “Ver um exemplo” aponta por padrão para `/exemplo`; use esse slug na campanha. `EXAMPLE_CAMPAIGN_SLUG` permite substituir o destino; valor vazio oculta o botão. Não há campanha estática embutida no build; fixtures de teste não são publicações.
 
 O editor também é nativo do Next: página pública `src/app/[slug]/page.tsx` e prévia `CampaignPreview` usam o mesmo `PhotoEditor`, carregado somente no cliente. Não há runtime HTML, iframe ou build esbuild separado. Fotos e composições permanecem no navegador.
 

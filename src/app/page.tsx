@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  const exampleSlug = process.env.EXAMPLE_CAMPAIGN_SLUG;
+  const exampleSlug = process.env.EXAMPLE_CAMPAIGN_SLUG ?? 'exemplo';
   const exampleHref = exampleSlug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(exampleSlug) && exampleSlug.length >= 2 && exampleSlug.length <= 80 ? `/${exampleSlug}` : undefined;
   return (
     <>

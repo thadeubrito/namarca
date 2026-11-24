@@ -36,7 +36,8 @@ test('landing nativa preserva composição, contatos, rede e materiais locais', 
   assert.doesNotMatch(html, /protótipo|teste local|Outros estudos|fontes no NOTICE|href="\/estudos\//i);
   assert.doesNotMatch(html, /Campanhas fictícias Clube Sol|Michael Dam \/ Unsplash|Pessoa ilustrativa, sem vínculo ou endosso ao Namarca/);
   for (const link of html.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)) assert.doesNotMatch(link[1], /[←-⇿➔➜➝➞➟➠➡↗]/u);
-  assert.match(html, /Uma pessoa participa\. <span class="underline">Outras podem vir com ela\./);
+  assert.match(html, /Uma pessoa participa\. Outras podem vir com ela\./);
+  assert.doesNotMatch(html, /class="underline"/);
   assert.equal((html.match(/class="network-card"/g) || []).length, 7);
   assert.equal((html.match(/<path data-from=/g) || []).length, 6);
   assert.doesNotMatch(html, /<img[^>]+mouth-sharing-young|marker-end|<image\b/);
