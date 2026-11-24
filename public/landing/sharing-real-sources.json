@@ -1,51 +1,123 @@
 [
   {
     "name": "01",
-    "image": "https://images.unsplash.com/photo-1622556498246-755f44ca76f3?auto=format&fit=max&w=2000&q=90",
-    "source": "https://unsplash.com/photos/81fRHbVliQI",
-    "photographer": "Emmanuel Ikwuegbu",
-    "position": "centre"
+    "image": "https://images.unsplash.com/photo-1528123778681-01e39b42808e?auto=format&fit=max&w=2000&q=90",
+    "source": "https://unsplash.com/photos/iaHFmpXVltw",
+    "photographer": "Nel Ranoko",
+    "position": "centre",
+    "license": "https://unsplash.com/license",
+    "scene": "Homem jovem sentado à mesa, sorrindo enquanto olha o celular; janela e outra pessoa ao fundo."
   },
   {
     "name": "02",
-    "image": "https://images.unsplash.com/photo-1595986630530-969786b19b4d?auto=format&fit=max&w=2000&q=90",
-    "source": "https://unsplash.com/photos/R6dSBkz32B8",
-    "photographer": "Ghen Mar Cuaño",
-    "position": "centre"
+    "image": "https://images.unsplash.com/photo-1485712207830-8a665e701494?auto=format&fit=max&w=2000&q=90",
+    "source": "https://unsplash.com/photos/_XR5rkprHQU",
+    "photographer": "Daria Nepriakhina",
+    "position": "custom",
+    "license": "https://unsplash.com/license",
+    "scene": "Mulher vista de costas e perfil, cabelo preso e cachecol vermelho, usando celular numa plataforma junto aos trilhos.",
+    "crop": {
+      "x": 0.3,
+      "y": 0,
+      "width": 0.547,
+      "height": 1,
+      "unit": "fraction-of-source"
+    }
   },
   {
     "name": "03",
-    "image": "https://images.unsplash.com/photo-1786915863528-923d1950466b?auto=format&fit=max&w=2000&q=90",
-    "source": "https://unsplash.com/photos/dRJyuy8qamw",
-    "photographer": "Helena Lopes",
-    "position": "centre"
+    "image": "https://images.unsplash.com/photo-1510535043828-3d1edc68071e?auto=format&fit=max&w=2000&q=90",
+    "source": "https://unsplash.com/photos/bTfza0M0hCE",
+    "photographer": "Chad Madden",
+    "position": "custom",
+    "license": "https://unsplash.com/license",
+    "scene": "Pessoa de jaqueta escura e jeans sentada numa escada externa, usando celular branco; enquadramento por cima do ombro, sem rosto.",
+    "crop": {
+      "x": 0.286,
+      "y": 0,
+      "width": 0.714,
+      "height": 1,
+      "unit": "fraction-of-source"
+    }
   },
   {
     "name": "04",
-    "image": "https://images.unsplash.com/photo-1520333789090-1afc82db536a?auto=format&fit=max&w=2000&q=90",
-    "source": "https://unsplash.com/photos/FWVMhUa_wbY",
-    "photographer": "bruce mars",
-    "position": "centre"
+    "image": "https://images.unsplash.com/photo-1610070835787-e209e94b56e2?auto=format&fit=max&w=2000&q=90",
+    "source": "https://unsplash.com/photos/Raf-aXkNQEc",
+    "photographer": "Beth Macdonald",
+    "position": "custom",
+    "license": "https://unsplash.com/license",
+    "scene": "Três mulheres jovens sentadas no meio-fio, cada uma segurando um celular; pessoas passando ao fundo. Cena de rua sem olhar para a câmera.",
+    "crop": {
+      "x": 0.35,
+      "y": 0.045,
+      "width": 0.3,
+      "height": 0.45,
+      "unit": "fraction-of-source"
+    },
+    "output": {
+      "width": 560,
+      "height": 560
+    }
   },
   {
     "name": "05",
-    "image": "https://images.unsplash.com/photo-1653762379954-8943c787e78b?auto=format&fit=max&w=2000&q=90",
-    "source": "https://unsplash.com/photos/eL4xIEuHzzk",
-    "photographer": "Brooke Cagle",
-    "position": "centre"
+    "image": "https://images.unsplash.com/photo-1493401415972-d4001c9fa2aa?auto=format&fit=max&w=2000&q=90",
+    "source": "https://unsplash.com/photos/m7zKB91brGo",
+    "photographer": "freestocks",
+    "position": "custom",
+    "license": "https://unsplash.com/license",
+    "scene": "Mulher de jaqueta verde usando celular com capa vermelha junto a um corrimão externo; foco nas mãos, rosto fora do quadro.",
+    "crop": {
+      "x": 0.08,
+      "y": 0.07,
+      "width": 0.62,
+      "height": 0.93,
+      "unit": "fraction-of-source"
+    },
+    "output": {
+      "width": 560,
+      "height": 560
+    }
   },
   {
     "name": "06",
-    "image": "https://images.unsplash.com/photo-1543965860-82ed7d542cc4?auto=format&fit=max&w=2000&q=90",
-    "source": "https://unsplash.com/photos/Ue2-23uBwNw",
-    "photographer": "Štefan Štefančík",
-    "position": "centre"
+    "image": "https://images.unsplash.com/photo-1565035812153-a190783dbc09?auto=format&fit=max&w=2000&q=90",
+    "source": "https://unsplash.com/photos/0wyy5mAj1-o",
+    "photographer": "Artem Beliaikin",
+    "position": "custom",
+    "license": "https://unsplash.com/license",
+    "scene": "Mulher de casaco e cachecol tocando o celular numa área externa ensolarada; unhas turquesa e transeuntes desfocados.",
+    "crop": {
+      "x": 0.35,
+      "y": 0.28,
+      "width": 0.48,
+      "height": 0.72,
+      "unit": "fraction-of-source"
+    },
+    "output": {
+      "width": 560,
+      "height": 560
+    }
   },
   {
     "name": "07",
-    "image": "https://images.unsplash.com/photo-1506377711776-dbdc2f3c20d9?auto=format&fit=max&w=2000&q=90",
-    "source": "https://unsplash.com/photos/QofjUnxy9LY",
-    "photographer": "Becca Tapert",
-    "position": "centre"
+    "image": "https://images.unsplash.com/photo-1544365712-91cd4904cd07?auto=format&fit=max&w=2000&q=90",
+    "source": "https://unsplash.com/photos/8c6iJMh80BI",
+    "photographer": "John Tuesday",
+    "position": "custom",
+    "license": "https://unsplash.com/license",
+    "scene": "Pessoa de cabelo loiro e blusa listrada segurando e usando celular branco, perto de grades e pessoas desfocadas; enquadramento por cima do ombro.",
+    "crop": {
+      "x": 0.01,
+      "y": 0.06,
+      "width": 0.6,
+      "height": 0.9,
+      "unit": "fraction-of-source"
+    },
+    "output": {
+      "width": 560,
+      "height": 560
+    }
   }
 ]

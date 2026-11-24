@@ -9,10 +9,10 @@ export function Sharing() {
    <div className="network-card" data-person="0"><img src="/landing/materials/compartilhamento-real-01.webp" width="360" height="545" loading="lazy" alt="" /></div>
    <div className="network-card" data-person="1"><img src="/landing/materials/compartilhamento-real-02.webp" width="335" height="345" loading="lazy" alt="" /></div>
    <div className="network-card" data-person="2"><img src="/landing/materials/compartilhamento-real-03.webp" width="375" height="350" loading="lazy" alt="" /></div>
-   <div className="network-card" data-person="3"><img src="/landing/materials/compartilhamento-real-04.webp" width="280" height="220" loading="lazy" alt="" /></div>
-   <div className="network-card" data-person="4"><img src="/landing/materials/compartilhamento-real-05.webp" width="280" height="185" loading="lazy" alt="" /></div>
-   <div className="network-card" data-person="5"><img src="/landing/materials/compartilhamento-real-06.webp" width="280" height="190" loading="lazy" alt="" /></div>
-   <div className="network-card" data-person="6"><img src="/landing/materials/compartilhamento-real-07.webp" width="280" height="225" loading="lazy" alt="" /></div>
+   <div className="network-card" data-person="3"><img src="/landing/materials/compartilhamento-real-04.webp" width="280" height="280" loading="lazy" alt="" /></div>
+   <div className="network-card" data-person="4"><img src="/landing/materials/compartilhamento-real-05.webp" width="280" height="280" loading="lazy" alt="" /></div>
+   <div className="network-card" data-person="5"><img src="/landing/materials/compartilhamento-real-06.webp" width="280" height="280" loading="lazy" alt="" /></div>
+   <div className="network-card" data-person="6"><img src="/landing/materials/compartilhamento-real-07.webp" width="280" height="280" loading="lazy" alt="" /></div>
   </div></figure>
 </section>
   );

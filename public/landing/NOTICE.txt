@@ -28,28 +28,28 @@ Legacy printcraft board (rejected compositions; retained historical assets, no h
 Derivatives: torn-tape.webp, coral-seal.webp, angular-cuts.webp, halftone-paper.webp. Container preparation script: scripts/prepare-lima-materials.mjs (historical generator, removed). Paper removed only where edge-connected; internal print wear preserved. No skin or stock photograph was involved in alpha processing.
 AI provider/model licensing and source rights are not independently proven. These assets are NOT claimed MIT, rights-cleared, exclusive, or guaranteed for production. Retain this limitation in future reuse. Typography is real local Poppins/CSS, not generated lettering. The rejected legacy fictional campaign was “Eu faço parte”, with “Tô nessa” and “Junto é melhor”. Small textures support CSS 9:16 backgrounds; the board is not enlarged as a full poster.
 
-Current mouth-sharing local test — seven real stock photographs, not customers, participants or endorsements. Free photographs, not Unsplash+; individual pages and https://unsplash.com/license reviewed during selection. Unsplash License permits free commercial use and modification; it does not establish a verified model release or personality/publicity clearance. Production rights review remains pending. No AI generation, uploads or runtime external requests. Center crops at 2× the existing seven slot dimensions, WebP quality 88; masks, connections and motion unchanged. Source records preserved at public/landing/sharing-real-sources.json; the historical preparation generator was removed.
-materials/compartilhamento-real-01.webp — Emmanuel Ikwuegbu
-Source: https://unsplash.com/photos/81fRHbVliQI
-Download: https://images.unsplash.com/photo-1622556498246-755f44ca76f3?auto=format&fit=max&w=2000&q=90
-materials/compartilhamento-real-02.webp — Ghen Mar Cuaño
-Source: https://unsplash.com/photos/R6dSBkz32B8
-Download: https://images.unsplash.com/photo-1595986630530-969786b19b4d?auto=format&fit=max&w=2000&q=90
-materials/compartilhamento-real-03.webp — Helena Lopes
-Source: https://unsplash.com/photos/dRJyuy8qamw
-Download: https://images.unsplash.com/photo-1786915863528-923d1950466b?auto=format&fit=max&w=2000&q=90
-materials/compartilhamento-real-04.webp — bruce mars
-Source: https://unsplash.com/photos/FWVMhUa_wbY
-Download: https://images.unsplash.com/photo-1520333789090-1afc82db536a?auto=format&fit=max&w=2000&q=90
-materials/compartilhamento-real-05.webp — Brooke Cagle
-Source: https://unsplash.com/photos/eL4xIEuHzzk
-Download: https://images.unsplash.com/photo-1653762379954-8943c787e78b?auto=format&fit=max&w=2000&q=90
-materials/compartilhamento-real-06.webp — Štefan Štefančík
-Source: https://unsplash.com/photos/Ue2-23uBwNw
-Download: https://images.unsplash.com/photo-1543965860-82ed7d542cc4?auto=format&fit=max&w=2000&q=90
-materials/compartilhamento-real-07.webp — Becca Tapert
-Source: https://unsplash.com/photos/QofjUnxy9LY
-Download: https://images.unsplash.com/photo-1506377711776-dbdc2f3c20d9?auto=format&fit=max&w=2000&q=90
+Current mouth-sharing local test — seven real stock photographs, not customers, participants or endorsements. Free photographs, not Unsplash+; individual pages and https://unsplash.com/license reviewed during selection. Unsplash License permits free commercial use and modification; it does not establish a verified model release or personality/publicity clearance. Production rights review remains pending. No AI generation, uploads or runtime external requests. First photograph retains its approved center crop. Photographs 02–07 use individually adjusted source crops to preserve the phone/hand gesture inside each organic mask; normalized crop coordinates are recorded in sharing-real-sources.json. Delivery at 2×: photographs 01–03 retain their existing slot dimensions; photographs 04–07 are square 560×560 derivatives (280×280 HTML slots), with source crops adjusted for this ratio. WebP quality 88; masks, connections and motion unchanged. Source records preserved at public/landing/sharing-real-sources.json; the historical preparation generator was removed.
+materials/compartilhamento-real-01.webp — Nel Ranoko
+Source: https://unsplash.com/photos/iaHFmpXVltw
+Download: https://images.unsplash.com/photo-1528123778681-01e39b42808e?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-02.webp — Daria Nepriakhina
+Source: https://unsplash.com/photos/_XR5rkprHQU
+Download: https://images.unsplash.com/photo-1485712207830-8a665e701494?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-03.webp — Chad Madden
+Source: https://unsplash.com/photos/bTfza0M0hCE
+Download: https://images.unsplash.com/photo-1510535043828-3d1edc68071e?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-04.webp — Beth Macdonald
+Source: https://unsplash.com/photos/Raf-aXkNQEc
+Download: https://images.unsplash.com/photo-1610070835787-e209e94b56e2?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-05.webp — freestocks
+Source: https://unsplash.com/photos/m7zKB91brGo
+Download: https://images.unsplash.com/photo-1493401415972-d4001c9fa2aa?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-06.webp — Artem Beliaikin
+Source: https://unsplash.com/photos/0wyy5mAj1-o
+Download: https://images.unsplash.com/photo-1565035812153-a190783dbc09?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-07.webp — John Tuesday
+Source: https://unsplash.com/photos/8c6iJMh80BI
+Download: https://images.unsplash.com/photo-1544365712-91cd4904cd07?auto=format&fit=max&w=2000&q=90
 
 A Grande Final — fifth hero composition (explicitly approved fictional artwork)
 Source original: /tmp/namarca-final-futebol-pilot/original.png, 941×1672 opaque PNG.
