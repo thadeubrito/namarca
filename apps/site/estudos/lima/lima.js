@@ -31,7 +31,7 @@
       const base = network.getBoundingClientRect();
       svg.setAttribute('viewBox', `0 0 ${base.width} ${base.height}`);
       const boxes = cards.map(c => { const b = c.getBoundingClientRect(); return {x:b.left-base.left,y:b.top-base.top,w:b.width,h:b.height}; });
-      const mobile = innerWidth <= 600;
+      const mobile = innerWidth <= 900;
       for (const path of paths) {
         const from = Number(path.dataset.from), to = Number(path.dataset.to);
         const a = boxes[from], b = boxes[to];
@@ -39,13 +39,6 @@
         if (!mobile) {
           const x=a.x+a.w, y=a.y+a.h*.5, endX=b.x, endY=b.y+b.h*.5, mid=(x+endX)/2;
           d=`M ${x} ${y} C ${mid} ${y} ${mid} ${endY} ${endX} ${endY}`;
-        } else if (to===4 || to===6) {
-          // The second recipient in each column has its own outside route,
-          // so the connection never runs through the first photograph.
-          const left = to===4, x=left?a.x:a.x+a.w, y=a.y+a.h*.5;
-          const endX=left?b.x:b.x+b.w, endY=b.y+b.h*.5;
-          const rail=left?Math.min(x,endX)-7:Math.max(x,endX)+7;
-          d=`M ${x} ${y} C ${rail} ${y} ${rail} ${y+20} ${rail} ${y+32} L ${rail} ${endY-18} Q ${rail} ${endY} ${endX} ${endY}`;
         } else {
           const x=a.x+a.w*.5,y=a.y+a.h,endX=b.x+b.w*.5,endY=b.y,mid=(y+endY)/2;
           d=`M ${x} ${y} C ${x} ${mid} ${endX} ${mid} ${endX} ${endY}`;

@@ -9,8 +9,23 @@ try {
  const check=async page=>{
   const result=await page.locator('.sharing-network').evaluate(n=>{
    const r=n.getBoundingClientRect(), cards=[...n.querySelectorAll('.network-card')].map(c=>c.getBoundingClientRect());
-   return [...n.querySelectorAll('path')].map(p=>{
+   const rows=cards.map(b=>b.top-r.top);
+   if(innerWidth<=900){
+    if(Math.abs(rows[1]-rows[2])>.1||rows.slice(3).some(y=>Math.abs(y-rows[3])>.1)||!(rows[0]<rows[1]&&rows[1]<rows[3]))throw Error('Expected exactly 1 / 2 / 4 rows');
+    cards.forEach(b=>{if(b.left<0||b.right>innerWidth||b.bottom>r.bottom+.1)throw Error('Portrait outside network/viewport');});
+    for(let i=3;i<6;i++)if(cards[i].right+9.9>cards[i+1].left)throw Error('Last-row gap below 10px');
+   }
+   const links=[...n.querySelectorAll('path')];
+   if(JSON.stringify(links.map(p=>[+p.dataset.from,+p.dataset.to]))!==JSON.stringify([[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]]))throw Error('Incorrect tree');
+   return links.map(p=>{
     const a=p.getPointAtLength(0),b=p.getPointAtLength(p.getTotalLength()),source=cards[+p.dataset.from],target=cards[+p.dataset.to];
+    if(innerWidth<=900){
+     if(Math.abs(a.x+r.left-source.left-source.width/2)>.1||Math.abs(a.y+r.top-source.bottom)>.1||Math.abs(b.x+r.left-target.left-target.width/2)>.1||Math.abs(b.y+r.top-target.top)>.1||b.y<=a.y)throw Error('Connector must descend bottom → top');
+     for(let i=0;i<=100;i++){
+      const q=p.getPointAtLength(p.getTotalLength()*i/100);
+      if(q.y<a.y-.1||q.y>b.y+.1||q.x<Math.min(a.x,b.x)-.1||q.x>Math.max(a.x,b.x)+.1)throw Error('Outside connector route');
+     }
+    }
     // All four side midpoints are on the organic outline (corner radii <50%).
     // Distance to the midpoint, not an infinite box edge, catches detached links.
     const edge=(point,box)=>Math.min(...[[box.left,box.top+box.height/2],[box.right,box.top+box.height/2],[box.left+box.width/2,box.top],[box.left+box.width/2,box.bottom]].map(([x,y])=>Math.hypot(point.x+r.left-x,point.y+r.top-y)));
@@ -44,14 +59,23 @@ try {
   await page.locator('[data-person="6"]').scrollIntoViewIfNeeded();
   assert.ok(await page.locator('[data-person="6"]').isVisible());
   await page.locator('.mouth').screenshot({path:`${out}/${width}-final.png`});
-  if(width===390){await page.setViewportSize({width:844,height:390});await page.waitForTimeout(150);await check(page);await page.setViewportSize({width:390,height:844});await page.waitForTimeout(150);await check(page);}
+  if(width===390)for(const w of [768,1440,390]){await page.setViewportSize({width:w,height:900});await page.waitForTimeout(150);await check(page);}
   await page.close();
  }
- for(const javaScriptEnabled of [true,false]) {
-  const page=await browser.newPage({javaScriptEnabled,viewport:{width:390,height:844},reducedMotion:'reduce'});
+ for(const width of [320,390,768]) for(const javaScriptEnabled of [true,false]) {
+  const page=await browser.newPage({javaScriptEnabled,viewport:{width,height:844},reducedMotion:'reduce'});
   await page.goto(base+'/');await page.locator('.mouth').scrollIntoViewIfNeeded();
   assert.deepEqual(await page.locator('.network-card img').evaluateAll(es=>es.map(e=>getComputedStyle(e).opacity)),Array(7).fill('1'));
   assert.equal(await page.locator('.sharing-network').evaluate(e=>e.getAnimations({subtree:true}).length),0);
+  if(javaScriptEnabled)await check(page);
+  else {
+   const boxes=await page.locator('.network-card').evaluateAll(es=>es.map(e=>{const b=e.getBoundingClientRect();return {top:b.top,left:b.left,right:b.right};}));
+   assert.equal(boxes[1].top,boxes[2].top);
+   assert.ok(boxes[0].top<boxes[1].top&&boxes[1].top<boxes[3].top);
+   boxes.slice(3).forEach(b=>assert.equal(b.top,boxes[3].top));
+   boxes.forEach(b=>assert.ok(b.left>=0&&b.right<=width));
+  }
+  await page.locator('.mouth').screenshot({path:`${out}/${width}-${javaScriptEnabled?'reduced':'no-js'}-final.png`});
   await page.close();
  }
  const page=await browser.newPage();await page.goto(base+'/');await page.locator('[data-person="0"]').scrollIntoViewIfNeeded();

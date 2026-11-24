@@ -1,3 +1,5 @@
+Hero delivery derivatives: materials/{clube-sol,orbita,adote,ritmo,final}-story-display.webp are uniform 720×1280 WebP quality-86 copies of their approved 1080×1920 sources, prepared by scripts/prepare-lima-hero-delivery.mjs without crop, retouch, stretching or generation. Approved originals, image provenance and rights limitations below remain unchanged.
+
 Poppins — Indian Type Foundry / Jonny Pinhorn. Licensed under SIL Open Font License 1.1, see OFL.txt.
 Official Latin WOFF2 files fetched in a development container from Google Fonts / fonts.gstatic.com, Poppins v24, normal weights 300, 400, 500, 600, 700.
 CSS provenance: https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap
@@ -11,7 +13,7 @@ Current slot two — Adote um Amigo, explicitly approved textured screenprint. O
 
 Superseded Café pilot — retained assets, no longer slot zero. Approved opaque Stories source: clube-do-cafe-story-1080x1920-janela-circular.png (1080×1920), corrected from the supplied approved artwork without further AI generation. Local derivative materials/cafe-story-approved.webp. Inner circle center (537.564825253664,1045.8218714768884), radius 427.37316798196167; green border 8.52311161217593. CSS overlays the stock photo, not an alpha window. Stickers cup/croissant extracted locally from clube-do-cafe-pilot-2026-11-23T00-13-30-321Z.png (1536×1024), reported text-only model cx/gpt-image-2.5: cafe-sticker-cup.webp and cafe-sticker-croissant.webp. Exterior alpha removal and constrained silhouette preserve cartoon, white border and peeled corner; lossless WebP preserves ink colors. scripts/prepare-lima-cafe.mjs reproduces derivatives in the app container. No photo upload or new AI call. AI licensing/source rights remain unverified; no exclusivity or production clearance claimed. Stock use is café demonstration only: do not reuse the identifiable person as a political supporter or religious adherent. Production publicity/personality rights and model release remain pending.
 
-No runtime request to Google Fonts. No Mojo template assets or code are included. The mouth-sharing section uses seven local photographic derivatives of the approved AI source described below (new composition awaiting visual review); the hero uses the static stock photograph and approved AI materials. None are participant photographs.
+No runtime request to Google Fonts. No Mojo template assets or code are included. The mouth-sharing section now tests seven real Unsplash stock photographs described below; the prior AI derivatives are retained but not loaded; the hero uses the static stock photograph and approved AI materials. None are participant photographs.
 
 Mouth-sharing approved photographic collage — materials/mouth-sharing-young.webp, 1536×1024, 362240 bytes, quality 94 WebP (effort 6), full frame without resize, crop, segmentation or new generation. Approved by the founder after viewing the existing original.png (response: “gostei”). Original source preserved at /tmp/namarca-mouth-young-styles/original.png (2351894 bytes); provenance metadata at /tmp/namarca-mouth-young-styles/metadata.json. Metadata records text-only generation on 2026-11-23T17:34:07.335Z, reported model cx/gpt-image-2.5, requested/actual size 1536×1024, one request, no retries, no input images. Seven fictional young adults using phones, with organic crops and lime connectors; not customers, participants, endorsements, reach or results. Runtime no longer loads this collage. Seven interior rectangular crops remove the baked off-white ground and connectors; scripts/prepare-sharing-portraits.mjs reproduces them from this versioned WebP, locally in the app container, without network, AI generation or photo uploads. materials/compartilhamento-{artista,tecnologia,financeiro,esporte,musica,estudante,cafe}.webp: respectively 360×545 / 73568 bytes; 335×345 / 29550; 375×350 / 31352; 280×220 / 20250; 280×185 / 16948; 280×190 / 19296; 280×225 / 19816 (quality 94, effort 6). Asset names identify fictional visual contexts, not real professions or identities. Independent images and SVG connections now form a one-shot 1→2→4 animation, with vertical mobile reflow and static reduced-motion/no-JS alternatives. This reconstruction is authorized for implementation, not yet visually approved. Model licensing, source rights, exclusivity, personality rights and production clearance remain unverified/pending; no MIT license, model release or guaranteed rights asserted. Local visual approval is not production publication approval.
 
@@ -25,3 +27,33 @@ Local derivative: materials/michael-dam-portrait.webp, 1000x1500, WebP encoding 
 Legacy printcraft board (rejected compositions; retained historical assets, no hero slot) — text-only AI generation, reported model cx/gpt-image-2.5. Input: namarca-eu-faco-parte-printcraft-1795390788928.png, 1536x1024. User accepted the textured sample; no new generation for this application.
 Derivatives: torn-tape.webp, coral-seal.webp, angular-cuts.webp, halftone-paper.webp. Container preparation script: scripts/prepare-lima-materials.mjs. Paper removed only where edge-connected; internal print wear preserved. No skin or stock photograph was involved in alpha processing.
 AI provider/model licensing and source rights are not independently proven. These assets are NOT claimed MIT, rights-cleared, exclusive, or guaranteed for production. Retain this limitation in future reuse. Typography is real local Poppins/CSS, not generated lettering. The rejected legacy fictional campaign was “Eu faço parte”, with “Tô nessa” and “Junto é melhor”. Small textures support CSS 9:16 backgrounds; the board is not enlarged as a full poster.
+
+Current mouth-sharing local test — seven real stock photographs, not customers, participants or endorsements. Free photographs, not Unsplash+; individual pages and https://unsplash.com/license reviewed during selection. Unsplash License permits free commercial use and modification; it does not establish a verified model release or personality/publicity clearance. Production rights review remains pending. No AI generation, uploads or runtime external requests. Center crops at 2× the existing seven slot dimensions, WebP quality 88; masks, connections and motion unchanged. Reproduce in app container: node scripts/prepare-sharing-real-portraits.mjs scripts/sharing-real-sources.json
+materials/compartilhamento-real-01.webp — Emmanuel Ikwuegbu
+Source: https://unsplash.com/photos/81fRHbVliQI
+Download: https://images.unsplash.com/photo-1622556498246-755f44ca76f3?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-02.webp — Ghen Mar Cuaño
+Source: https://unsplash.com/photos/R6dSBkz32B8
+Download: https://images.unsplash.com/photo-1595986630530-969786b19b4d?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-03.webp — Helena Lopes
+Source: https://unsplash.com/photos/dRJyuy8qamw
+Download: https://images.unsplash.com/photo-1786915863528-923d1950466b?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-04.webp — bruce mars
+Source: https://unsplash.com/photos/FWVMhUa_wbY
+Download: https://images.unsplash.com/photo-1520333789090-1afc82db536a?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-05.webp — Brooke Cagle
+Source: https://unsplash.com/photos/eL4xIEuHzzk
+Download: https://images.unsplash.com/photo-1653762379954-8943c787e78b?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-06.webp — Štefan Štefančík
+Source: https://unsplash.com/photos/Ue2-23uBwNw
+Download: https://images.unsplash.com/photo-1543965860-82ed7d542cc4?auto=format&fit=max&w=2000&q=90
+materials/compartilhamento-real-07.webp — Becca Tapert
+Source: https://unsplash.com/photos/QofjUnxy9LY
+Download: https://images.unsplash.com/photo-1506377711776-dbdc2f3c20d9?auto=format&fit=max&w=2000&q=90
+
+A Grande Final — fifth hero composition (explicitly approved fictional artwork)
+Source original: /tmp/namarca-final-futebol-pilot/original.png, 941×1672 opaque PNG.
+Reported generation model: cx/gpt-image-2.5, text-only prior generation. No new generation, upload or download for integration. Fictional teams União Norte and Estrela do Vale; no real club endorsement. Legal provenance/model rights/exclusivity are not guaranteed.
+materials/final-story-approved.webp: 1080×1920 uniform contain of the entire approved original, minimal cream padding, no crop/stretch, no redrawing of logos, graphics or copy.
+Preparation: scripts/prepare-lima-final.mjs. Independent photo aperture measured with 1440 rays and simplified to exactly 60 vertices by chord error (maximum 0.536px on the prepared raster); retains the upper-left chamfer and lower rounded corners. Photo and credit remain Michael Dam / Unsplash above; personality/model release for production remains unverified.
+materials/final-sticker-ball.webp and final-sticker-flag.webp: locally drawn unbranded SVG graphics rasterized to 260×260 lossless WebP with alpha, no real club crests. Independent decorative layers, not part of the approved background.

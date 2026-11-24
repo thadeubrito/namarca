@@ -16,8 +16,19 @@ test('landing lima integral na raiz e na prévia, fontes locais e allow-list fec
     const html = await response.text();
     for (const id of ['boca-a-boca','como-funciona','duvidas','contato']) assert.ok(html.includes(`id="${id}"`));
     assert.equal((html.match(/data-perspective/g) || []).length, 1);
+    assert.match(html, /class="photo" data-shape="0"/);
+    assert.match(html, /class="track" aria-hidden="true"><div class="frame variant-0"><img class="initial-art"/);
+assert.match(html, /data-assets="decoded"/);
+    const materials = await readFile('apps/site/estudos/lima/materials.css', 'utf8');
+    for (const key of ['left','top','width','height']) assert.ok(materials.includes(`${key}:var(--perspective-photo-0-${key})`), `initial CSS geometry: ${key}`);
     assert.equal((html.match(/<details><summary>/g) || []).length, 5);
     assert.doesNotMatch(html, /<form|<input|wa\.me|<button|data-step/);
+    assert.doesNotMatch(html, /protótipo|teste local|Outros estudos|fontes no NOTICE/i);
+    assert.doesNotMatch(html, /<a\b[^>]*href="\/estudos\/"/);
+    assert.match(html, /Campanhas fictícias Clube Sol, Órbita, Adote um Amigo, Ritmo de Rua e A Grande Final\./);
+    assert.match(html, /Michael Dam \/ Unsplash/);
+    assert.match(html, /Pessoa ilustrativa, sem vínculo ou endosso ao Namarca\./);
+    assert.match(html, /name="robots" content="noindex, nofollow"/);
     for (const link of html.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)) assert.doesNotMatch(link[1], /[←-⇿➔➜➝➞➟➠➡]/u);
     assert.doesNotMatch(html, /↗/);
     assert.match(html, /Uma pessoa participa\. <span class="underline">Outras podem vir com ela\./);
@@ -25,13 +36,14 @@ test('landing lima integral na raiz e na prévia, fontes locais e allow-list fec
     assert.equal((html.match(/class="network-card"/g) || []).length, 7);
     assert.equal((html.match(/<path data-from=/g) || []).length, 6);
     assert.doesNotMatch(html, /<img[^>]+mouth-sharing-young/);
-    for (const name of ['artista','tecnologia','financeiro','esporte','musica','estudante','cafe']) {
-      const crop = await fetch(base + `/estudos/lima/materials/compartilhamento-${name}.webp`);
+    for (const name of ['01','02','03','04','05','06','07']) {
+      const crop = await fetch(base + `/estudos/lima/materials/compartilhamento-real-${name}.webp`);
       assert.equal(crop.status, 200);
       assert.equal(crop.headers.get('content-type'), 'image/webp');
     }
     assert.equal((await fetch(base + '/estudos/lima/materials/compartilhamento-outro.webp')).status, 404);
-    assert.match(html, /Imagem ilustrativa gerada por IA; pessoas fictícias\./);
+    assert.match(html, /Fotos de banco de imagens; uso ilustrativo, sem vínculo ou endosso\./);
+    assert.doesNotMatch(html, /<img[^>]+compartilhamento-(?!real-)/);
     const art = await fetch(base + '/estudos/lima/materials/mouth-sharing-young.webp');
     assert.equal(art.headers.get('content-type'), 'image/webp');
     assert.equal(Buffer.from(await art.arrayBuffer()).toString('ascii', 8, 12), 'WEBP');
@@ -70,7 +82,7 @@ test('landing lima integral na raiz e na prévia, fontes locais e allow-list fec
     const faces = [...css.matchAll(/@font-face\{([^}]+)\}/g)];
     assert.equal(faces.length, 5);
     for (const [,face] of faces) assert.match(face, /font-display:block/);
-    const preloads = [...html.matchAll(/<link rel="preload"[^>]+>/g)].map(m => m[0]);
+    const preloads = [...html.matchAll(/<link rel="preload"[^>]+as="font"[^>]*>/g)].map(m => m[0]);
     assert.equal(preloads.length, 4);
     for (const weight of [700,300,500,600]) {
       const url = `/estudos/lima/poppins-${weight}-latin.woff2`;

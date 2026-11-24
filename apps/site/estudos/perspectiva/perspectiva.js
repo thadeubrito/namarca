@@ -9,7 +9,8 @@
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const counter = scope.querySelector('.counter');
   const status = scope.querySelector('[role="status"]');
-  const count = root.dataset.compositions === '4' ? 4 : 3;
+  const configuredCount = Number(root.dataset.compositions);
+  const count = Number.isInteger(configuredCount) && configuredCount >= 3 && configuredCount <= 5 ? configuredCount : 3;
   const wrap = n => ((n % count) + count) % count;
   // Independent photo geometry in a 900 × 1600 Stories canvas.
   // Solid materials need no second clipping shape to align.
@@ -18,14 +19,21 @@
     { shape: [130, 170, 700, 1170, 350, 585], material: '#a2a2a2', stickers: [[30, 320, 200, 150, -12], [598, 1190, 245, 135, 11], [100, 1400, 155, 100, -5]] },
     { shape: [74, 420, 670, 930, 140, 140], material: '#747474', stickers: [[535, 190, 250, 165, 10], [28, 1230, 210, 160, -7]] }
   ];
-  // Opt-in fourth composition; historical studies remain three-slot rings.
-  if (count === 4) compositions.push({ shape: [440, 490, 400, 590, 70, 90], material: '#452080', stickers: [[54, 1240, 160, 106, -8], [570, 1390, 180, 120, 8]] });
+  // Additional compositions are root-scoped; historical studies keep three slots.
+  if (count >= 4) compositions.push({ shape: [440, 490, 400, 590, 70, 90], material: '#452080', stickers: [[54, 1240, 160, 106, -8], [570, 1390, 180, 120, 8]] });
+  if (count >= 5) compositions.push({ shape: [230, 690, 420, 510, 0, 0], material: '#164d36', stickers: [[45, 1120, 117, 117, -8], [729, 1088, 117, 117, 8]] });
   const photo = root.querySelector('.photo');
   const stickerLayer = document.createElement('div');
   stickerLayer.className = 'sticker-layer'; stickerLayer.setAttribute('aria-hidden', 'true');
-  root.append(stickerLayer);
+  const continuousPhoto = root.dataset.photoMotion === 'continuous';
+  const showStickers = root.dataset.stickers !== 'false';
+  if (showStickers) root.append(stickerLayer);
   let selection = -1;
   // A single, interruptible entrance; it never owns carousel position or input.
+  const waitsForAssets = root.dataset.assets === 'decoded';
+  let assetsReady = !waitsForAssets;
+  const decodedMaterials = new Set();
+  const materialImages = [];
   let entering = !reduce.matches && !document.hidden;
   let entranceProgress = entering ? 0 : 1, entranceRaf = 0;
   const entranceAnimations = [];
@@ -34,6 +42,7 @@
     return 1 - (1 - t) ** 3;
   };
   function stickers(index, entrance = false) {
+    if (!showStickers) return;
     // Interruptions retain at most the current and outgoing sets, never queues.
     stickerLayer.querySelectorAll('[data-phase="out"]').forEach(el => { el.getAnimations().forEach(a => a.cancel()); el.remove(); });
     [...stickerLayer.children].forEach(el => {
@@ -60,18 +69,88 @@
     selection = index;
     const [x, y, w, h, rx, ry] = compositions[index].shape;
     // Optional root-scoped geometry; absent properties retain every study's defaults.
-    Object.assign(photo.style, { left: `var(--perspective-photo-${index}-left, ${x / 9}%)`, top: `var(--perspective-photo-${index}-top, ${y / 16}%)`, width: `var(--perspective-photo-${index}-width, ${w / 9}%)`, height: `var(--perspective-photo-${index}-height, ${h / 16}%)`, borderRadius: `var(--perspective-photo-${index}-radius, ${rx / w * 100}% / ${ry / h * 100}%)` });
+    if (!continuousPhoto) Object.assign(photo.style, { left: `var(--perspective-photo-${index}-left, ${x / 9}%)`, top: `var(--perspective-photo-${index}-top, ${y / 16}%)`, width: `var(--perspective-photo-${index}-width, ${w / 9}%)`, height: `var(--perspective-photo-${index}-height, ${h / 16}%)`, borderRadius: `var(--perspective-photo-${index}-radius, ${rx / w * 100}% / ${ry / h * 100}%)` });
     photo.dataset.shape = String(index);
     stickers(index, entering);
     root.dataset.active = String(index);
     if (counter) counter.textContent = `0${index + 1} / 0${count}`;
     if (status) status.textContent = `Composição ${index + 1} de ${count}`;
   }
+  // Cache approved contours once. A common angular parameterization includes
+  // EVERY original corner angle, rather than pairing incompatible vertex indices.
+  // Ray/edge intersections preserve the exact polygon at rest, including small
+  // rounded corners in the adaptively sampled Adote and Final apertures.
+  let photoGeometry = [];
+  const portrait = photo.querySelector('img');
+  function cachePhotoGeometry() {
+    if (!continuousPhoto) return;
+    // Snapshot before changing data-shape. WebKit can invalidate a retained
+    // CSSStyleDeclaration after the descendant mutation and return empty custom
+    // properties: that silently selected the study defaults for the first slots.
+    // The production hero reads immutable, authored declarations rather than a
+    // live computed declaration. Safari may expose empty inherited variables
+    // around invalidations, and sampling masks by mutating the visible photo
+    // also makes initialization depend on the compositor's current style state.
+    const source = root.dataset.photoSource;
+    if (source === 'namarcaHeroGeometry') {
+      // Ordered deferred scripts guarantee configuration before initialization.
+      // Values are generated from materials.css, not re-measured from Safari's
+      // transient style state. Never silently replace approved hero geometry.
+      const config = window.namarcaHeroGeometry;
+      if (!Array.isArray(config) || config.length !== count) throw new Error('Missing hero geometry');
+      photoGeometry = config.map(({ geometry, points }) => ({ geometry: [...geometry], points: points.map(point => [...point]) }));
+    } else {
+    const css = getComputedStyle(root);
+    const geometries = compositions.map((composition, index) =>
+      ['left', 'top', 'width', 'height'].map((key, i) => {
+        const value = parseFloat(css.getPropertyValue(`--perspective-photo-${index}-${key}`));
+        return Number.isFinite(value) ? value : composition.shape[i] / (i % 2 ? 16 : 9);
+      }));
+    const saved = photo.dataset.shape;
+    photoGeometry = compositions.map((composition, index) => {
+      photo.dataset.shape = String(index);
+      const style = getComputedStyle(portrait);
+      const points = [...style.clipPath.matchAll(/(-?[\d.]+)%\s+(-?[\d.]+)%/g)].map(m => [Number(m[1]), Number(m[2])]);
+      const geometry = geometries[index];
+      return { geometry, points };
+    });
+    photo.dataset.shape = saved;
+    }
+    const angles = [...new Set(photoGeometry.flatMap(({ points }) => points.map(([x, y]) => Math.atan2(y - 50, x - 50))))].sort((a, b) => a - b);
+    photoGeometry.forEach(item => {
+      const source = item.points;
+      item.points = angles.map(angle => {
+        const dx = Math.cos(angle), dy = Math.sin(angle);
+        let distance = Infinity;
+        source.forEach(([x, y], i) => {
+          const [nx, ny] = source[(i + 1) % source.length];
+          const ex = nx - x, ey = ny - y;
+          const cross = dx * ey - dy * ex;
+          if (Math.abs(cross) < 1e-9) return;
+          const t = ((x - 50) * ey - (y - 50) * ex) / cross;
+          const u = ((x - 50) * dy - (y - 50) * dx) / cross;
+          if (t >= 0 && u >= -1e-8 && u <= 1 + 1e-8) distance = Math.min(distance, t);
+        });
+        return [50 + dx * distance, 50 + dy * distance];
+      });
+    });
+  }
+  function paintPhoto(position) {
+    if (!continuousPhoto || !photoGeometry.length) return;
+    const p = reduce.matches ? Math.round(position) : position;
+    const base = Math.floor(p), fraction = p - base;
+    const a = photoGeometry[wrap(base)], b = photoGeometry[wrap(base + 1)];
+    const mix = (x, y) => x + (y - x) * fraction;
+    ['left', 'top', 'width', 'height'].forEach((key, i) => { photo.style[key] = `${mix(a.geometry[i], b.geometry[i])}%`; });
+    portrait.style.clipPath = `polygon(${a.points.map(([x, y], i) => `${mix(x, b.points[i][0])}% ${mix(y, b.points[i][1])}%`).join(',')})`;
+    root.dataset.photoProgress = String(fraction);
+  }
   function material(el, index) {
     el.style.backgroundColor = `var(--perspective-material-${index}, ${compositions[index].material})`;
   }
   // Nine recycled instances, with root-scoped composition count. Recycle exclusively beyond the clipped
   // viewport: at the half-slot boundary the outgoing slot is >3.5 gaps away.
+  const initialArt = root.querySelector('.initial-art');
   const pool = Array.from({ length: 9 }, () => {
     const el = document.createElement('div');
     el.className = 'frame';
@@ -92,11 +171,11 @@
     const paused = explicitlyPaused || (reduce.matches && !motionOptIn);
     if (autoplayLabel) autoplayLabel.textContent = (paused ? 'Retomar' : 'Pausar') + (autoplayLabel === autoplayButton ? '' : ' animação');
     autoplayButton?.setAttribute('aria-pressed', String(paused));
-    if (paused || entering || drag || root.dataset.settled !== 'true' || document.hidden || !inViewport || keyboardFocus || hovered.size) {
+    if (!assetsReady || paused || entering || drag || root.dataset.settled !== 'true' || document.hidden || !inViewport || keyboardFocus || hovered.size) {
       clearAutoplay(); return;
     }
     if (autoTimer) return;
-    autoTimer = setTimeout(() => { autoTimer = 0; step(1); }, Math.max(5000, interactionUntil - performance.now()));
+    autoTimer = setTimeout(() => { autoTimer = 0; step(1); }, Math.max(root.dataset.autoplayInterval === '3000' ? 3000 : 5000, interactionUntil - performance.now()));
   }
   function interact() {
     interactionUntil = performance.now() + 8000;
@@ -160,10 +239,15 @@
       el.style.transform = `translate3d(${d * gap * spread}px, ${(1 - reveal) * 12}px, ${-depth * open}px) rotateY(${angle * open}deg) scale(${scale * (.97 + .03 * reveal)})`;
       el.style.opacity = String(reveal * Math.max(0, Math.min(1 - .16 * distance, (2.4 - distance) * 1.5)));
       el.style.zIndex = String(1000 - Math.round(distance * 100));
+      // One decoded DOM image per art, moved only to its nearest visible slot.
+      // No background + Image double download on no-store origins.
+      const image = materialImages[wrap(slot)];
+      if (image && distance < count / 2 && image.parentElement !== el) el.replaceChildren(image);
       // Hidden well outside both desktop and mobile viewports, never mid-scene.
-      el.style.visibility = distance > 3.4 ? 'hidden' : 'visible';
+      el.style.visibility = distance > 3.4 || (waitsForAssets && !decodedMaterials.has(wrap(slot))) ? 'hidden' : 'visible';
     });
     root.dataset.position = String(position);
+    paintPhoto(position);
   }
   function measure() {
     // Geometry reads are cached and never run in pointermove or animation ticks.
@@ -287,14 +371,19 @@
     root.dataset.entrance = 'ready';
     paint(); scheduleAutoplay();
   }
-  root.dataset.entrance = entering ? 'running' : 'ready';
+  root.dataset.entrance = waitsForAssets ? 'waiting' : entering ? 'running' : 'ready';
+  if (waitsForAssets) root.dataset.assetState = 'loading';
   select(0);
+  cachePhotoGeometry();
   measure();
+  function startEntrance() {
   if (entering) {
+    root.dataset.entrance = 'running';
+    root.dataset.entranceStarted = String(performance.now());
     // Scale/clip only: left/top/size/radius remain exclusively owned by morph.
     entranceAnimations.push(photo.animate([
-      { opacity: 0, transform: 'translateY(10px) scale(.96)', clipPath: 'inset(8% 4% 8% 4%)' },
-      { opacity: 1, transform: 'translateY(0) scale(1)', clipPath: 'inset(0%)' }
+      { opacity: 0, transform: 'translateY(10px) scale(.96)', ...(!continuousPhoto && { clipPath: 'inset(8% 4% 8% 4%)' }) },
+      { opacity: 1, transform: 'translateY(0) scale(1)', ...(!continuousPhoto && { clipPath: 'inset(0%)' }) }
     ], { duration: 640, delay: 260, fill: 'both', easing: 'cubic-bezier(.2,.7,.3,1)' }));
     const start = performance.now();
     function entranceTick(now) {
@@ -305,6 +394,65 @@
       else entranceRaf = requestAnimationFrame(entranceTick);
     }
     entranceRaf = requestAnimationFrame(entranceTick);
+  }
+  scheduleAutoplay();
+  }
+  if (!waitsForAssets) startEntrance();
+  else {
+    // Decode each resource, not just its response: an image can be downloaded
+    // but still unavailable to Safari's compositor. Critical preload URLs and
+    // CSS URLs are identical, allowing the browser to reuse a single request.
+    function readyImage(image) {
+      return new Promise(resolve => {
+        let done = false;
+        const finish = ok => {
+          if (done) return;
+          done = true; clearTimeout(timeout);
+          image.removeEventListener('load', loaded);
+          image.removeEventListener('error', failed);
+          resolve(ok);
+        };
+        const loaded = () => {
+          if (image.decode) image.decode().then(() => finish(true), () => finish(false));
+          else finish(image.naturalWidth > 0);
+        };
+        const failed = () => finish(false);
+        // Failed/stalled assets must not indefinitely lock autoplay or input.
+        const timeout = setTimeout(() => finish(false), 10000);
+        image.addEventListener('load', loaded, { once: true });
+        image.addEventListener('error', failed, { once: true });
+        if (image.complete) {
+          if (image.naturalWidth) loaded(); else if (image.src) failed();
+        }
+      });
+    }
+    const tasks = compositions.map((_, index) => {
+      const url = root.dataset.artSources?.split(',')[index];
+      if (!url) return Promise.resolve(false);
+      const image = index === 0 && initialArt ? initialArt : new Image();
+      image.alt = ''; image.draggable = false;
+      materialImages[index] = image;
+      if (!image.getAttribute('src')) image.src = url;
+      return readyImage(image).then(ok => {
+        if (ok) decodedMaterials.add(index);
+        else root.dataset.assetError = 'true';
+        paint();
+        return ok;
+      });
+    });
+    const photoReady = readyImage(portrait);
+    // Only the initial centre and adjacent cards hold the opening. Remaining
+    // cards continue their normal CSS loading without delaying the opening.
+    Promise.all([photoReady, tasks[0], tasks[1], tasks[count - 1]]).then(results => {
+      assetsReady = true;
+      root.dataset.assetState = results.every(Boolean) ? 'ready' : 'partial';
+      root.dataset.assetsDecoded = String(performance.now());
+      // Interaction/reduced motion/hidden document may already have cancelled
+      // entrance: do not restart it or overwrite the person's carousel position.
+      if (!entering) root.dataset.entrance = 'ready';
+      startEntrance();
+      paint();
+    });
   }
   }
 })();

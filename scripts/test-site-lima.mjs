@@ -57,7 +57,7 @@ try {
   assert.equal(await page.locator('.mouth a,.mouth button').count(),0);
   assert.equal(await page.locator('.mouth img').count(),7);
   const art=await page.locator('.mouth-art img').evaluateAll(imgs=>imgs.map(e=>{const b=e.getBoundingClientRect();return {loaded:e.complete&&e.naturalWidth>=280&&e.naturalHeight>0,ratio:b.width/b.height,intrinsic:e.naturalWidth/e.naturalHeight,left:b.left,right:b.right,width:b.width};}));
-  for(const image of art){assert.ok(image.loaded);assert.ok(Math.abs(image.ratio-image.intrinsic)<.001);assert.ok(image.left>=0&&image.right<=width);assert.ok(image.width>=(width<600?90:width===1024?120:140));}
+  for(const [i,image] of art.entries()){assert.ok(image.loaded);assert.ok(Math.abs(image.ratio-image.intrinsic)<.001);assert.ok(image.left>=0&&image.right<=width);assert.ok(image.width>=(width<=900?(i===0?112:i<3?95:62):width===1024?120:140));}
   console.log(`${route} ${width} ${reducedMotion}: seven independent portraits`);
   assert.equal(await page.locator('.mouth [data-reveal]').evaluateAll(nodes=>nodes.every(e=>getComputedStyle(e).opacity==='1')),true);
   await page.locator('.mouth').screenshot({path:`${out}/${width}-${reducedMotion}-mouth.png`});
