@@ -70,7 +70,7 @@ Não são tarefas automaticamente autorizadas nem prova de que todo cenário ain
 ## Fora do escopo autorizado atual
 
 - Deploy, push, migração do público antigo, PixGo real ou provisionamento pago.
-- Upload direto R2 para produção/Vercel: proxy local de 25 MiB não garante suporte na Vercel. Precisa desenho de autorização/finalização/validação antes de prometer produção.
+- Upload direto de materiais implementado localmente com autorização autenticada, PUT assinado para staging privado e finalização que valida tamanho/hash/PNG antes de gravar bytes definitivos. Não equivale a homologação R2/Vercel: validar browser real, CORS/assinatura e pior caso de memória/tempo. Temporários/autorização não têm limpeza automática; política de retenção restrita pendente antes de operação contínua. Detalhes em `apps/admin/UPLOADS.md`.
 - Backups/restauração, retenção de longo prazo, rate limiting distribuído, cache/CDN, escala e operação financeira live exigem preparação específica.
 - Novas regras de revogação/reemissão, cancelamento/reembolso, oferta e métricas de participantes exigem escopo/decisão. Não usar backlog antigo como autorização.
 

@@ -7,6 +7,8 @@ services:
     environment:
       NODE_ENV: development
       NEXT_TELEMETRY_DISABLED: '1'
+      # Signed before sending to the browser; never rewrite a signed hostname.
+      S3_UPLOAD_ENDPOINT: ${S3_UPLOAD_ENDPOINT:-http://localhost:9000}
       HOSTNAME: 0.0.0.0
       PORT: '3000'
     ports: ['127.0.0.1:3000:3000']

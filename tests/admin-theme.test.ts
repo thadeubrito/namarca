@@ -18,6 +18,10 @@ test('theme bootstrap resolves saved preference before React, with safe light fa
 test('bootstrap is in the head and dark tokens apply before hydration', async () => {
   const layout = await readFile('apps/admin/src/app/layout.tsx', 'utf8');
   const css = await readFile('apps/admin/src/app/ui.css', 'utf8');
-  assert.match(layout, /<head><script dangerouslySetInnerHTML=\{\{ __html: adminThemeScript \}\} \/><\/head><body>/);
+  // React manages async external scripts as resources, including client remounts.
+  assert.match(layout, /<head><script src="\/admin-theme.js" async blocking="render" \/><\/head>/);
+  assert.doesNotMatch(layout, /dangerouslySetInnerHTML|beforeInteractive/);
+  const bootstrap = await readFile('apps/admin/public/admin-theme.js', 'utf8');
+  assert.equal(bootstrap.trim(), adminThemeScript);
   assert.match(css, /html\[data-admin-theme=dark\] \.ui-scope/);
 });

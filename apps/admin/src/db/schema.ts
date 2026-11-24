@@ -81,6 +81,20 @@ export const campaignPublicationHistory = pgTable("campaign_publication_history"
   authorizedAt: timestamp("authorized_at", { withTimezone: true }).notNull(),
 }, t => [index("publication_history_campaign_idx").on(t.campaignId), uniqueIndex("publication_history_version_unique").on(t.campaignId, t.version), check("publication_history_version_positive", sql`${t.version} > 0`)]);
 
+// Upload authorization is separate from usable assets; temporary objects never enter drafts.
+export const campaignAssetUploads = pgTable("campaign_asset_uploads", {
+  id: uuid("id").primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  authorizedBy: text("authorized_by").notNull(),
+  name: text("name").notNull(),
+  kind: text("kind", { enum: ["artwork", "sticker"] }).notNull(),
+  byteLength: integer("byte_length").notNull(),
+  sha256: text("sha256").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, t => [check("asset_upload_size", sql`${t.byteLength} > 0 AND ${t.byteLength} <= 26214400`), check("asset_upload_hash", sql`${t.sha256} ~ '^[a-f0-9]{64}$'`), check("asset_upload_kind", sql`${t.kind} IN ('artwork', 'sticker')`)]);
+
 export const campaignAssets = pgTable("campaign_assets", {
   id: uuid("id").defaultRandom().primaryKey(),
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),

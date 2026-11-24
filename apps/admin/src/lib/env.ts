@@ -4,6 +4,7 @@ import { z } from "zod";
 const schema = z.object({
   DATABASE_URL: z.string().min(1),
   S3_ENDPOINT: z.url().default("http://storage:9000"),
+  S3_UPLOAD_ENDPOINT: z.url().optional(),
   S3_REGION: z.string().default("us-east-1"),
   S3_BUCKET: z.string().min(1).default("namarca-private"),
   S3_ACCESS_KEY_ID: z.string().min(1),

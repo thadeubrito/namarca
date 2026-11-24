@@ -10,6 +10,16 @@ const messages = new Set([
   'PNG excede o limite de 25 MiB',
   'PNG deve conter pixels transparentes e opacos',
   'Campanha não encontrada',
+  'Esta campanha não está disponível para edição',
+  'Dados de upload inválidos',
+  'Upload não encontrado',
+  'ID de upload já utilizado com outro material',
+  'Autorização expirada. Tente enviar o arquivo novamente',
+  'O arquivo difere do upload autorizado. Selecione o mesmo PNG e tente novamente',
+  'O envio deve conter uma imagem PNG válida.',
+  'O envio está incompleto. Envie o arquivo novamente.',
+  'Não foi possível ler o envio. Envie o arquivo novamente.',
+  'Não foi possível preparar o envio. Tente novamente.',
   'Somente campanhas em rascunho e não publicadas podem ser editadas',
 ]);
 
@@ -24,7 +34,7 @@ export async function uploadFailureMessage(response: Response): Promise<string> 
           return 'O PNG precisa ter ao menos um pixel totalmente transparente e um totalmente opaco. Confira a transparência ao exportar o material.';
         }
         if (body.error === 'PNG inválido') return 'O arquivo não é um PNG válido ou está corrompido. Exporte novamente como PNG e tente de novo.';
-        return `${body.error}.`;
+        return body.error.endsWith('.') ? body.error : `${body.error}.`;
       }
     } catch { /* Proxy HTML and malformed JSON use a safe fallback. */ }
   }

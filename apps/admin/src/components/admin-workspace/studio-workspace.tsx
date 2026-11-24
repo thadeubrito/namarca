@@ -19,7 +19,7 @@ import { useCampaignRecovery } from './campaign-recovery';
 import { StudioSaveProgress, type SaveProgress, type UploadItem } from './studio-save-progress';
 import { sameDraftValue, claimDraftTab, localMaterialId, draftKey, readStudioDraft, writeStudioDraft, deleteStudioDraft, uploadPool, type LocalMaterial, type StudioDraft } from '@/lib/studio-draft';
 import { clampReference, ReferenceCanvas } from '@/editor/reference-canvas';
-import { uploadFailureMessage } from '@/lib/upload-feedback';
+import { uploadCampaignMaterial } from '@/lib/direct-upload-client';
 import { Action, Surface, TextInput, Notice, EmptyState, Workspace, WorkspaceTabs } from './primitives';
 import './studio.css';
 
@@ -233,9 +233,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
         reportUpload(item.id, 'uploading');
         let succeeded = false;
         try {
-          const response = await fetch(`/api/campaigns/${campaignId}/assets?kind=${item.kind}`, { method: 'POST', headers: { 'Content-Type': 'image/png', 'X-Asset-Name': encodeURIComponent(material.name), 'X-Upload-Id': item.id }, body: item.file });
-          if (!response.ok) throw new Error(await uploadFailureMessage(response));
-          const result = await response.json() as { material: { id: string } };
+          const result = await uploadCampaignMaterial(campaignId, { id: item.id, name: material.name, kind: item.kind, file: item.file });
           if (result.material.id !== item.id) throw new Error('Não foi possível confirmar o arquivo.');
           const next = materialsRef.current.map(value => value.id === item.id ? { ...value, uploaded: true } : value);
           changeMaterials(next);
