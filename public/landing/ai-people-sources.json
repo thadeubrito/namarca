@@ -1,0 +1,127 @@
+{
+  "model": "cx/gpt-image-2.5",
+  "textOnly": true,
+  "people": "Fictional adults, not customers or endorsements",
+  "rights": "Model licensing, exclusivity and production rights not independently verified",
+  "generations": [
+    {
+      "model": "cx/gpt-image-2.5",
+      "prompt": "Create a photographic contact sheet with exactly FOUR independent hyperrealistic documentary photographs arranged in a precise 2 columns x 2 rows edge-to-edge grid, no gaps, no borders, no text. Each quadrant is a complete landscape photo, not a collage within a quadrant. All people are fictional young adults aged 23-29. Authentic everyday Brazil atmosphere, unposed, imperfect natural skin, ordinary clothing, daylight, no commercial stock photo staging, nobody looks at camera. TOP LEFT: a young Black Brazilian man with short curls seated by a café window, naturally amused by something on his smartphone, entire head and both hands and phone visible in the central 60 percent, medium torso shot. TOP RIGHT: young brown Brazilian woman with tied dark hair waiting on a train platform, three-quarter face visible, focused on typing on phone at chest height, whole head and hands clearly visible close together in center. BOTTOM LEFT: young man with wavy hair sitting on outdoor campus steps, reading phone held close to chest, whole head and hands in central area. BOTTOM RIGHT: young woman with short curly hair sitting on a street bench checking her phone, relaxed neutral face, medium shot with whole face and hands. Keep each person and their phone centrally composed with generous space around them so each quadrant can be cropped square without cutting head or phone. Real optical photography, normal 50mm lens, no beauty retouching, anatomically correct hands and plausible devices. No logos, no lettering, no watermarks.",
+      "requestedSize": "1536x1024",
+      "file": "sharing-a.png",
+      "textOnly": true
+    },
+    {
+      "model": "cx/gpt-image-2.5",
+      "prompt": "Create a photographic contact sheet with exactly FOUR independent hyperrealistic documentary photographs arranged in a precise 2 columns x 2 rows edge-to-edge grid, no gaps, no borders, no text. Each quadrant is a complete landscape photo. All people are fictional young adults aged 23-29 in everyday Brazilian urban life. Candid imperfect real photography, natural skin pores, ordinary clothes, no studio stock posing, no camera gaze. TOP LEFT: young woman with long dark hair in a light cotton shirt standing beside a campus railing, reading her smartphone held at chest height, medium torso photo with full face and both hands. TOP RIGHT: young brown man wearing casual olive t-shirt waiting outside a neighborhood bakery, tapping his smartphone at chest height, whole head and phone in frame. BOTTOM LEFT: young woman with short auburn hair and denim jacket sitting outside on a low wall, quietly focused on phone at chest height, full face and hands visible. BOTTOM RIGHT: young adult with dark curly hair at an outdoor café reading their phone, thoughtful natural expression. Each quadrant must keep full head, both hands and smartphone close together within the central 60 percent, generous space on all sides for square cropping, environmental background softly visible. Natural daylight, 50mm lens, plausible fingers and device. No logos, no text, no watermarks.",
+      "requestedSize": "1536x1024",
+      "file": "sharing-b.png",
+      "textOnly": true
+    },
+    {
+      "model": "cx/gpt-image-2.5",
+      "prompt": "One hyperrealistic candid portrait photograph of a fictional Brazilian young adult woman aged 26, shoulder-length naturally wavy dark brown hair, warm brown eyes, medium tan skin with authentic fine pores and subtle imperfections, relaxed small spontaneous smile, approachable ordinary person not a fashion model. Plain muted terracotta crew-neck shirt, shoulders and upper torso visible, face centered in the top-middle with generous margin above hair and on both sides for portrait cropping. Gentle natural window daylight, quiet neutral warm pale background, documentary 50mm camera photography, no studio glamour, no heavy makeup, no airbrushing, no artificial exaggerated teeth. Vertical portrait, very convincing real photographic texture. No text, no logo, no watermark, no phone required. This is a completely fictional person, not based on any real person.",
+      "requestedSize": "1024x1536",
+      "file": "hero.png",
+      "textOnly": true
+    }
+  ],
+  "assets": [
+    {
+      "file": "materials/compartilhamento-ia-01.webp",
+      "source": "materials/ai-sharing-a-source.webp",
+      "extract": {
+        "left": 0,
+        "top": 0,
+        "width": 724,
+        "height": 543
+      },
+      "width": 720,
+      "height": 1090
+    },
+    {
+      "file": "materials/compartilhamento-ia-02.webp",
+      "source": "materials/ai-sharing-a-source.webp",
+      "extract": {
+        "left": 724,
+        "top": 0,
+        "width": 724,
+        "height": 543
+      },
+      "width": 670,
+      "height": 690
+    },
+    {
+      "file": "materials/compartilhamento-ia-03.webp",
+      "source": "materials/ai-sharing-a-source.webp",
+      "extract": {
+        "left": 0,
+        "top": 543,
+        "width": 724,
+        "height": 543
+      },
+      "width": 750,
+      "height": 700
+    },
+    {
+      "file": "materials/compartilhamento-ia-04.webp",
+      "source": "materials/ai-sharing-a-source.webp",
+      "extract": {
+        "left": 724,
+        "top": 543,
+        "width": 724,
+        "height": 543
+      },
+      "width": 560,
+      "height": 560
+    },
+    {
+      "file": "materials/compartilhamento-ia-05.webp",
+      "source": "materials/ai-sharing-b-source.webp",
+      "extract": {
+        "left": 0,
+        "top": 0,
+        "width": 768,
+        "height": 512
+      },
+      "width": 560,
+      "height": 560
+    },
+    {
+      "file": "materials/compartilhamento-ia-06.webp",
+      "source": "materials/ai-sharing-b-source.webp",
+      "extract": {
+        "left": 768,
+        "top": 0,
+        "width": 768,
+        "height": 512
+      },
+      "width": 560,
+      "height": 560
+    },
+    {
+      "file": "materials/compartilhamento-ia-07.webp",
+      "source": "materials/ai-sharing-b-source.webp",
+      "extract": {
+        "left": 0,
+        "top": 512,
+        "width": 768,
+        "height": 512
+      },
+      "width": 560,
+      "height": 560
+    },
+    {
+      "file": "materials/hero-fictional-portrait.webp",
+      "source": "materials/ai-hero-source.webp",
+      "extract": {
+        "left": 0,
+        "top": 280,
+        "width": 1024,
+        "height": 1256
+      },
+      "width": 1000,
+      "height": 1500
+    }
+  ]
+}

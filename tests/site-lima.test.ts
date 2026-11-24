@@ -42,20 +42,20 @@ test('landing nativa preserva composição, contatos, rede e materiais locais', 
   assert.equal((html.match(/<path data-from=/g) || []).length, 6);
   assert.doesNotMatch(html, /<img[^>]+mouth-sharing-young|marker-end|<image\b/);
   for (const name of ['01', '02', '03', '04', '05', '06', '07']) {
-    const path = `materials/compartilhamento-real-${name}.webp`;
+    const path = `materials/compartilhamento-ia-${name}.webp`;
     assert.ok(html.includes(`/landing/${path}`));
     assert.equal((await asset(path)).toString('ascii', 8, 12), 'WEBP');
   }
   for (const name of ['04', '05', '06', '07']) {
-    assert.ok(html.includes(`src="/landing/materials/compartilhamento-real-${name}.webp" width="280" height="280"`));
-    const bytes = await asset(`materials/compartilhamento-real-${name}.webp`);
+    assert.ok(html.includes(`src="/landing/materials/compartilhamento-ia-${name}.webp" width="280" height="280"`));
+    const bytes = await asset(`materials/compartilhamento-ia-${name}.webp`);
     // Sharp emits VP8 (lossy WebP); validate the encoded square, not only its HTML ratio.
     const frame = bytes.indexOf(Buffer.from([0x9d, 0x01, 0x2a]), 20);
     assert.ok(frame >= 0);
     assert.equal(bytes.readUInt16LE(frame + 3) & 0x3fff, 560);
     assert.equal(bytes.readUInt16LE(frame + 5) & 0x3fff, 560);
   }
-  assert.doesNotMatch(html, /Fotos de banco de imagens; uso ilustrativo, sem vínculo ou endosso|<img[^>]+compartilhamento-(?!real-)/);
+  assert.doesNotMatch(html, /Fotos de banco de imagens; uso ilustrativo, sem vínculo ou endosso|<img[^>]+compartilhamento-(?!ia-)/);
   assert.equal((html.match(/<section\b/g) || []).length, 5);
   assert.deepEqual([...html.matchAll(/<section\b[^>]*aria-labelledby="([^"]+)"/g)].map(m => m[1]),
     ['hero-title', 'mouth-title', 'workings-title', 'faq-title', 'contact-title']);

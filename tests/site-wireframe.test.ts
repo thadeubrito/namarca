@@ -51,8 +51,11 @@ test('entrada Next monta a landing nativa, metadados e preloads locais', async (
   assert.ok(ts.isStringLiteral(properties.description));
   assert.match(properties.description.text, /Campanhas de marketing com participação e boca a boca digital/);
   assert.ok(ts.isObjectLiteralExpression(properties.robots));
-  assert.deepEqual(Object.fromEntries(properties.robots.properties.filter(ts.isPropertyAssignment).map(p => [p.name.getText(tree), p.initializer.kind])),
-    { index: ts.SyntaxKind.FalseKeyword, follow: ts.SyntaxKind.FalseKeyword });
+  assert.deepEqual(Object.fromEntries(properties.robots.properties.filter(ts.isPropertyAssignment).map(p => [p.name.getText(tree), p.initializer.getText(tree)])),
+    { index: 'launchIndexing', follow: 'launchIndexing' });
+  assert.match(source, /process\.env\.NODE_ENV === 'production'/);
+  assert.match(source, /=== 'https:\/\/namarca\.com'/);
+  assert.match(source, /process\.env\.VERCEL_ENV !== 'preview'/);
   const fonts = preloads.filter(p => p.as === 'font');
   assert.equal(fonts.length, 4);
   for (const weight of [700, 300, 500, 600]) {

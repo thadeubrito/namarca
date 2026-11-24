@@ -9,10 +9,31 @@ import { Contact } from "@/components/site/Contact";
 import { Footer } from "@/components/site/Footer";
 import "@/components/site/landing.css";
 
+const launchIndexing = process.env.NODE_ENV === 'production'
+  && process.env.PUBLIC_SITE_URL?.replace(/\/$/, '') === 'https://namarca.com'
+  && process.env.VERCEL_ENV !== 'preview';
+
 export const metadata: Metadata = {
   title: "Namarca — boca a boca digital para sua campanha",
   description: "Campanhas de marketing com participação e boca a boca digital. Cada pessoa combina sua foto, molduras e figurinhas e decide se compartilha a imagem.",
-  robots: { index: false, follow: false },
+  metadataBase: new URL("https://namarca.com"),
+  alternates: { canonical: "https://namarca.com/" },
+  robots: { index: launchIndexing, follow: launchIndexing },
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "namarca",
+    url: "https://namarca.com/",
+    title: "Sua campanha. As pessoas ajudam a divulgar. | namarca",
+    description: "Campanhas de marketing com participação e boca a boca digital. Com fotos, molduras e figurinhas, cada pessoa decide se compartilha.",
+    images: [{ url: "/landing/social-card.png", width: 1200, height: 630, alt: "namarca — boca a boca digital" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sua campanha. As pessoas ajudam a divulgar. | namarca",
+    description: "Campanhas de marketing com participação e boca a boca digital.",
+    images: ["/landing/social-card.png"],
+  },
 };
 
 export default function HomePage() {
@@ -25,7 +46,7 @@ export default function HomePage() {
       <link rel="preload" href="/landing/poppins-500-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       <link rel="preload" href="/landing/poppins-600-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" media="(min-width: 901px)" />
       <link rel="preload" as="image" href="/landing/materials/clube-sol-story-display.webp" fetchPriority="high" />
-      <link rel="preload" as="image" href="/landing/materials/michael-dam-portrait.webp" fetchPriority="high" />
+      <link rel="preload" as="image" href="/landing/materials/hero-fictional-portrait.webp" fetchPriority="high" />
       <link rel="preload" as="image" href="/landing/materials/orbita-story-display.webp" />
       <link rel="preload" as="image" href="/landing/materials/final-story-display.webp" />
       <link rel="preload" as="image" href="/landing/materials/adote-story-display.webp" fetchPriority="low" />
