@@ -1,6 +1,6 @@
 import { PNG } from "pngjs";
 import { z } from "zod";
-import { themeDefaults, parseEvent, type EventConfig } from "@namarca/editor/events";
+import { themeDefaults, parseCampaign, type CampaignConfig } from "@namarca/editor/campaigns";
 
 export class CampaignEditorError extends Error {
   constructor(readonly status: number, message: string) { super(message); }
@@ -70,11 +70,11 @@ export function validatePng(bytes: Buffer): { width: number; height: number } {
   if (!transparent || !opaque) throw new CampaignEditorError(422, "PNG deve conter pixels transparentes e opacos");
   return { width, height };
 }
-export function deriveCampaignEvent(event: EventConfig, campaign: CampaignIdentity): EventConfig {
+export function deriveCampaignConfig(event: CampaignConfig, campaign: CampaignIdentity): CampaignConfig {
   return { ...event, name: campaign.name, slug: campaign.slug, endsAt: campaign.endsAt.toISOString().replace(/\.\d{3}Z$/, "Z") };
 }
-export function defaultCampaignEvent(campaign: CampaignIdentity): EventConfig {
-  return deriveCampaignEvent({ name: "", slug: "", endsAt: "", color: themeDefaults.accent, demo: false, theme: { version: 1, ...themeDefaults }, artworks: [], stickers: [] }, campaign);
+export function defaultCampaignConfig(campaign: CampaignIdentity): CampaignConfig {
+  return deriveCampaignConfig({ name: "", slug: "", endsAt: "", color: themeDefaults.accent, demo: false, theme: { version: 1, ...themeDefaults }, artworks: [], stickers: [] }, campaign);
 }
 const material = z.object({ id: z.string().regex(UUID), name: z.string().trim().min(1).max(200), file: z.string().regex(/^[0-9a-f-]{36}\.png$/i) });
 const rectangle = z.object({ x: z.number().finite().nonnegative(), y: z.number().finite().nonnegative(), width: z.number().finite().positive(), height: z.number().finite().positive() }).strict();
@@ -88,18 +88,18 @@ export const editorSaveInput = z.object({ event: z.unknown(), revision: z.number
 
 // Call only with the current snapshot read under the campaign/editor write locks.
 // The global revision also protects writes to different sections from stale tabs.
-export function resolveEditorSave(input: z.infer<typeof editorSaveInput>, current: { config: EventConfig; revision: number } | undefined, campaign: CampaignIdentity, assets: readonly EditorAsset[]) {
+export function resolveEditorSave(input: z.infer<typeof editorSaveInput>, current: { config: CampaignConfig; revision: number } | undefined, campaign: CampaignIdentity, assets: readonly EditorAsset[]) {
   if ((current?.revision ?? 0) !== input.revision) throw new CampaignEditorError(409, "O rascunho mudou. Recarregue antes de salvar");
   let candidate = input.event;
   if (input.scope !== undefined) {
     if (!candidate || typeof candidate !== "object" || Array.isArray(candidate) || !Object.hasOwn(candidate, input.scope)) throw new CampaignEditorError(422, "Configuração inválida");
-    const base = current?.config ?? defaultCampaignEvent(campaign);
+    const base = current?.config ?? defaultCampaignConfig(campaign);
     // Never spread the incoming event: other sections (and legacy color) are ignored.
     candidate = { ...base, [input.scope]: (candidate as Record<string, unknown>)[input.scope] };
   }
-  return { event: validateCampaignEvent(candidate, campaign, assets), revision: input.revision + 1 };
+  return { event: validateCampaignConfig(candidate, campaign, assets), revision: input.revision + 1 };
 }
-export function validateCampaignEvent(input: unknown, campaign: CampaignIdentity, assets: readonly EditorAsset[]): EventConfig {
+export function validateCampaignConfig(input: unknown, campaign: CampaignIdentity, assets: readonly EditorAsset[]): CampaignConfig {
   const result = eventInput.safeParse(input);
   if (!result.success) throw new CampaignEditorError(422, "Configuração inválida");
   const supplied = result.data;
@@ -114,12 +114,12 @@ export function validateCampaignEvent(input: unknown, campaign: CampaignIdentity
       if ((item.width !== undefined && item.width !== asset.width) || (item.height !== undefined && item.height !== asset.height)) throw new CampaignEditorError(422, "Dimensões divergentes do arquivo");
     }
   }
-  const derived = deriveCampaignEvent(supplied, campaign);
+  const derived = deriveCampaignConfig(supplied, campaign);
   // The published parser requires an artwork; drafts intentionally permit an empty gallery.
   const empty = derived.artworks.length === 0;
   const placeholder = { id: "draft-placeholder", name: "Rascunho", file: "placeholder.png", width: 1, height: 1, reference: { x: 0, y: 0, width: 1, height: 1 } };
   try {
-    const parsed = parseEvent({ ...derived, artworks: empty ? [placeholder] : derived.artworks }, campaign.slug);
+    const parsed = parseCampaign({ ...derived, artworks: empty ? [placeholder] : derived.artworks }, campaign.slug);
     return { ...parsed, artworks: empty ? [] : parsed.artworks };
   } catch { throw new CampaignEditorError(422, "Configuração inválida"); }
 }

@@ -36,7 +36,7 @@ Os adaptadores leem o papel a cada execução e herdam o modelo da sessão. Edit
 - `services`: host público independente e simulador PixGo.
 - `scripts`, `tests`, `e2e`: operação e validação entre aplicações.
 
-npm workspaces, um `package-lock.json`; instalar na raiz em containers. `npm run build` compila admin e prepara prévia; `npm run build:campaign` gera `apps/campaign/dist`, consumido pelo host público. Contratos técnicos `/events`, `/event-runtime` e `event.json` permanecem.
+npm workspaces, um `package-lock.json`; instalar na raiz em containers. `npm run build` compila admin e prepara prévia; `npm run build:campaign` gera `apps/campaign/dist`, consumido pelo host público. Contratos técnicos `/campaigns`, `/campaign-runtime` e `campaign.json` permanecem.
 
 ## Começar localmente
 

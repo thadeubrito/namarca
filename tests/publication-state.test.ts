@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultCampaignEvent } from '../apps/admin/src/lib/campaign-editor';
+import { defaultCampaignConfig } from '../apps/admin/src/lib/campaign-editor';
 import { publicationArtifacts } from '../apps/admin/src/lib/publication-artifacts';
 import { hasUnpublishedChanges } from '../apps/admin/src/lib/publication-state';
 import { readFile } from 'node:fs/promises';
 
-const base = { ...defaultCampaignEvent({ name: 'Evento', slug: 'evento', endsAt: new Date('2099-01-01') }), artworks: [{ id: '10000000-0000-4000-8000-000000000001', name: 'Arte', file: '10000000-0000-4000-8000-000000000001.png', width: 2, height: 2, reference: { x: 0, y: 0, width: 2, height: 2 } }] };
+const base = { ...defaultCampaignConfig({ name: 'Evento', slug: 'evento', endsAt: new Date('2099-01-01') }), artworks: [{ id: '10000000-0000-4000-8000-000000000001', name: 'Arte', file: '10000000-0000-4000-8000-000000000001.png', width: 2, height: 2, reference: { x: 0, y: 0, width: 2, height: 2 } }] };
 test('publicação compara conteúdo público, não caminhos de release nem ordem de JSONB', () => {
   const published = publicationArtifacts(base, 12).event;
   const legacy = { ...published, artworks: published.artworks.map(item => ({ ...item, file: `releases/${'a'.repeat(64)}/${item.id}.png` })) };

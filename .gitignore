@@ -1,6 +1,8 @@
 node_modules/
 .next/
 out/
+apps/admin/public/campaign-runtime/
+# Legacy generated preview; never version build output.
 apps/admin/public/event-runtime/
 .env*
 !.env.example

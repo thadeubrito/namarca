@@ -1,41 +1,41 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PNG } from "pngjs";
-import { assertEditable, assertMutationOrigin, CampaignEditorError, decodeAssetName, defaultCampaignEvent, deriveCampaignEvent, editorSaveInput, MAX_UPLOAD_BYTES, readLimitedBody, validateCampaignEvent, validatePng } from "../apps/admin/src/lib/campaign-editor";
+import { assertEditable, assertMutationOrigin, CampaignEditorError, decodeAssetName, defaultCampaignConfig, deriveCampaignConfig, editorSaveInput, MAX_UPLOAD_BYTES, readLimitedBody, validateCampaignConfig, validatePng } from "../apps/admin/src/lib/campaign-editor";
 
 const campaign = { name: "Campanha real", slug: "campanha-real", endsAt: new Date("2030-01-01T12:00:00Z") };
 const id = "01234567-89ab-4cde-8fab-0123456789ab";
 const asset = { id, width: 20, height: 10, kind: "artwork" as const };
 function event() {
-  return { ...defaultCampaignEvent(campaign), artworks: [{ id, name: "Arte", file: `${id}.png`, width: 20, height: 10, reference: { x: 0, y: 0, width: 20, height: 10 } }] };
+  return { ...defaultCampaignConfig(campaign), artworks: [{ id, name: "Arte", file: `${id}.png`, width: 20, height: 10, reference: { x: 0, y: 0, width: 20, height: 10 } }] };
 }
 const status = (code: number) => (error: unknown) => error instanceof CampaignEditorError && error.status === code;
 
 test("draft vazio é permitido; identidade sempre vem da campanha", () => {
-  const empty = defaultCampaignEvent(campaign);
+  const empty = defaultCampaignConfig(campaign);
   assert.deepEqual(empty.artworks, []);
-  const saved = validateCampaignEvent({ ...empty, name: "ignorado", slug: "ignorado", endsAt: "ignorado" }, campaign, []);
+  const saved = validateCampaignConfig({ ...empty, name: "ignorado", slug: "ignorado", endsAt: "ignorado" }, campaign, []);
   assert.equal(saved.name, campaign.name);
   assert.equal(saved.slug, campaign.slug);
   assert.equal(saved.endsAt, "2030-01-01T12:00:00Z");
   assert.deepEqual(saved.artworks, []);
   assert.equal(saved.theme?.version, 1);
   assert.deepEqual(saved.theme, empty.theme);
-  assert.equal(deriveCampaignEvent(saved, { ...campaign, name: "Novo" }).name, "Novo");
+  assert.equal(deriveCampaignConfig(saved, { ...campaign, name: "Novo" }).name, "Novo");
 });
 test("valida referência estrita, dimensões, tipo, propriedade e duplicatas globais", () => {
-  assert.equal(validateCampaignEvent(event(), campaign, [asset]).artworks.length, 1);
-  assert.throws(() => validateCampaignEvent(event(), campaign, []), status(422));
-  assert.throws(() => validateCampaignEvent(event(), campaign, [{ ...asset, kind: "sticker" }]), status(422));
-  assert.throws(() => validateCampaignEvent(event(), campaign, [{ ...asset, width: 21 }]), status(422));
+  assert.equal(validateCampaignConfig(event(), campaign, [asset]).artworks.length, 1);
+  assert.throws(() => validateCampaignConfig(event(), campaign, []), status(422));
+  assert.throws(() => validateCampaignConfig(event(), campaign, [{ ...asset, kind: "sticker" }]), status(422));
+  assert.throws(() => validateCampaignConfig(event(), campaign, [{ ...asset, width: 21 }]), status(422));
   const outOfBounds = event(); outOfBounds.artworks[0].reference.x = 0.01;
-  assert.throws(() => validateCampaignEvent(outOfBounds, campaign, [asset]), status(422));
-  assert.throws(() => validateCampaignEvent({ ...event(), stickers: [{ id, name: "Duplicado", file: `${id}.png` }] }, campaign, [asset]), status(422));
+  assert.throws(() => validateCampaignConfig(outOfBounds, campaign, [asset]), status(422));
+  assert.throws(() => validateCampaignConfig({ ...event(), stickers: [{ id, name: "Duplicado", file: `${id}.png` }] }, campaign, [asset]), status(422));
   const traversal = event(); traversal.artworks[0].file = `../${id}.png`;
-  assert.throws(() => validateCampaignEvent(traversal, campaign, [asset]), status(422));
+  assert.throws(() => validateCampaignConfig(traversal, campaign, [asset]), status(422));
   const unknownField = { ...event(), paymentId: "private" };
-  assert.throws(() => validateCampaignEvent(unknownField, campaign, [asset]), status(422));
-  assert.throws(() => validateCampaignEvent({ ...event(), theme: { primary: "url(evil)" } }, campaign, [asset]), status(422));
+  assert.throws(() => validateCampaignConfig(unknownField, campaign, [asset]), status(422));
+  assert.throws(() => validateCampaignConfig({ ...event(), theme: { primary: "url(evil)" } }, campaign, [asset]), status(422));
 });
 test("revisão obrigatória e estados não editáveis", () => {
   assert.equal(editorSaveInput.safeParse({ event: {}, revision: 0 }).success, true);

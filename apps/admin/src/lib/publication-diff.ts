@@ -1,4 +1,4 @@
-import { parseEvent, themeDefaults, type Artwork, type EventConfig, type Material } from '@namarca/editor/events';
+import { parseCampaign, themeDefaults, type Artwork, type CampaignConfig, type Material } from '@namarca/editor/campaigns';
 
 export type ValueChange<T> = { before: T; after: T };
 export type PublicationField = 'slug' | 'name' | 'endsAt' | 'demo' | 'color' | `theme.${keyof typeof themeDefaults}`;
@@ -13,7 +13,7 @@ export type MaterialChanges<T extends Material> = {
   modified: { id: string; before: T; after: T; changes: MaterialFieldChange[] }[];
   reordered: { id: string; name: string; before: number; after: number }[];
 };
-export type PublicationEventDiff = {
+export type PublicationCampaignDiff = {
   hasChanges: boolean;
   fields: PublicationFieldChange[];
   artworks: MaterialChanges<Artwork>;
@@ -21,8 +21,8 @@ export type PublicationEventDiff = {
 };
 
 // Public parsing strips unknown/private fields; file paths never identify a material.
-function normalize(event: EventConfig): EventConfig {
-  return parseEvent({ ...event,
+function normalize(event: CampaignConfig): CampaignConfig {
+  return parseCampaign({ ...event,
     artworks: event.artworks.map(item => ({ ...item, file: 'material.png' })),
     stickers: event.stickers.map(item => ({ ...item, file: 'material.png' })),
   }, event.slug, { allowEmptyArtworks: true });
@@ -51,7 +51,7 @@ function materials<T extends Material>(before: T[], after: T[]): MaterialChanges
 }
 
 /** Pure, ID-based comparison of saved public content. Throws for invalid public configs. */
-export function comparePublicationEvents(before: EventConfig, after: EventConfig): PublicationEventDiff {
+export function comparePublicationCampaigns(before: CampaignConfig, after: CampaignConfig): PublicationCampaignDiff {
   const a = normalize(before), b = normalize(after);
   const fields: PublicationFieldChange[] = [];
   for (const field of ['slug', 'name', 'endsAt', 'demo', 'color'] as const) {

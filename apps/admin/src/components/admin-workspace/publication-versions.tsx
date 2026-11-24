@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import type { EventConfig } from '@namarca/editor/events';
+import type { CampaignConfig } from '@namarca/editor/campaigns';
 import { useRouter } from 'next/navigation';
 import { useHistoricalVersion } from '@/app/(workspace)/campanhas/[id]/publication-actions';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
@@ -9,7 +9,7 @@ import { useCampaignAnyPending, usePublicationLock } from './campaign-sections';
 import { SelectField } from './form-controls';
 import { Notice } from './primitives';
 
-export function PublicationVersions({ id, version, revision, updatedAt, versions }: { id: string; version: number; revision: number; updatedAt: string; versions: { version: number; config: EventConfig; publishedBy: string; deliveredAt: string }[] }) {
+export function PublicationVersions({ id, version, revision, updatedAt, versions }: { id: string; version: number; revision: number; updatedAt: string; versions: { version: number; config: CampaignConfig; publishedBy: string; deliveredAt: string }[] }) {
   const [selected, setSelected] = useState(String(version));
   const [operation, setOperation] = useState<'publish' | 'restore' | null>(null);
   const [state, submit, busy] = useActionState(useHistoricalVersion.bind(null, id), {});

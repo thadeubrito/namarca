@@ -1,11 +1,11 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { createRoot } from 'react-dom/client'
 import { PhotoEditor } from '@namarca/editor/photo-editor'
-import { checkEventSuspended, eventThemeStyle, loadEvent, MissingEventError, SuspendedEventError, resolveSlug, type EventConfig } from '@namarca/editor/events'
+import { checkCampaignSuspended, campaignThemeStyle, loadCampaign, MissingCampaignError, SuspendedCampaignError, resolveSlug, type CampaignConfig } from '@namarca/editor/campaigns'
 import '@namarca/editor/styles.css'
 import './status.css'
 
-type State = { status: 'loading' | 'missing' | 'error' | 'suspended' } | { status: 'ready'; event: EventConfig }
+type State = { status: 'loading' | 'missing' | 'error' | 'suspended' } | { status: 'ready'; event: CampaignConfig }
 
 function App() {
   const [state, setState] = useState<State>(() => ({ status: resolveSlug(window.location.pathname) ? 'loading' : 'missing' }))
@@ -16,10 +16,10 @@ function App() {
   useEffect(() => {
     const controller = new AbortController()
     if (!slug) return () => controller.abort()
-    loadEvent(slug, controller.signal).then(event => {
+    loadCampaign(slug, controller.signal).then(event => {
       if (!controller.signal.aborted) { setNow(Date.now()); setState({ status: 'ready', event }) }
     }).catch(error => {
-      if (!controller.signal.aborted) setState({ status: error instanceof SuspendedEventError ? 'suspended' : error instanceof MissingEventError ? 'missing' : 'error' })
+      if (!controller.signal.aborted) setState({ status: error instanceof SuspendedCampaignError ? 'suspended' : error instanceof MissingCampaignError ? 'missing' : 'error' })
     })
     return () => controller.abort()
   }, [slug, attempt])
@@ -50,7 +50,7 @@ function App() {
       pending = controller
       const timeout = window.setTimeout(() => controller.abort(), 10_000)
       try {
-        const suspended = await checkEventSuspended(slug, controller.signal)
+        const suspended = await checkCampaignSuspended(slug, controller.signal)
         if (!disposed && !controller.signal.aborted && suspended) setState({ status: 'suspended' })
         // Active checks do not replace the event or remount the local composition.
       } catch {
@@ -74,7 +74,7 @@ function App() {
   }, [slug, state])
 
   if (state.status === 'ready' && Date.parse(state.event.endsAt) > now) {
-    return <div className="editor-page" style={eventThemeStyle(state.event) as CSSProperties}><PhotoEditor event={state.event} /></div>
+    return <div className="editor-page" style={campaignThemeStyle(state.event) as CSSProperties}><PhotoEditor event={state.event} /></div>
   }
   // Loading is deliberately quiet: do not flash the branded status page before the editor.
   if (state.status === 'loading') return <span className="sr-only" role="status">Preparando editor…</span>

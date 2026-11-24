@@ -6,7 +6,7 @@ export interface Artwork extends Material {
 export const themeDefaults = {
   background: '#ffffff', surface: '#dedede', accent: '#494fdf', text: '#191c1f',
 }
-export type EventTheme = { version: 1 } & typeof themeDefaults
+export type CampaignTheme = { version: 1 } & typeof themeDefaults
 export function contrastText(color: string): string {
   const channels = color.slice(1).match(/../g)!.map(hex => {
     const value = parseInt(hex, 16) / 255
@@ -15,10 +15,10 @@ export function contrastText(color: string): string {
   const luminance = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722
   return (luminance + .05) / .05 >= 1.05 / (luminance + .05) ? '#000000' : '#ffffff'
 }
-export function eventThemeStyle(event: EventConfig): Record<string, string> {
+export function campaignThemeStyle(event: CampaignConfig): Record<string, string> {
   const { background, surface, accent, text } = event.theme ?? { version: 1, ...themeDefaults }
   return {
-    '--event-color': accent,
+    '--campaign-color': accent,
     '--theme-background': background, '--theme-surface': surface,
     '--theme-text': text, '--theme-muted-text': text,
     '--theme-primary': accent, '--theme-accent': accent,
@@ -28,9 +28,9 @@ export function eventThemeStyle(event: EventConfig): Record<string, string> {
   }
 }
 
-export interface EventConfig {
+export interface CampaignConfig {
   slug: string; name: string; color: string; demo: boolean; endsAt: string
-  artworks: Artwork[]; stickers: Material[]; theme?: EventTheme
+  artworks: Artwork[]; stickers: Material[]; theme?: CampaignTheme
 }
 
 export function resolveSlug(path: string): string | null {
@@ -38,7 +38,7 @@ export function resolveSlug(path: string): string | null {
   return match?.[1] ?? null
 }
 
-export function parseEvent(value: unknown, slug: string, options: { allowEmptyArtworks?: boolean } = {}): EventConfig {
+export function parseCampaign(value: unknown, slug: string, options: { allowEmptyArtworks?: boolean } = {}): CampaignConfig {
   const fail = (detail?: string): never => { throw new Error(`Configuração inválida${detail ? `: ${detail}` : ''}`) }
   const object = (v: unknown): Record<string, unknown> => {
     if (!v || typeof v !== 'object' || Array.isArray(v)) return fail()
@@ -62,7 +62,7 @@ export function parseEvent(value: unknown, slug: string, options: { allowEmptyAr
   const color = text(o.color)
   const endsAt = text(o.endsAt)
   if (!/^#[0-9a-f]{6}$/i.test(color) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/.test(endsAt) || !Number.isFinite(Date.parse(endsAt))) return fail()
-  let theme: EventTheme | undefined
+  let theme: CampaignTheme | undefined
   if (o.theme !== undefined) {
     const input = object(o.theme)
     if (input.version !== 1 || Object.keys(input).length !== 5) return fail('versão ou campos do tema inválidos')
@@ -87,8 +87,8 @@ export function parseEvent(value: unknown, slug: string, options: { allowEmptyAr
   return { slug, name: text(o.name), theme, color, demo: o.demo, endsAt, artworks, stickers }
 }
 
-export class MissingEventError extends Error {}
-export class SuspendedEventError extends Error {}
+export class MissingCampaignError extends Error {}
+export class SuspendedCampaignError extends Error {}
 
 // The control pointer is strict; full legacy manifests retain their existing parser.
 function publicationPointer(value: unknown): { version: number; suspended: boolean } | null {
@@ -101,28 +101,28 @@ function publicationPointer(value: unknown): { version: number; suspended: boole
   return { version: input.version, suspended: input.suspended === true }
 }
 
-async function readEventJson(path: string, signal: AbortSignal, pointer = false): Promise<unknown> {
+async function readCampaignJson(path: string, signal: AbortSignal, pointer = false): Promise<unknown> {
     const response = await fetch(path, { signal, ...(pointer ? { cache: 'no-store' as const } : {}) })
     // Servidores SPA podem retornar index.html (200) quando o JSON não existe.
-    if (response.status === 404) throw new MissingEventError()
+    if (response.status === 404) throw new MissingCampaignError()
     if (!response.ok) throw new Error('Falha de rede')
-    if (response.headers.get('content-type')?.includes('text/html')) throw new MissingEventError()
+    if (response.headers.get('content-type')?.includes('text/html')) throw new MissingCampaignError()
     return response.json()
 }
 
 /** Reads only the no-store control object. Failure is unknown, never an active verdict. */
-export async function checkEventSuspended(slug: string, signal: AbortSignal): Promise<boolean> {
-  const manifest = await readEventJson(`/events/${slug}/event.json`, signal, true)
+export async function checkCampaignSuspended(slug: string, signal: AbortSignal): Promise<boolean> {
+  const manifest = await readCampaignJson(`/campaigns/${slug}/campaign.json`, signal, true)
   const pointer = publicationPointer(manifest)
   if (pointer) return pointer.suspended
-  parseEvent(manifest, slug)
+  parseCampaign(manifest, slug)
   return false
 }
 
-export async function loadEvent(slug: string, signal: AbortSignal): Promise<EventConfig> {
-  const manifest = await readEventJson(`/events/${slug}/event.json`, signal, true)
+export async function loadCampaign(slug: string, signal: AbortSignal): Promise<CampaignConfig> {
+  const manifest = await readCampaignJson(`/campaigns/${slug}/campaign.json`, signal, true)
   const pointer = publicationPointer(manifest)
-  if (pointer?.suspended) throw new SuspendedEventError()
-  if (pointer) return parseEvent(await readEventJson(`/events/${slug}/versions/v${pointer.version}.json`, signal), slug)
-  return parseEvent(manifest, slug)
+  if (pointer?.suspended) throw new SuspendedCampaignError()
+  if (pointer) return parseCampaign(await readCampaignJson(`/campaigns/${slug}/versions/v${pointer.version}.json`, signal), slug)
+  return parseCampaign(manifest, slug)
 }

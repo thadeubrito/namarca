@@ -1,4 +1,4 @@
-import type { Artwork } from '../events/events'
+import type { Artwork } from '../campaigns/campaigns'
 import { constrain, coverScale, initialFrame, type Rect, type Transform } from './framing'
 
 export interface Sticker {

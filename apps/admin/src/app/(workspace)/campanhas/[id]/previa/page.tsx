@@ -7,5 +7,5 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
   await requireAdmin();
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  redirect(`/event-runtime/preview.html?campaignId=${id}`);
+  redirect(`/campaign-runtime/preview.html?campaignId=${id}`);
 }

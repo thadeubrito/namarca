@@ -44,7 +44,7 @@ test('mapa é validado antes da atualização atômica e não remonta editor nem
   const resolve = (assetUrls: unknown, assetBase?: string) => runInNewContext(`(${expression})`, { file, assetUrls, assetBase, event: { slug: 'public-event' }, Object, encodeURIComponent });
   assert.equal(resolve({ [file]: `blob:${origin}/art` }, '/private'), `blob:${origin}/art`);
   assert.equal(resolve({}, '/private'), '/private/' + file.replace(/\.png$/, ''));
-  assert.equal(resolve(undefined), '/events/public-event/' + file);
+  assert.equal(resolve(undefined), '/campaigns/public-event/' + file);
   assert.equal(resolve(Object.create({ [file]: 'https://evil.test' }), '/private'), '/private/' + file.replace(/\.png$/, ''));
   const publicEntry = readFileSync('apps/campaign/src/main.tsx', 'utf8');
   assert.doesNotMatch(publicEntry, /assetUrls|localAssets/);

@@ -7,7 +7,7 @@ import { campaigns, payments, clients, checkoutLinks, checkoutAttempts, campaign
 import { requireAdmin } from '@/lib/admin';
 import { hasUnpublishedChanges } from '@/lib/publication-state';
 import { campaignAvailability } from '@/lib/campaign-availability';
-import { defaultCampaignEvent, deriveCampaignEvent } from '@/lib/campaign-editor';
+import { defaultCampaignConfig, deriveCampaignConfig } from '@/lib/campaign-editor';
 import { CampaignPublication } from '@/components/admin-workspace/publication';
 import { updateCampaign } from './actions';
 import { CampaignSections } from '@/components/admin-workspace/campaign-sections';
@@ -26,7 +26,7 @@ export default async function CampaignDetail({ params }: { params: Promise<{ id:
   const publicationHistory = await db.select().from(campaignPublicationHistory).where(eq(campaignPublicationHistory.campaignId, id)).orderBy(desc(campaignPublicationHistory.deliveredAt));
   const previousPublication = publicationHistory[0];
   const versions = [...publicationHistory, ...(publication?.deliveredAt ? [publication] : [])].map(item => ({ version: item.version, config: item.config, publishedBy: item.publishedBy, deliveredAt: item.deliveredAt!.toISOString() })).sort((a, b) => a.version - b.version);
-  const draft = editor ? deriveCampaignEvent(editor.config, campaign) : defaultCampaignEvent(campaign);
+  const draft = editor ? deriveCampaignConfig(editor.config, campaign) : defaultCampaignConfig(campaign);
   const publicConfig = publication?.deliveredAt ? publication.config : previousPublication?.config;
   const unpublishedChanges = !!publicConfig && hasUnpublishedChanges(draft, publicConfig);
   const history = await db.select().from(payments).where(eq(payments.campaignId, id)).orderBy(desc(payments.createdAt));

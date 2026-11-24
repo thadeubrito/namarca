@@ -6,7 +6,7 @@ import { db, pool } from "../apps/admin/src/db";
 import { campaigns, campaignAssets, campaignEditor, campaignPackages } from "../apps/admin/src/db/schema";
 import { cleanupCampaignAssets } from "../apps/admin/src/lib/asset-cleanup";
 import { campaignAssetKey } from "../apps/admin/src/lib/asset-cleanup-policy";
-import { defaultCampaignEvent } from "../apps/admin/src/lib/campaign-editor";
+import { defaultCampaignConfig } from "../apps/admin/src/lib/campaign-editor";
 import { deletePrivateObject, getPrivateObject, putPrivateObject } from "../apps/admin/src/lib/storage";
 
 async function main() {
@@ -15,7 +15,7 @@ const campaignId = randomUUID();
 const ids = Array.from({ length: 5 }, () => randomUUID());
 const [removed, retained, dbOnly, recent, orphan] = ids;
 const identity = { name: "Cleanup focal fixture", slug: `cleanup-${campaignId}`, endsAt: new Date("2099-01-01") };
-const empty = defaultCampaignEvent(identity);
+const empty = defaultCampaignConfig(identity);
 const historic = { ...empty, artworks: [{ id: retained, name: "Retained", file: `${retained}.png`, width: 2, height: 2, reference: { x: 0, y: 0, width: 2, height: 2 } }] };
 try {
   await db.insert(campaigns).values({ id: campaignId, ...identity });

@@ -1,4 +1,4 @@
-import type { Artwork } from '../events/events'
+import type { Artwork } from '../campaigns/campaigns'
 
 export async function decodeImage(src: string): Promise<HTMLImageElement> {
   const image = new Image()

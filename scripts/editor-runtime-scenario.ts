@@ -2,14 +2,14 @@ import { openStudio, closeStudio, campaignSections, expectStudioLayout, expectCo
 import assert from 'node:assert/strict';
 import { expect, type BrowserContext, type Download, type Locator, type Page, type Route } from '@playwright/test';
 import { PNG } from 'pngjs';
-import type { EventConfig } from '../packages/editor/src/events/events';
+import type { CampaignConfig } from '../packages/editor/src/campaigns/campaigns';
 
 type Props = {
   page: Page;
   context: BrowserContext;
   base: string;
   campaignId: string;
-  event: EventConfig;
+  event: CampaignConfig;
   photo: Buffer;
 };
 
@@ -27,9 +27,9 @@ export async function testEditorRuntime({ page, context, base, campaignId, event
   const root = base.replace(/\/$/, '');
   const slug = `runtime-${crypto.randomUUID()}`;
   const endedSlug = `${slug}-ended`;
-  const manifest: EventConfig = { ...event, slug, endsAt: '2099-12-31T23:59:59Z' };
+  const manifest: CampaignConfig = { ...event, slug, endsAt: '2099-12-31T23:59:59Z' };
   assert.ok(manifest.artworks.length, 'O cenário exige ao menos uma arte');
-  const ended: EventConfig = { ...manifest, slug: endedSlug, endsAt: '2000-01-01T00:00:00Z' };
+  const ended: CampaignConfig = { ...manifest, slug: endedSlug, endsAt: '2000-01-01T00:00:00Z' };
   const ownedRoutes: { url: string; handler: (route: Route) => Promise<void> }[] = [];
   const opened: Page[] = [];
   const mutations: string[] = [];
@@ -71,23 +71,23 @@ export async function testEditorRuntime({ page, context, base, campaignId, event
   try {
     // Chromium treats fulfilled top-level fixture HTML as an unknown address space.
     // Fulfill its static subresources too; bytes still come from the actual build.
-    await route(`${origin}/event-runtime/**`, async intercepted => {
+    await route(`${origin}/campaign-runtime/**`, async intercepted => {
       const response = await context.request.get(intercepted.request().url());
       await intercepted.fulfill({ response });
     });
     for (const config of [manifest, ended]) {
       await route(`${origin}/${config.slug}`, async intercepted => {
-        const response = await context.request.get(`${root}/event-runtime/index.html`);
+        const response = await context.request.get(`${root}/campaign-runtime/index.html`);
         assert.equal(response.status(), 200, 'Runtime público estático deve existir');
         await intercepted.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: await response.body() });
       });
-      await route(`${origin}/events/${config.slug}/event.json`, async intercepted => {
+      await route(`${origin}/campaigns/${config.slug}/campaign.json`, async intercepted => {
         await intercepted.fulfill({ json: config });
       });
       for (const material of [...config.artworks, ...config.stickers]) {
         const id = material.file.replace(/\.png$/i, '');
         assert.match(id, /^[0-9a-f-]{36}$/i, 'Materiais devem ser UUIDs privados, sem caminhos');
-        await route(`${origin}/events/${config.slug}/${material.file}`, async intercepted => {
+        await route(`${origin}/campaigns/${config.slug}/${material.file}`, async intercepted => {
           // API privada recebe UUID SEM .png. Apenas GET de materiais existentes.
           const response = await context.request.get(`${root}/api/campaigns/${campaignId}/assets/${id}`);
           assert.equal(response.status(), 200);
@@ -115,7 +115,7 @@ export async function testEditorRuntime({ page, context, base, campaignId, event
       styles: Array.from(document.styleSheets, sheet => sheet.href || ''),
       resources: performance.getEntriesByType('resource').map(entry => entry.name),
     }));
-    assert.ok(isolated.styles.some(url => /event-runtime\/.*\.css/.test(url)), 'Prévia usa CSS estático do editor');
+    assert.ok(isolated.styles.some(url => /campaign-runtime\/.*\.css/.test(url)), 'Prévia usa CSS estático do editor');
     for (const url of [...isolated.styles, ...isolated.resources]) {
       assert.doesNotMatch(url, /\/_next(?:\/|\?)|globals(?:\.[^/]*)?\.css/i, 'Sem CSS/JS administrativo na prévia');
     }

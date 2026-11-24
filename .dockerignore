@@ -10,4 +10,4 @@ test-results
 
 **/.next
 **/dist
-apps/admin/public/event-runtime
+apps/admin/public/campaign-runtime

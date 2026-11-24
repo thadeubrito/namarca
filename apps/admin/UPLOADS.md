@@ -43,7 +43,8 @@ Esse teste chama handlers reais com auth/TOTP e storage reais, mas não é um br
 - URLs assinadas não devem entrar em logs, analytics/session replay ou relatórios de erro. Não instrumentar o corpo da autorização.
 - Homologar assinatura/headers, CORS, PNG de 25 MiB, imagens de 40 milhões de pixels, memória/tempo e concorrência na Vercel/R2 reais. Finalização declara `maxDuration=60`, não prova capacidade do plano.
 - Finalização é síncrona e mantém lock da campanha durante leitura/validação/persistência, como o caminho legado. Arquivos pequenos não demonstram capacidade do pior caso.
-- Sem worker/cron e **sem limpeza automática nova**. Temporários concluídos/abandonados permanecem privados; retenção e limpeza do prefixo exclusivo `private/uploads/` precisam de decisão explícita antes da operação contínua. Cleanup manual atual de assets não percorre staging. Não criar lifecycle amplo em `private/`.
-- Registros de autorização também permanecem para idempotência; nenhum job apaga registros ou objetos automaticamente.
+- Política aprovada: expiração pelo lifecycle do próprio storage após **1 dia**, restrita exatamente ao prefixo `private/uploads/`, incluindo temporários concluídos, abandonados e inválidos. Não aplicar a `private/campaigns/`, `public/` ou ao prefixo amplo `private/`. Sem worker/cron da aplicação. Expiração não garante exclusão em horário exato; conferir semântica do R2 e margem em relação à finalização de 1 hora durante a homologação.
+- A regra está aprovada, mas **ainda não foi configurada** no storage local ou no R2. Até configurá-la, temporários permanecem privados. Cleanup manual atual de assets não percorre staging. Configurar a regra de forma restrita e verificar que não substitui outras regras de retenção do bucket.
+- Registros de autorização permanecem para idempotência; lifecycle de objetos não remove registros do banco.
 
 Este documento não autoriza provisionamento, R2 real, push ou deploy.

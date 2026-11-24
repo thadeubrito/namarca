@@ -12,7 +12,7 @@ Memória seletiva, não diário de entregas. Código e migrations são a fonte d
 
 - Monorepo npm workspaces: `apps/admin`, `apps/campaign`, `apps/site`, `packages/editor`; lock único. Administrativo sem prefixo `/admin`; campanha pública em host separado.
 - O novo sistema possui administração, clientes leves, estúdio, prévia privada, checkout mock, financeiro e publicação local versionada. O público antigo em produção continua separado: implementação local não é migração/deploy nem homologação live.
-- `@namarca/editor` é o core compartilhado entre público local e prévia privada. Não criar uma segunda implementação do editor. Contratos técnicos `/events`, `/event-runtime`, `event.json` e nomes `EventConfig` permanecem apesar da terminologia de produto campanha.
+- `@namarca/editor` é o core compartilhado entre público local e prévia privada. Não criar uma segunda implementação do editor. Contrato público novo usa `/campaigns/<slug>/campaign.json` e storage `public/campaigns/`; não usa mais `/events/` ou `event.json`. Tipos/imports e runtime padronizados para `CampaignConfig`, `@namarca/editor/campaigns` e `/campaign-runtime`; não preservar nomes de evento para a entidade campanha. Objetos publicados antes dessa troca não foram migrados: DB entregue antigo não comprova existência dos novos caminhos; planejar materialização/migração explícita antes de reutilizar campanhas antigas.
 - Design tem diretrizes separadas: administrativo com referência Revolut; público com direção visual ainda a definir em `design/public.md`. Não aplicar Revolut automaticamente ao institucional/campanha. Prévia tem shell administrativo e conteúdo público. Login/TOTP e checkout preservam tratamento atual até definição de associação visual.
 - Aplicação contém componentes legados sem uso. Conferir imports e rotas ativas antes de alterar/remover; existência de arquivo ou tabela não significa funcionalidade vigente.
 
@@ -49,7 +49,7 @@ Memória seletiva, não diário de entregas. Código e migrations são a fonte d
 ### Publicação
 
 - Salvar rascunho não muda público. Publicar não consulta/exige pagamento; primeira publicação exige confirmação explícita. Endereço já publicado permanece fixo.
-- Artefatos públicos estritos, sem cliente/notas/financeiro/tokens/auditoria. PNGs e `versions/vN.json` imutáveis; `event.json` é ponteiro escrito por último, no-store. Retry usa snapshot congelado, nunca draft posterior.
+- Artefatos públicos estritos, sem cliente/notas/financeiro/tokens/auditoria. PNGs e `versions/vN.json` imutáveis; `campaign.json` é ponteiro escrito por último, no-store. Retry usa snapshot congelado, nunca draft posterior.
 - Número público atual pode ser menor que o maior histórico. Publicar versão histórica mantém seu número e não muda draft; restaurar no rascunho não muda público. Próxima versão nova é max histórico + 1.
 - S3 e banco não têm transação distribuída. PUT bem-sucedido seguido de commit falho pode divergir até retry explícito. `published` não comprova entrega: conferir `deliveredAt`. Falhas podem deixar assets públicos órfãos acessíveis pela URL.
 - Suspensão preservada em novas publicações; reativação usa versão entregue, não rascunho. Prazo não pausa, versão expirada não reativa. Checks de suspensão em sessões abertas não significam revogação instantânea; offline/cache/clientes antigos podem atrasar. Arquivos publicados/exportados não são apagados por suspensão ou prazo.
@@ -70,7 +70,7 @@ Não são tarefas automaticamente autorizadas nem prova de que todo cenário ain
 ## Fora do escopo autorizado atual
 
 - Deploy, push, migração do público antigo, PixGo real ou provisionamento pago.
-- Upload direto de materiais implementado localmente com autorização autenticada, PUT assinado para staging privado e finalização que valida tamanho/hash/PNG antes de gravar bytes definitivos. Não equivale a homologação R2/Vercel: validar browser real, CORS/assinatura e pior caso de memória/tempo. Temporários/autorização não têm limpeza automática; política de retenção restrita pendente antes de operação contínua. Detalhes em `apps/admin/UPLOADS.md`.
+- Upload direto de materiais implementado localmente com autorização autenticada, PUT assinado para staging privado e finalização que valida tamanho/hash/PNG antes de gravar bytes definitivos. Não equivale a homologação R2/Vercel: validar browser real, CORS/assinatura e pior caso de memória/tempo. Retenção aprovada para objetos temporários: lifecycle do storage após 1 dia, exclusivamente `private/uploads/`, sem worker/cron; ainda não configurado localmente nem no R2. Não afeta definitivos/públicos nem remove autorizações do banco. Detalhes em `apps/admin/UPLOADS.md`.
 - Backups/restauração, retenção de longo prazo, rate limiting distribuído, cache/CDN, escala e operação financeira live exigem preparação específica.
 - Novas regras de revogação/reemissão, cancelamento/reembolso, oferta e métricas de participantes exigem escopo/decisão. Não usar backlog antigo como autorização.
 

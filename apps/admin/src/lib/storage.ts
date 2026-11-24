@@ -33,7 +33,7 @@ export async function putPrivateObject(key: string, body: Uint8Array, contentTyp
 }
 // Public delivery is restricted to campaign manifests and immutable versioned PNGs.
 export function assertPublicKey(key: string) {
-  if (!/^public\/events\/[a-z0-9]+(?:-[a-z0-9]+)*\/(?:event\.json|versions\/v[1-9][0-9]*\.json|(?:artworks|stickers)\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.png|releases\/[a-f0-9]{64}\/[a-f0-9-]{36}\.png)$/.test(key)) throw new Error('Invalid public key');
+  if (!/^public\/campaigns\/[a-z0-9]+(?:-[a-z0-9]+)*\/(?:campaign\.json|versions\/v[1-9][0-9]*\.json|(?:artworks|stickers)\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.png|releases\/[a-f0-9]{64}\/[a-f0-9-]{36}\.png)$/.test(key)) throw new Error('Invalid public key');
 }
 export async function publicObjectExists(key: string): Promise<boolean> {
   assertPublicKey(key);
@@ -50,7 +50,7 @@ export async function putPublicObject(key: string, body: Uint8Array, contentType
   assertPublicKey(key);
   if (key.endsWith('.json') !== (contentType === 'application/json')) throw new Error('Invalid public content type');
   const client = createStorageClient();
-  try { await client.send(new PutObjectCommand({ Bucket: getEnv().S3_BUCKET, Key: key, Body: body, ContentType: contentType, CacheControl: key.endsWith('/event.json') ? 'no-store' : 'public, max-age=31536000, immutable' })); }
+  try { await client.send(new PutObjectCommand({ Bucket: getEnv().S3_BUCKET, Key: key, Body: body, ContentType: contentType, CacheControl: key.endsWith('/campaign.json') ? 'no-store' : 'public, max-age=31536000, immutable' })); }
   finally { client.destroy(); }
 }
 export async function deletePrivateObject(key: string) {

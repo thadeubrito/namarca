@@ -7,8 +7,7 @@
   },
   "scripts": {
     "dev": "npm run dev --workspace @namarca/admin --",
-    "build:event": "npm run build:campaign",
-    "dev:event": "npm run dev --workspace @namarca/campaign",
+    "dev:campaign": "npm run dev --workspace @namarca/campaign",
     "build": "npm run build --workspace @namarca/admin",
     "start": "npm run start --workspace @namarca/admin --",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit",

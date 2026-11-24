@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { IconArrowBackUp, IconArrowForwardUp, IconCamera, IconDownload, IconInfoCircle, IconPhotoSquareRounded, IconSticker, IconTrash, IconX } from '@tabler/icons-react'
 import { motion, useReducedMotion } from 'motion/react'
-import type { EventConfig } from '../events/events'
+import type { CampaignConfig } from '../campaigns/campaigns'
 
 export type EditorTool = '' | 'Foto' | 'Artes' | 'Stickers' | 'Salvar' | 'Ajuda'
 
@@ -24,7 +24,7 @@ export function EditorIcon({ name }: { name: string }) {
 
 // Ferramentas sobrepostas não participam do dimensionamento da composição.
 export function EditorWorkspace({ event, panel, open, blocked, compositionReady = true, tools, canvas, history, feedback, fileInput, choosePhoto, trash, dragging, overTrash }: {
-  event: EventConfig; panel: EditorTool; open: (tool: EditorTool) => void; blocked: boolean; compositionReady?: boolean
+  event: CampaignConfig; panel: EditorTool; open: (tool: EditorTool) => void; blocked: boolean; compositionReady?: boolean
   tools: ReactNode; canvas: ReactNode; history: ReactNode; feedback: ReactNode; fileInput: ReactNode
   choosePhoto: () => void; trash: RefObject<HTMLDivElement | null>; dragging: boolean; overTrash: boolean
 }) {
@@ -57,7 +57,7 @@ export function EditorWorkspace({ event, panel, open, blocked, compositionReady 
     trigger.current = button
     open(panel === tool ? '' : tool)
   }
-  return <section ref={root} className="dedicated-editor" data-panel={panel} aria-label="Editor de composição" style={{ '--event-color': event.color } as CSSProperties}
+  return <section ref={root} className="dedicated-editor" data-panel={panel} aria-label="Editor de composição" style={{ '--campaign-color': event.color } as CSSProperties}
     onPointerDownCapture={(e) => {
       closingClick.current = false
       const target = e.target as HTMLElement

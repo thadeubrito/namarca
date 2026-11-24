@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 import { Pipette, RotateCcw } from 'lucide-react';
-import { themeDefaults, type EventConfig } from '@namarca/editor/events';
+import { themeDefaults, type CampaignConfig } from '@namarca/editor/campaigns';
 import { Action } from './primitives';
 
 type ThemeKey = keyof typeof themeDefaults;
@@ -34,7 +34,7 @@ function ColorControl({ label, hint, value, disabled, onChange }: { label: strin
   </div>;
 }
 
-export function StudioColors({ event, disabled, onChange }: { event: EventConfig; disabled: boolean; onChange: (event: EventConfig) => void }) {
+export function StudioColors({ event, disabled, onChange }: { event: CampaignConfig; disabled: boolean; onChange: (event: CampaignConfig) => void }) {
   const theme = event.theme ?? { version: 1, ...themeDefaults };
   const customized = (Object.keys(themeDefaults) as ThemeKey[]).some(key => (event.theme?.[key] ?? themeDefaults[key]).toLowerCase() !== themeDefaults[key].toLowerCase());
   return <div className="ws-studio-palette">

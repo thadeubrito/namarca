@@ -8,11 +8,11 @@ import { pipeline } from 'node:stream/promises';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const slug = '[a-z0-9]+(?:-[a-z0-9]+)*';
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
-const manifestRoute = new RegExp(`^/events/(${slug})/event\\.json$`);
-const versionRoute = new RegExp(`^/events/(${slug})/versions/v[1-9][0-9]*\\.json$`);
-const imageRoute = new RegExp(`^/events/(${slug})/(?:releases/[0-9a-f]{64}|artworks|stickers)/(${uuid})\\.png$`);
+const manifestRoute = new RegExp(`^/campaigns/(${slug})/campaign\\.json$`);
+const versionRoute = new RegExp(`^/campaigns/(${slug})/versions/v[1-9][0-9]*\\.json$`);
+const imageRoute = new RegExp(`^/campaigns/(${slug})/(?:releases/[0-9a-f]{64}|artworks|stickers)/(${uuid})\\.png$`);
 const slugRoute = new RegExp(`^/(${slug})$`);
-const reserved = new Set(['admin', 'api', 'login', 'seguranca', 'checkout', 'events', 'event-runtime', 'private']);
+const reserved = new Set(['admin', 'api', 'login', 'seguranca', 'checkout', 'campaigns', 'campaign-runtime', 'private']);
 const immutable = 'public, max-age=31536000, immutable';
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
 const security = {
@@ -76,7 +76,7 @@ export function createPublicServer({ readObject, runtimeDir = resolve(root, 'app
       if (path === '/estudos/azul/azul.css') return await localFile(res, siteDir, 'estudos/azul/azul.css');
       if (['/estudos/galeria/galeria.css', '/estudos/galeria/manrope-latin.woff2', '/estudos/galeria/OFL.txt', '/estudos/galeria/NOTICE.txt'].includes(path)) return await localFile(res, siteDir, path.slice(1));
       if (['/estudos/estudos.css', '/estudos/estudos.js', '/estudos/NOTICE.txt', '/estudos/molduras/molduras.css', '/estudos/molduras/molduras.js', '/estudos/perspectiva/perspectiva.css', '/estudos/perspectiva/perspectiva.js'].includes(path)) return await localFile(res, siteDir, path.slice(1));
-      if (path.startsWith('/event-runtime/')) return await localFile(res, runtimeDir, path.slice('/event-runtime/'.length));
+      if (path.startsWith('/campaign-runtime/')) return await localFile(res, runtimeDir, path.slice('/campaign-runtime/'.length));
       const manifest = manifestRoute.exec(path);
       const version = versionRoute.exec(path);
       const image = imageRoute.exec(path);
@@ -119,7 +119,7 @@ export async function start(env = process.env) {
   const server = createPublicServer({ readObject: async (key, { signal }) => {
     // Defense in depth at the storage boundary.
     const path = key.slice('public'.length);
-    if (!key.startsWith('public/events/') || !(manifestRoute.test(path) || versionRoute.test(path) || imageRoute.test(path))) throw new Error('Chave inválida.');
+    if (!key.startsWith('public/campaigns/') || !(manifestRoute.test(path) || versionRoute.test(path) || imageRoute.test(path))) throw new Error('Chave inválida.');
     const result = await client.send(new GetObjectCommand({ Bucket: S3_BUCKET, Key: key }), { abortSignal: signal });
     return { body: result.Body };
   } });

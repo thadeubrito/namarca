@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { campaigns, campaignEditor, campaignAssets } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
-import { assertEditable, assertMutationOrigin, CampaignEditorError, defaultCampaignEvent, deriveCampaignEvent, editorErrorResponse, editorSaveInput, readLimitedBody, requireUuid, resolveEditorSave } from "@/lib/campaign-editor";
+import { assertEditable, assertMutationOrigin, CampaignEditorError, defaultCampaignConfig, deriveCampaignConfig, editorErrorResponse, editorSaveInput, readLimitedBody, requireUuid, resolveEditorSave } from "@/lib/campaign-editor";
 
 import { cleanupCampaignAssets } from "@/lib/asset-cleanup";
 import { CLEANUP_BATCH_LIMIT, removedAssetIds } from "@/lib/asset-cleanup-policy";
@@ -17,7 +17,7 @@ export async function GET(request: Request, context: Context) {
     const id = requireUuid((await context.params).id);
     const [row] = await db.select({ campaign: campaigns, editor: campaignEditor }).from(campaigns).leftJoin(campaignEditor, eq(campaignEditor.campaignId, campaigns.id)).where(eq(campaigns.id, id));
     if (!row) throw new CampaignEditorError(404, "Campanha não encontrada");
-    return json({ event: row.editor ? deriveCampaignEvent(row.editor.config, row.campaign) : defaultCampaignEvent(row.campaign), revision: row.editor?.revision ?? 0, draftOwner: session.user.id });
+    return json({ event: row.editor ? deriveCampaignConfig(row.editor.config, row.campaign) : defaultCampaignConfig(row.campaign), revision: row.editor?.revision ?? 0, draftOwner: session.user.id });
   } catch (error) { return editorErrorResponse(error); }
 }
 

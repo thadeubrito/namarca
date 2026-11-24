@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 export * from "./auth-schema";
-import type { EventConfig } from "@namarca/editor/events";
+import type { CampaignConfig } from "@namarca/editor/campaigns";
 
 export const preparationStatus = pgEnum("preparation_status", ["draft", "validated", "approved"]);
 export const publicationStatus = pgEnum("publication_status", ["unpublished", "pending", "published", "failed", "ended"]);
@@ -38,7 +38,7 @@ export const campaigns = pgTable("campaigns", {
 
 export const campaignEditor = pgTable("campaign_editor", {
   campaignId: uuid("campaign_id").primaryKey().references(() => campaigns.id, { onDelete: "cascade" }),
-  config: jsonb("config").$type<EventConfig>().notNull(),
+  config: jsonb("config").$type<CampaignConfig>().notNull(),
   revision: integer("revision").default(0).notNull(),
   updatedAt: updatedAt(),
 });
@@ -50,7 +50,7 @@ export const campaignPackages = pgTable("campaign_packages", {
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "restrict" }),
   version: integer("version").notNull(),
   editorRevision: integer("editor_revision").notNull(),
-  config: jsonb("config").$type<EventConfig>().notNull(),
+  config: jsonb("config").$type<CampaignConfig>().notNull(),
   approvedBy: text("approved_by").notNull(),
   channel: text("channel").notNull(),
   approvedAt: timestamp("approved_at", { withTimezone: true }).notNull(),
@@ -62,7 +62,7 @@ export const campaignPackages = pgTable("campaign_packages", {
 export const campaignPublications = pgTable("campaign_publications", {
   campaignId: uuid("campaign_id").primaryKey().references(() => campaigns.id, { onDelete: "restrict" }),
   version: integer("version").notNull(),
-  config: jsonb("config").$type<EventConfig>().notNull(),
+  config: jsonb("config").$type<CampaignConfig>().notNull(),
   editorRevision: integer("editor_revision").notNull(),
   publishedBy: text("published_by").notNull(),
   deliveredAt: timestamp("delivered_at", { withTimezone: true }),
@@ -74,7 +74,7 @@ export const campaignPublicationHistory = pgTable("campaign_publication_history"
   id: uuid("id").defaultRandom().primaryKey(),
   version: integer("version").notNull(),
   campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "restrict" }),
-  config: jsonb("config").$type<EventConfig>().notNull(),
+  config: jsonb("config").$type<CampaignConfig>().notNull(),
   editorRevision: integer("editor_revision").notNull(),
   publishedBy: text("published_by").notNull(),
   deliveredAt: timestamp("delivered_at", { withTimezone: true }).notNull(),

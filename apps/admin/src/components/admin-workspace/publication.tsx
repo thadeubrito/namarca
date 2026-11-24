@@ -1,5 +1,5 @@
 'use client';
-import type { EventConfig } from '@namarca/editor/events';
+import type { CampaignConfig } from '@namarca/editor/campaigns';
 import { PublicationDiff } from './publication-diff';
 import { PublicationVersions } from './publication-versions';
 import { useActionState, useEffect, useRef, useState } from 'react';
@@ -9,7 +9,7 @@ import { useCampaignAnyPending, useCampaignPending, usePublicationLock } from '.
 import { Action, Notice, Surface } from './primitives';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 
-export function CampaignPublication({ suspended = false, ended = false, id, delivered, revision, published, updatedAt, unpublishedChanges, version, versions, draft }: { suspended?: boolean; ended?: boolean; version: number; versions: { version: number; config: EventConfig; publishedBy: string; deliveredAt: string }[]; draft: EventConfig; id: string; delivered: boolean; revision: number; published: boolean; updatedAt: string; unpublishedChanges: boolean }) {
+export function CampaignPublication({ suspended = false, ended = false, id, delivered, revision, published, updatedAt, unpublishedChanges, version, versions, draft }: { suspended?: boolean; ended?: boolean; version: number; versions: { version: number; config: CampaignConfig; publishedBy: string; deliveredAt: string }[]; draft: CampaignConfig; id: string; delivered: boolean; revision: number; published: boolean; updatedAt: string; unpublishedChanges: boolean }) {
   const lock = usePublicationLock();
   const [confirmation, setConfirmation] = useState<'publish' | 'discard' | 'access' | null>(null);
   const confirmed = useRef(false);

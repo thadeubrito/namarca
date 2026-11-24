@@ -1,6 +1,6 @@
 'use client'
 import { useRef, useState, type PointerEvent } from 'react'
-import type { Artwork } from '@namarca/editor/events'
+import type { Artwork } from '@namarca/editor/campaigns'
 type Point = { x: number; y: number }
 
 export type ReferenceHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'

@@ -62,7 +62,7 @@ docker run --rm --name "$TEST" --network "$NETWORK" \
   -e S3_ACCESS_KEY_ID=synthetic-test-key -e S3_SECRET_ACCESS_KEY=synthetic-test-secret \
   -e PIXGO_MODE=mock -e PIXGO_API_KEY=synthetic -e PIXGO_WEBHOOK_SECRET=synthetic-direct-upload-webhook-secret \
   node:24.11.1-bookworm-slim sh -ec '
-    node -e '\''const fs=require("node:fs");fs.cpSync("/source","/app",{recursive:true,filter:p=>!p.slice(8).split("/").some(n=>["node_modules",".git",".next","dist","event-runtime"].includes(n)||n.startsWith(".env"))})'\''
+    node -e '\''const fs=require("node:fs");fs.cpSync("/source","/app",{recursive:true,filter:p=>!p.slice(8).split("/").some(n=>["node_modules",".git",".next","dist","campaign-runtime"].includes(n)||n.startsWith(".env"))})'\''
     npm run db:migrate --workspace @namarca/admin
     node_modules/.bin/tsx scripts/test-direct-upload.ts
   '

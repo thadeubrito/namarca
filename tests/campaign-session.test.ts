@@ -3,7 +3,7 @@ import test from 'node:test';
 import { build } from 'esbuild';
 import { chromium } from '@playwright/test';
 
-// Isolated runtime session: real App/loadEvent, local composition stand-in (no photo/upload).
+// Isolated runtime session: real App/loadCampaign, local composition stand-in (no photo/upload).
 test('sessão preserva composição ativa, limita checks, suspende e só reativa por retry explícito', { skip: process.env.EVENT_BROWSER_TEST !== '1' }, async () => {
   const bundle = await build({ entryPoints: ['apps/campaign/src/main.tsx'], bundle: true, write: false, loader: { '.css': 'empty' }, plugins: [{ name: 'local-editor', setup(builder) {
     builder.onLoad({ filter: /\/editor\/PhotoEditor\.tsx$/ }, () => ({ contents: `import React from 'react'; export function PhotoEditor(){return <input aria-label="Composição local" defaultValue=""/>}`, loader: 'tsx' }));
@@ -19,7 +19,7 @@ test('sessão preserva composição ativa, limita checks, suspende e só reativa
     const event = { slug: 'teste', name: 'Teste', color: '#123456', demo: false, endsAt: '2099-12-31T23:59:59Z', artworks: [{ id: 'a', name: 'A', file: 'a.png', width: 10, height: 10, reference: { x: 0, y: 0, width: 10, height: 10 } }], stickers: [] };
     await page.route('http://runtime.test/**', async route => {
       const path = new URL(route.request().url()).pathname;
-      if (path.endsWith('event.json')) {
+      if (path.endsWith('campaign.json')) {
         checks++;
         assert.equal(route.request().method(), 'GET');
         if (offline) return route.abort();

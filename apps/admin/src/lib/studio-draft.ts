@@ -1,7 +1,7 @@
-import type { EventConfig } from '@namarca/editor/events';
+import type { CampaignConfig } from '@namarca/editor/campaigns';
 
 export type LocalMaterial = { id: string; file: Blob; kind: 'artwork' | 'sticker'; uploaded: boolean };
-export type StudioDraft = { event: EventConfig; revision: number; materials: LocalMaterial[]; updatedAt: number };
+export type StudioDraft = { event: CampaignConfig; revision: number; materials: LocalMaterial[]; updatedAt: number };
 const database = 'namarca-studio-drafts';
 
 /** JSONB can reorder object keys; gallery array order remains significant. */

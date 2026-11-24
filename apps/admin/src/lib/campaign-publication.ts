@@ -1,18 +1,18 @@
 import { and, eq, max } from 'drizzle-orm';
 import { db } from '@/db';
 import { campaigns, campaignEditor, campaignAssets, campaignPublications, campaignPublicationHistory } from '@/db/schema';
-import { assertEditable, CampaignEditorError, requireUuid, validateCampaignEvent, validatePng } from './campaign-editor';
+import { assertEditable, CampaignEditorError, requireUuid, validateCampaignConfig, validatePng } from './campaign-editor';
 import { getPrivateObject, putPublicObject, publicObjectExists } from './storage';
 import { deliverPublicationAccess } from './publication-access-delivery';
 import { publicationArtifacts } from './publication-artifacts';
 import { publicationPointer, validatePublicationAccess } from './publication-access';
-import { parseEvent, type EventConfig } from '@namarca/editor/events';
+import { parseCampaign, type CampaignConfig } from '@namarca/editor/campaigns';
 
-export function publicationEvent(input: unknown, campaign: { name: string; slug: string; endsAt: Date }, assets: Parameters<typeof validateCampaignEvent>[2], now = new Date()): EventConfig {
+export function publicationCampaign(input: unknown, campaign: { name: string; slug: string; endsAt: Date }, assets: Parameters<typeof validateCampaignConfig>[2], now = new Date()): CampaignConfig {
   if (campaign.endsAt.getTime() <= now.getTime()) throw new CampaignEditorError(422, 'O encerramento precisa estar no futuro.');
-  const event = validateCampaignEvent(input, campaign, assets);
+  const event = validateCampaignConfig(input, campaign, assets);
   if (!event.artworks.length) throw new CampaignEditorError(422, 'Adicione e salve ao menos uma arte antes de publicar.');
-  return parseEvent(event, campaign.slug);
+  return parseCampaign(event, campaign.slug);
 }
 
 // Every draft/publication/cleanup writer locks the campaign first. Delivery takes
@@ -28,11 +28,11 @@ export async function publishCampaign(id: string, revision: number, actor: strin
     // An incomplete delivery must finish its frozen version, not adopt new drafts.
     if (existing && !existing.deliveredAt) return existing;
     if (expectedUpdatedAt !== undefined && campaign.updatedAt.toISOString() !== expectedUpdatedAt) throw new CampaignEditorError(409, 'Os detalhes da campanha mudaram. Recarregue e confira antes de publicar.');
-    if (['admin', 'api', 'checkout', 'events', 'event-runtime', 'login', 'seguranca', 'private'].includes(campaign.slug)) throw new CampaignEditorError(422, 'Escolha outro endereço para a campanha: este é reservado pelo aplicativo.');
+    if (['admin', 'api', 'checkout', 'campaigns', 'campaign-runtime', 'login', 'seguranca', 'private'].includes(campaign.slug)) throw new CampaignEditorError(422, 'Escolha outro endereço para a campanha: este é reservado pelo aplicativo.');
     const [editor] = await tx.select().from(campaignEditor).where(eq(campaignEditor.campaignId, id)).for('update');
     if (!editor || editor.revision !== revision) throw new CampaignEditorError(409, 'O rascunho mudou. Recarregue e confira antes de publicar.');
     const assets = await tx.select().from(campaignAssets).where(eq(campaignAssets.campaignId, id));
-    const config = publicationEvent(editor.config, campaign, assets);
+    const config = publicationCampaign(editor.config, campaign, assets);
     const artifacts = publicationArtifacts(config);
     if (existing) {
       const original = { ...existing.config, artworks: existing.config.artworks.map(item => ({ ...item, file: `${item.id}.png` })), stickers: existing.config.stickers.map(item => ({ ...item, file: `${item.id}.png` })) };
@@ -46,7 +46,7 @@ export async function publishCampaign(id: string, revision: number, actor: strin
       const size = validatePng(Buffer.from(object.body));
       if (size.width !== asset.width || size.height !== asset.height) throw new CampaignEditorError(422, 'Dimensões do material divergentes.');
     }
-    publicationEvent(config, campaign, assets);
+    publicationCampaign(config, campaign, assets);
     const [history] = await tx.select({ version: max(campaignPublicationHistory.version) }).from(campaignPublicationHistory).where(eq(campaignPublicationHistory.campaignId, id));
     const version = Math.max(existing?.version ?? 0, history?.version ?? 0) + 1;
     if (version > 2147483647) throw new CampaignEditorError(409, 'O limite de versões foi atingido.');
@@ -103,7 +103,7 @@ export async function publishHistoricalVersion(id: string, revision: number, act
     const assets = await tx.select().from(campaignAssets).where(eq(campaignAssets.campaignId, id));
     // Validate ownership/references without adopting private identity or rewriting
     // frozen legacy paths. Expiry is checked even while access is suspended.
-    publicationEvent({ ...target.config,
+    publicationCampaign({ ...target.config,
       artworks: target.config.artworks.map(item => ({ ...item, file: `${item.id}.png` })),
       stickers: target.config.stickers.map(item => ({ ...item, file: `${item.id}.png` })),
     }, { name: target.config.name, slug: campaign.slug, endsAt: new Date(target.config.endsAt) }, assets);

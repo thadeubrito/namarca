@@ -22,10 +22,10 @@ test('estudo isolado: allow-list exata, CSP local e raiz preservada', async () =
       assert.equal((await fetch(origin + path)).status, 404, path);
     }
     assert.equal((await fetch(origin + '/estudos/', { method: 'POST' })).status, 405);
-    assert.equal((await fetch(origin + '/event-runtime/index.html')).status, 200);
+    assert.equal((await fetch(origin + '/campaign-runtime/index.html')).status, 200);
     assert.equal((await fetch(origin + '/synthetic-campaign')).status, 200);
     assert.equal(reads, 0);
-    assert.equal((await fetch(origin + '/events/synthetic-campaign/event.json')).status, 404);
+    assert.equal((await fetch(origin + '/campaigns/synthetic-campaign/campaign.json')).status, 404);
     assert.equal(reads, 1);
   } finally { await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); }
 });

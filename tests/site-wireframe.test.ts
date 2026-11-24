@@ -62,12 +62,12 @@ assert.doesNotMatch(html, /<a\b[^>]*href="\/estudos\/"/);
       assert.ok(ids.includes(link[1]), `Destino inexistente: ${link[1]}`);
     }
     assert.equal(reads, 0, 'Institucional não depende do storage');
-    const runtime = await fetch(`${origin}/event-runtime/index.html`);
+    const runtime = await fetch(`${origin}/campaign-runtime/index.html`);
     assert.equal(runtime.status, 200);
     assert.doesNotMatch(runtime.headers.get('content-security-policy')!, /sha256-/);
     const campaign = await fetch(`${origin}/wireframe-synthetic`);
     assert.equal(campaign.status, 200);
-    const missing = await fetch(`${origin}/events/wireframe-synthetic/event.json`);
+    const missing = await fetch(`${origin}/campaigns/wireframe-synthetic/campaign.json`);
     assert.equal(missing.status, 404);
     assert.equal(reads, 1);
     assert.equal((await fetch(`${origin}/private`)).status, 404);

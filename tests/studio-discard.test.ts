@@ -1,16 +1,16 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type { EventConfig } from '@namarca/editor/events';
+import type { CampaignConfig } from '@namarca/editor/campaigns';
 import { discardStudioScope } from '../apps/admin/src/lib/studio-discard';
 import type { LocalMaterial } from '../apps/admin/src/lib/studio-draft';
 
-const saved: EventConfig = { name: 'Salvo', slug: 'evento', endsAt: '2030-01-01T00:00:00Z', demo: false, color: '#123456', artworks: [{ id: 'a', name: 'Arte', file: 'a.png', width: 10, height: 10, reference: { x: 0, y: 0, width: 10, height: 10 } }], stickers: [{ id: 's', name: 'Figurinha', file: 's.png' }] };
+const saved: CampaignConfig = { name: 'Salvo', slug: 'evento', endsAt: '2030-01-01T00:00:00Z', demo: false, color: '#123456', artworks: [{ id: 'a', name: 'Arte', file: 'a.png', width: 10, height: 10, reference: { x: 0, y: 0, width: 10, height: 10 } }], stickers: [{ id: 's', name: 'Figurinha', file: 's.png' }] };
 const local: LocalMaterial[] = [
   { id: 'a', kind: 'artwork', file: new Blob(['saved']), uploaded: true },
   { id: 'new-a', kind: 'artwork', file: new Blob(['art']), uploaded: true },
   { id: 'new-s', kind: 'sticker', file: new Blob(['sticker']), uploaded: false },
 ];
-const edited: EventConfig = { ...saved, name: 'Identidade atual', color: '#ffffff', artworks: [{ ...saved.artworks[0], name: 'Editado' }, { ...saved.artworks[0], id: 'new-a' }], stickers: [...saved.stickers, { id: 'new-s', name: 'Nova', file: 'new-s.png' }], theme: { version: 1, background: '#ffffff', surface: '#ffffff', text: '#000000', accent: '#ffffff' } };
+const edited: CampaignConfig = { ...saved, name: 'Identidade atual', color: '#ffffff', artworks: [{ ...saved.artworks[0], name: 'Editado' }, { ...saved.artworks[0], id: 'new-a' }], stickers: [...saved.stickers, { id: 'new-s', name: 'Nova', file: 'new-s.png' }], theme: { version: 1, background: '#ffffff', surface: '#ffffff', text: '#000000', accent: '#ffffff' } };
 
 test('descartar artes restaura lista/referência/ordem sem tocar identidade, outras abas ou blobs salvos', () => {
   const before = structuredClone(edited);

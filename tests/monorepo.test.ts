@@ -12,9 +12,9 @@ test('workspaces declaram aplicações e exports do editor sem aliases para impl
   const editor = await json('packages/editor/package.json');
   assert.equal(admin.dependencies['@namarca/editor'], '*');
   assert.equal(campaign.dependencies['@namarca/editor'], '*');
-  assert.equal(editor.exports['./events'], './src/events/events.ts');
+  assert.equal(editor.exports['./campaigns'], './src/campaigns/campaigns.ts');
   assert.match(admin.scripts.prebuild, /build:preview/);
-  assert.equal((await json('apps/admin/tsconfig.json')).compilerOptions.paths['@namarca/editor/events'], undefined);
+  assert.equal((await json('apps/admin/tsconfig.json')).compilerOptions.paths['@namarca/editor/campaigns'], undefined);
   await access('apps/admin/drizzle/meta/_journal.json');
 });
 
@@ -25,7 +25,7 @@ test('artefato público é independente do Next e a prévia mantém contrato pub
   assert.match(build, /apps\/campaign\/dist/);
   assert.doesNotMatch(build, /apps\/admin/);
   assert.match(copy, /campaign\/dist/);
-  assert.match(copy, /public\/event-runtime/);
+  assert.match(copy, /public\/campaign-runtime/);
   assert.match(host, /runtimeDir = resolve\(root, 'apps\/campaign\/dist'\)/);
-  assert.match(host, /\/event-runtime\//);
+  assert.match(host, /\/campaign-runtime\//);
 });

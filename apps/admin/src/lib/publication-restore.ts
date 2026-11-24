@@ -1,10 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import { campaigns, campaignEditor, campaignAssets, campaignPublications, campaignPublicationHistory } from '@/db/schema';
-import { assertEditable, CampaignEditorError, requireUuid, validateCampaignEvent, type EditorAsset } from './campaign-editor';
-import type { EventConfig } from '@namarca/editor/events';
+import { assertEditable, CampaignEditorError, requireUuid, validateCampaignConfig, type EditorAsset } from './campaign-editor';
+import type { CampaignConfig } from '@namarca/editor/campaigns';
 
 type RestoreCampaign = { name: string; slug: string; endsAt: Date; updatedAt: Date; preparationStatus: string; publicationStatus: string };
-type RestorePublication = { version: number; config: EventConfig; deliveredAt: Date | null };
+type RestorePublication = { version: number; config: CampaignConfig; deliveredAt: Date | null };
 
 // Pure preparation shared by the locked writer and tests. The source is always
 // a campaign-scoped DB publication, never a snapshot supplied by the form.
@@ -20,11 +20,11 @@ export function resolvePublishedRestore(campaign: RestoreCampaign, editor: { rev
   const endsAt = new Date(snapshot.endsAt);
   if (!Number.isFinite(endsAt.getTime()) || !snapshot.name.trim()) throw new CampaignEditorError(422, 'Publicação inválida.');
   const identity = { name: snapshot.name, slug: campaign.slug, endsAt };
-  const config = validateCampaignEvent({ ...snapshot,
+  const config = validateCampaignConfig({ ...snapshot,
     artworks: snapshot.artworks.map(item => ({ ...item, file: `${item.id}.png` })),
     stickers: snapshot.stickers.map(item => ({ ...item, file: `${item.id}.png` })),
   }, identity, assets);
-  // No publicationEvent: a delivered campaign may have expired since publishing.
+  // No publicationCampaign: a delivered campaign may have expired since publishing.
   return { ...identity, config, revision: editor.revision + 1 };
 }
 

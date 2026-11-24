@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { createRoot } from 'react-dom/client'
 import { PhotoEditor } from '@namarca/editor/photo-editor'
-import { eventThemeStyle, parseEvent, type EventConfig } from '@namarca/editor/events'
+import { campaignThemeStyle, parseCampaign, type CampaignConfig } from '@namarca/editor/campaigns'
 import '@namarca/editor/styles.css'
 import './preview.css'
 
@@ -11,14 +11,14 @@ const query = new URLSearchParams(window.location.search)
 const campaignId = query.get('campaignId') ?? ''
 const validQuery = uuid.test(campaignId) && !query.has('packageId')
 
-function validate(value: unknown): EventConfig {
+function validate(value: unknown): CampaignConfig {
   if (!value || typeof value !== 'object' || !('slug' in value) || typeof value.slug !== 'string') throw new Error('Invalid event')
-  const event = parseEvent(value, value.slug, { allowEmptyArtworks: true })
+  const event = parseCampaign(value, value.slug, { allowEmptyArtworks: true })
   if ([...event.artworks, ...event.stickers].some(material => !privateFile.test(material.file))) throw new Error('Invalid file')
   return event
 }
 
-function validateLocalAssets(value: unknown, event: EventConfig): Record<string, string> {
+function validateLocalAssets(value: unknown, event: CampaignConfig): Record<string, string> {
   if (value === undefined) return {}
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) throw new Error('Invalid local assets')
   const files = new Set([...event.artworks, ...event.stickers].map(material => material.file))
@@ -32,7 +32,7 @@ function validateLocalAssets(value: unknown, event: EventConfig): Record<string,
 }
 
 function Preview() {
-  const [config, setConfig] = useState<{ event: EventConfig; selectedArtworkId?: string; assetUrls: Record<string, string>; adminTheme: 'dark' | 'light' } | null>(null)
+  const [config, setConfig] = useState<{ event: CampaignConfig; selectedArtworkId?: string; assetUrls: Record<string, string>; adminTheme: 'dark' | 'light' } | null>(null)
   const [warning, setWarning] = useState(false)
   const failed = !validQuery
 
@@ -60,7 +60,7 @@ function Preview() {
   return <>
     {warning && <p className="preview-warning" role="alert">Prévia pausada: corrija os campos inválidos. A última configuração válida permanece visível.</p>}
     {!config ? <span className="sr-only" role="status">Aguardando configuração da prévia…</span> :
-      <div className="editor-page" data-admin-theme={config.adminTheme} style={eventThemeStyle(config.event) as CSSProperties}>
+      <div className="editor-page" data-admin-theme={config.adminTheme} style={campaignThemeStyle(config.event) as CSSProperties}>
         <PhotoEditor event={config.event} assetUrls={config.assetUrls} assetBase={`/api/campaigns/${campaignId}/assets`} preferredArtworkId={config.selectedArtworkId} />
       </div>}
   </>

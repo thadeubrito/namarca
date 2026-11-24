@@ -1,10 +1,10 @@
-import type { EventConfig } from '@namarca/editor/events';
+import type { CampaignConfig } from '@namarca/editor/campaigns';
 import { sameDraftValue, type LocalMaterial } from './studio-draft';
 
 export type StudioScope = 'artworks' | 'stickers' | 'theme';
 
 /** Restore one local section; identity, saved revision and other blobs stay untouched. */
-export function discardStudioScope(event: EventConfig, saved: EventConfig, materials: LocalMaterial[], scope: StudioScope) {
+export function discardStudioScope(event: CampaignConfig, saved: CampaignConfig, materials: LocalMaterial[], scope: StudioScope) {
   // Scoped saves ignore incoming legacy color and retain the saved envelope value.
   const next = scope === 'theme'
     ? { ...event, theme: saved.theme, color: saved.color }

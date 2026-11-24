@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { PanelRightClose, PanelRightOpen, Scan, Trash2, Upload, X } from 'lucide-react';
 import { Dialog } from 'radix-ui';
 import { useDarkTheme } from '@/components/theme-scope';
-import { type Artwork, type EventConfig, type Material } from '@namarca/editor/events';
+import { type Artwork, type CampaignConfig, type Material } from '@namarca/editor/campaigns';
 import { StudioColors } from './studio-colors';
 import { SortableMaterial, SortableMaterialLibrary } from './sortable-material';
 import { reorderMaterials } from '@/lib/reorder-materials';
@@ -23,7 +23,7 @@ import { uploadCampaignMaterial } from '@/lib/direct-upload-client';
 import { Action, Surface, TextInput, Notice, EmptyState, Workspace, WorkspaceTabs } from './primitives';
 import './studio.css';
 
-type Snapshot = { event: EventConfig; revision: number; draftOwner?: string; cleanupWarning?: string };
+type Snapshot = { event: CampaignConfig; revision: number; draftOwner?: string; cleanupWarning?: string };
 type Kind = 'artwork' | 'sticker';
 type SaveScope = 'artworks' | 'stickers' | 'theme';
 const scopeLabels: Record<SaveScope, string> = { artworks: 'artes', stickers: 'figurinhas', theme: 'cores' };
@@ -46,7 +46,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
     return () => { document.body.style.overflow = previous; };
   }, [referenceOpen]);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [event, setEvent] = useState<EventConfig | null>(null);
+  const [event, setEvent] = useState<CampaignConfig | null>(null);
   const [selected, setSelected] = useState('');
   const [materials, setMaterials] = useState<LocalMaterial[]>([]);
   const materialsRef = useRef<LocalMaterial[]>([]);
@@ -178,7 +178,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
     return () => window.removeEventListener('message', ready);
   }, [sendPreview, campaignId]);
 
-  const change = (next: EventConfig) => {
+  const change = (next: CampaignConfig) => {
     const ids = new Set([...next.artworks, ...next.stickers].map(item => item.id));
     const retained = materials.filter(item => ids.has(item.id));
     if (retained.length !== materials.length) changeMaterials(retained);
@@ -372,7 +372,7 @@ export function StudioWorkspace({ campaignId, activeSection, onPendingChange }: 
       </div><motion.aside id={`studio-preview-${campaignId}`} className="ws-studio-preview" aria-label="Prévia da campanha" initial={false} animate={{ opacity: 1 }} transition={{ duration: reducedMotion ? 0 : 0.18 }}>
         <div className="ws-studio-preview-bar"><Action variant="ghost" className="ws-studio-toggle-preview" aria-expanded={!previewCollapsed} aria-controls={`studio-preview-content-${campaignId}`} onClick={() => setPreviewCollapsed(value => !value)}>{previewCollapsed ? <PanelRightOpen aria-hidden /> : <PanelRightClose aria-hidden />}{previewCollapsed ? 'Mostrar prévia' : 'Ocultar prévia'}</Action></div>
         <div id={`studio-preview-content-${campaignId}`} className="ws-studio-preview-content" hidden={previewCollapsed}>
-        <div className="ws-studio-device"><iframe ref={frame} src={`/event-runtime/preview.html?campaignId=${campaignId}`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></div>
+        <div className="ws-studio-device"><iframe ref={frame} src={`/campaign-runtime/preview.html?campaignId=${campaignId}`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></div>
         </div>
       </motion.aside>
     </div>

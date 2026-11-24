@@ -42,40 +42,40 @@ test('gateway público: HTTP real, filesystem isolado e storage injetado', async
   assert.equal((await get('/')).body, 'Namarca');
   assert.equal((await get('/my-event')).body, 'EDITOR');
   assert.equal(keys.length, 0, 'HTML não consulta bucket');
-  const js = await get('/event-runtime/main.js');
+  const js = await get('/campaign-runtime/main.js');
   assert.equal(js.status, 200);
   assert.match(js.headers['content-type'], /javascript/);
   assert.equal(js.headers['cache-control'], 'no-store');
   assert.equal(js.headers['x-content-type-options'], 'nosniff');
   assert.match(js.headers['content-security-policy'], /img-src 'self' blob: data:/);
-  const json = await get('/events/my-event/event.json');
+  const json = await get('/campaigns/my-event/campaign.json');
   assert.equal(json.status, 200);
   assert.equal(json.headers['cache-control'], 'no-store');
   assert.equal(json.headers['content-type'], 'application/json; charset=utf-8');
-  const png = await get(`/events/my-event/releases/${sha}/${id}.png`);
+  const png = await get(`/campaigns/my-event/releases/${sha}/${id}.png`);
   assert.equal(png.status, 200);
   assert.equal(png.headers['content-type'], 'image/png');
   assert.match(png.headers['cache-control'], /immutable/);
-  assert.deepEqual(keys, ['public/events/my-event/event.json', `public/events/my-event/releases/${sha}/${id}.png`]);
+  assert.deepEqual(keys, ['public/campaigns/my-event/campaign.json', `public/campaigns/my-event/releases/${sha}/${id}.png`]);
   for (const path of ['versions/v1.json', 'versions/v12.json', `artworks/${id}.png`, `stickers/${id}.png`]) {
-    const response = await get(`/events/my-event/${path}`);
+    const response = await get(`/campaigns/my-event/${path}`);
     assert.equal(response.status, 200, path);
     assert.equal(response.headers['cache-control'], 'public, max-age=31536000, immutable');
     assert.equal(response.headers['content-type'], path.endsWith('.json') ? 'application/json; charset=utf-8' : 'image/png');
-    assert.equal(keys.at(-1), `public/events/my-event/${path}`);
+    assert.equal(keys.at(-1), `public/campaigns/my-event/${path}`);
   }
   const count = keys.length;
-  for (const path of ['/events/my-event/versions/v0.json', '/events/my-event/versions/v01.json', '/events/my-event/versions/v-1.json', '/events/my-event/versions/v1.5.json', '/events/my-event/artworks/not-a-uuid.png', '/events/my-event/stickers/12345678-1234-1234-1234-123456789abz.png', '/private/a', '/admin', '/api/health', '//events/my-event/event.json', '/events/', '/events/my-event/', '/events/my-event/private.png', '/events/my-event/releases/bad/file.png', '/events/admin/event.json', '/event-runtime/', '/event-runtime/escape.js', '/event-runtime/../secret.js', '/event-runtime/%2e%2e/secret.js', '/event-runtime/%2F..%2Fsecret.js', '/event-runtime/%5csecret.js', '/event-runtime/%00.js', '/event-runtime/%ZZ', '/event-runtime/.hidden', '/event-runtime/missing.js']) {
+  for (const path of ['/campaigns/my-event/versions/v0.json', '/campaigns/my-event/versions/v01.json', '/campaigns/my-event/versions/v-1.json', '/campaigns/my-event/versions/v1.5.json', '/campaigns/my-event/artworks/not-a-uuid.png', '/campaigns/my-event/stickers/12345678-1234-1234-1234-123456789abz.png', '/private/a', '/admin', '/api/health', '//campaigns/my-event/campaign.json', '/campaigns/', '/campaigns/my-event/', '/campaigns/my-event/private.png', '/campaigns/my-event/releases/bad/file.png', '/campaigns/admin/campaign.json', '/campaign-runtime/', '/campaign-runtime/escape.js', '/campaign-runtime/../secret.js', '/campaign-runtime/%2e%2e/secret.js', '/campaign-runtime/%2F..%2Fsecret.js', '/campaign-runtime/%5csecret.js', '/campaign-runtime/%00.js', '/campaign-runtime/%ZZ', '/campaign-runtime/.hidden', '/campaign-runtime/missing.js']) {
     const response = await get(path);
     assert.equal(response.status, 404, path);
     assert.doesNotMatch(response.body, /PRIVATE|sensitive/);
     assert.equal(response.headers['cache-control'], 'no-store');
   }
   assert.equal(keys.length, count);
-  for (const method of ['POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS']) assert.equal((await get('/events/my-event/event.json', method)).status, 405);
+  for (const method of ['POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS']) assert.equal((await get('/campaigns/my-event/campaign.json', method)).status, 405);
   assert.equal(keys.length, count);
-  assert.equal((await get('/events/missing/event.json')).status, 404);
-  const failure = await get('/events/failure/event.json');
+  assert.equal((await get('/campaigns/missing/campaign.json')).status, 404);
+  const failure = await get('/campaigns/failure/campaign.json');
   assert.equal(failure.status, 503);
   assert.doesNotMatch(failure.body, /sensitive|internal/);
 });

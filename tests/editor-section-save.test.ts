@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { CampaignEditorError, defaultCampaignEvent, editorSaveInput, resolveEditorSave } from "../apps/admin/src/lib/campaign-editor";
+import { CampaignEditorError, defaultCampaignConfig, editorSaveInput, resolveEditorSave } from "../apps/admin/src/lib/campaign-editor";
 import { removedAssetIds } from "../apps/admin/src/lib/asset-cleanup-policy";
 
 const campaign = { name: "Campanha", slug: "campanha", endsAt: new Date("2030-01-01T12:00:00Z") };
@@ -12,7 +12,7 @@ const assets = [
 ];
 function snapshot() {
   return { revision: 7, config: {
-    ...defaultCampaignEvent(campaign), color: "#123456",
+    ...defaultCampaignConfig(campaign), color: "#123456",
     artworks: [{ id: artworkId, name: "Arte", file: `${artworkId}.png`, width: 20, height: 10, reference: { x: 0, y: 0, width: 20, height: 10 } }],
     stickers: [{ id: stickerId, name: "Figurinha", file: `${stickerId}.png` }],
   } };
@@ -60,7 +60,7 @@ test("theme preserva color legado, materiais e identidade; cleanup vazio", () =>
 });
 
 test("primeiro salvamento scoped usa defaults, sem incorporar payload de outras abas", () => {
-  const base = defaultCampaignEvent(campaign);
+  const base = defaultCampaignConfig(campaign);
   for (const scope of ["artworks", "stickers", "theme"] as const) {
     const saved = resolveEditorSave({ scope, revision: 0, event: { [scope]: base[scope], color: "invalid", demo: true, name: null } }, undefined, campaign, []);
     assert.deepEqual(saved, { event: base, revision: 1 });

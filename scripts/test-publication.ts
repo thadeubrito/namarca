@@ -25,7 +25,7 @@ async function main() {
   const { db, pool } = await import('../apps/admin/src/db');
   const s = await import('../apps/admin/src/db/schema');
   const { publishCampaign, publishHistoricalVersion, setCampaignSuspended } = await import('../apps/admin/src/lib/campaign-publication');
-  const { CampaignEditorError, defaultCampaignEvent } = await import('../apps/admin/src/lib/campaign-editor');
+  const { CampaignEditorError, defaultCampaignConfig } = await import('../apps/admin/src/lib/campaign-editor');
   const { putPrivateObject, putPublicObject } = await import('../apps/admin/src/lib/storage');
   const { publicationArtifacts } = await import('../apps/admin/src/lib/publication-artifacts');
   const ids = Array.from({ length: 6 }, () => randomUUID());
@@ -44,7 +44,7 @@ async function main() {
     const path = req.url ?? '';
     const pathname = path.split('?')[0];
     if (req.method === 'PUT') writes.push(decodeURIComponent(pathname));
-    if (req.method === 'PUT' && pathname.endsWith('/event.json')) {
+    if (req.method === 'PUT' && pathname.endsWith('/campaign.json')) {
       if (inspectManifestKey) {
         const previous = await client.send(new GetObjectCommand({ Bucket, Key: inspectManifestKey }));
         beforeManifestWrites.push(JSON.parse(await previous.Body!.transformToString()));
@@ -83,7 +83,7 @@ async function main() {
     for (const id of ids) {
       const identity = { name: `Public fixture ${id}`, slug: `publication-${id}`, endsAt: new Date(id === expiredId ? '2000-01-01' : '2099-01-01') };
       const asset = randomUUID(), sticker = randomUUID(), outside = randomUUID();
-      const config = { ...defaultCampaignEvent(identity), artworks: id === emptyId ? [] : [{ id: asset, name: 'Synthetic artwork', file: `${asset}.png`, width: 2, height: 2, reference: { x: 0, y: 0, width: 2, height: 2 } }], stickers: [{ id: sticker, name: 'Synthetic sticker', file: `${sticker}.png` }] };
+      const config = { ...defaultCampaignConfig(identity), artworks: id === emptyId ? [] : [{ id: asset, name: 'Synthetic artwork', file: `${asset}.png`, width: 2, height: 2, reference: { x: 0, y: 0, width: 2, height: 2 } }], stickers: [{ id: sticker, name: 'Synthetic sticker', file: `${sticker}.png` }] };
       await db.insert(s.campaigns).values({ id, ...identity, notes: 'PRIVATE-NOTES-FIXTURE', contact: 'PRIVATE-CONTACT-FIXTURE', organizer: 'PRIVATE-ORGANIZER-FIXTURE' });
       await db.insert(s.campaignEditor).values({ campaignId: id, revision: 7, config });
       const artifacts = publicationArtifacts(config.artworks.length ? config : { ...config, artworks: [{ id: asset, name: 'Placeholder for rejected fixture key only', file: `${asset}.png`, width: 2, height: 2, reference: { x: 0, y: 0, width: 2, height: 2 } }] });
@@ -117,7 +117,7 @@ async function main() {
     assert.ok(published.deliveredAt && published.deliveredAt >= published.createdAt);
     assert.deepEqual(published.config, fixture.artifacts.event);
     assert.equal(published.version, 1);
-    assert.equal(writes.length, 4); assert.ok(writes[3].endsWith('/event.json')); assert.ok(writes[2].endsWith('/versions/v1.json'));
+    assert.equal(writes.length, 4); assert.ok(writes[3].endsWith('/campaign.json')); assert.ok(writes[2].endsWith('/versions/v1.json'));
     assert.ok(writes.slice(0, 2).every(key => /\/(artworks|stickers)\//.test(key)));
     const [campaign] = await db.select().from(s.campaigns).where(eq(s.campaigns.id, publishedId));
     assert.equal(campaign.publicationStatus, 'published'); assert.equal(campaign.preparationStatus, 'draft'); assert.equal(campaign.priceCents, null);
@@ -126,13 +126,13 @@ async function main() {
     assert.equal(stored.type, 'application/json'); assert.deepEqual(JSON.parse(stored.bytes.toString()), { version: 1 });
     const versionV1 = await object(fixture.artifacts.versionKey);
     assert.deepEqual(JSON.parse(versionV1.bytes.toString()), published.config);
-    const { parseEvent } = await import('@namarca/editor/events');
-    assert.deepEqual(parseEvent(JSON.parse(versionV1.bytes.toString()), fixture.identity.slug), published.config);
+    const { parseCampaign } = await import('@namarca/editor/campaigns');
+    assert.deepEqual(parseCampaign(JSON.parse(versionV1.bytes.toString()), fixture.identity.slug), published.config);
     assert.deepEqual(Object.keys(published.config).sort(), Object.keys(fixture.config).sort());
     for (const privateValue of ['PRIVATE-', 'fixture-admin', 'private/campaigns/', 'publishedBy', 'deliveredAt', 'priceCents', 'checkoutId', 'paymentId', 'Changed private draft']) assert.ok(!versionV1.bytes.toString().includes(privateValue));
     for (const material of [...published.config.artworks, ...published.config.stickers]) {
       assert.match(material.file, /^(artworks|stickers)\/[a-f0-9-]{36}\.png$/);
-      const result = await object(`public/events/${fixture.identity.slug}/${material.file}`); assert.equal(result.type, 'image/png'); assert.ok(result.bytes.equals(bytes));
+      const result = await object(`public/campaigns/${fixture.identity.slug}/${material.file}`); assert.equal(result.type, 'image/png'); assert.ok(result.bytes.equals(bytes));
     }
     // Availability is independent from publication; storage failure leaves DB intact.
     const campaignState = async () => (await db.select().from(s.campaigns).where(eq(s.campaigns.id, publishedId)))[0];
@@ -160,7 +160,7 @@ async function main() {
     keys.add(artifactsV2.manifestKey); keys.add(artifactsV2.versionKey);
     for (const material of [...configV2.artworks, ...configV2.stickers]) keys.add(artifactsV2.assetKey(material.id));
     await db.update(s.campaignEditor).set({ revision: 8, config: configV2 }).where(eq(s.campaignEditor.campaignId, publishedId));
-    assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 1, suspended: true });
+    assert.deepEqual(await (await get(`/campaigns/${fixture.identity.slug}/campaign.json`)).json(), { version: 1, suspended: true });
     inspectManifestKey = fixture.artifacts.manifestKey;
     beforeManifestWrites.length = 0; writes.length = 0;
     const updated = await publishCampaign(publishedId, 8, 'update-fixture-admin');
@@ -171,8 +171,8 @@ async function main() {
     assert.ok((await object(fixture.artifacts.versionKey)).bytes.equals(versionV1.bytes), 'v1 JSON remains immutable');
     const versionV2 = await object(artifactsV2.versionKey);
     assert.deepEqual(JSON.parse(versionV2.bytes.toString()), updated.config);
-    assert.ok(writes.at(-1)?.endsWith('/event.json')); assert.ok(writes.at(-2)?.endsWith('/versions/v2.json'));
-    assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 2, suspended: true });
+    assert.ok(writes.at(-1)?.endsWith('/campaign.json')); assert.ok(writes.at(-2)?.endsWith('/versions/v2.json'));
+    assert.deepEqual(await (await get(`/campaigns/${fixture.identity.slug}/campaign.json`)).json(), { version: 2, suspended: true });
     assert.deepEqual((await campaignState()).suspendedAt, suspendedV1.suspendedAt);
     const beforeReactivation = await campaignState();
     rejectManifest = true;
@@ -182,14 +182,14 @@ async function main() {
     await access(false, 'reactivate-fixture-admin');
     assert.equal((await campaignState()).suspendedAt, null);
     assert.equal((await campaignState()).suspendedBy, 'reactivate-fixture-admin');
-    assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 2 });
+    assert.deepEqual(await (await get(`/campaigns/${fixture.identity.slug}/campaign.json`)).json(), { version: 2 });
     assert.deepEqual((await db.select().from(s.campaignPublications).where(eq(s.campaignPublications.campaignId, publishedId)))[0], updated, 'Access never creates or changes versions');
     writes.length = 0;
     assert.deepEqual(await publishCampaign(publishedId, 8, 'other-fixture-admin'), updated);
     assert.equal(writes.length, 0, 'Same delivered config/revision is idempotent');
     for (const material of [...published.config.artworks, ...published.config.stickers]) {
-      assert.ok((await object(`public/events/${fixture.identity.slug}/${material.file}`)).bytes.equals(bytes), 'v1 assets retained after v2');
-      assert.equal((await get(`/events/${fixture.identity.slug}/${material.file}`)).status, 200);
+      assert.ok((await object(`public/campaigns/${fixture.identity.slug}/${material.file}`)).bytes.equals(bytes), 'v1 assets retained after v2');
+      assert.equal((await get(`/campaigns/${fixture.identity.slug}/${material.file}`)).status, 200);
     }
     const configV3 = { ...configV2, artworks: [{ ...configV2.artworks[0], name: 'Artwork v3' }] };
     const artifactsV3 = publicationArtifacts(configV3, 3);
@@ -206,7 +206,7 @@ async function main() {
     const beforePendingAccess = await campaignState();
     await assert.rejects(() => access(true), (e: unknown) => e instanceof CampaignEditorError && e.status === 409);
     assert.deepEqual(await campaignState(), beforePendingAccess);
-    assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 2 }, 'Failed v3 leaves public v2 intact');
+    assert.deepEqual(await (await get(`/campaigns/${fixture.identity.slug}/campaign.json`)).json(), { version: 2 }, 'Failed v3 leaves public v2 intact');
     const pendingVersionBytes = (await object(artifactsV3.versionKey)).bytes;
     // Even an externally changed draft cannot replace the pending frozen delivery.
     await db.update(s.campaignEditor).set({ revision: 10, config: { ...configV3, stickers: fixture.config.stickers } }).where(eq(s.campaignEditor.campaignId, publishedId));
@@ -215,7 +215,7 @@ async function main() {
     assert.equal(deliveredV3.editorRevision, 9); assert.equal(deliveredV3.publishedBy, pendingV3.publishedBy);
     assert.deepEqual(deliveredV3.createdAt, pendingV3.createdAt); assert.deepEqual(deliveredV3.config, pendingV3.config); assert.ok(deliveredV3.deliveredAt);
     assert.equal(deliveredV3.version, 3);
-    assert.deepEqual(await (await get(`/events/${fixture.identity.slug}/event.json`)).json(), { version: 3 });
+    assert.deepEqual(await (await get(`/campaigns/${fixture.identity.slug}/campaign.json`)).json(), { version: 3 });
     assert.ok((await object(artifactsV3.versionKey)).bytes.equals(pendingVersionBytes), 'Retry does not change frozen JSON');
     assert.ok((await object(artifactsV2.versionKey)).bytes.equals(versionV2.bytes));
     assert.ok((await object(fixture.artifacts.versionKey)).bytes.equals(versionV1.bytes));
@@ -243,9 +243,9 @@ async function main() {
     assert.ok(committedBeforeManifest);
     const [failed] = await db.select().from(s.campaignPublications).where(eq(s.campaignPublications.campaignId, failureId));
     assert.equal(failed.deliveredAt, null); assert.equal(failed.editorRevision, 7);
-    assert.ok(writes[0].includes('/artworks/') && writes[1].includes('/stickers/') && writes[2].endsWith('/versions/v1.json') && writes.slice(3).every(key => key.endsWith('/event.json')));
+    assert.ok(writes[0].includes('/artworks/') && writes[1].includes('/stickers/') && writes[2].endsWith('/versions/v1.json') && writes.slice(3).every(key => key.endsWith('/campaign.json')));
     await missing(fixtures[5].artifacts.manifestKey);
-    assert.equal((await get(`/events/${fixtures[5].identity.slug}/event.json`)).status, 404);
+    assert.equal((await get(`/campaigns/${fixtures[5].identity.slug}/campaign.json`)).status, 404);
     rejectManifest = false;
     const retried = await publishCampaign(failureId, 7, 'different-admin');
     assert.equal(retried.publishedBy, failed.publishedBy); assert.deepEqual(retried.createdAt, failed.createdAt); assert.deepEqual(retried.config, failed.config); assert.ok(retried.deliveredAt);
@@ -258,30 +258,30 @@ async function main() {
     assert.deepEqual(JSON.parse((await object(concurrentArtifacts.manifestKey)).bytes.toString()), { version: 2 });
     const concurrentHistory = await db.select().from(s.campaignPublicationHistory).where(eq(s.campaignPublicationHistory.campaignId, failureId));
     assert.deepEqual(concurrentHistory.map(row => row.version), [1]);
-    await missing(`public/events/${fixtures[5].identity.slug}/versions/v3.json`);
+    await missing(`public/campaigns/${fixtures[5].identity.slug}/versions/v3.json`);
     // Previously delivered full manifests and hash releases remain readable without migration.
     const legacy = fixtures[4];
     const legacyFile = `releases/${legacy.artifacts.revision}/${legacy.asset}.png`;
     const legacyConfig = { ...legacy.config, artworks: [{ ...legacy.config.artworks[0], file: legacyFile }], stickers: [] };
-    const legacyKey = `public/events/${legacy.identity.slug}/${legacyFile}`; keys.add(legacyKey);
+    const legacyKey = `public/campaigns/${legacy.identity.slug}/${legacyFile}`; keys.add(legacyKey);
     await putPublicObject(legacyKey, bytes, 'image/png');
     await putPublicObject(legacy.artifacts.manifestKey, Buffer.from(JSON.stringify(legacyConfig)), 'application/json');
-    assert.deepEqual(await (await get(`/events/${legacy.identity.slug}/event.json`)).json(), legacyConfig);
-    const legacyResponse = await get(`/events/${legacy.identity.slug}/${legacyFile}`);
+    assert.deepEqual(await (await get(`/campaigns/${legacy.identity.slug}/campaign.json`)).json(), legacyConfig);
+    const legacyResponse = await get(`/campaigns/${legacy.identity.slug}/${legacyFile}`);
     assert.equal(legacyResponse.status, 200); assert.ok(Buffer.from(await legacyResponse.arrayBuffer()).equals(bytes));
-    assert.deepEqual(parseEvent(legacyConfig, legacy.identity.slug), legacyConfig);
+    assert.deepEqual(parseCampaign(legacyConfig, legacy.identity.slug), legacyConfig);
     const [payment] = await db.insert(s.payments).values({ campaignId: draftId, externalId: randomUUID(), paymentId: randomUUID(), amountCents: 1000, status: 'paid', paidAt: new Date() }).returning();
     await db.insert(s.webhookReceipts).values({ paymentId: payment.paymentId, eventId: receiptEventId });
     const paidBefore = await financialState(); await publishCampaign(draftId, 7, 'fixture-admin');
     // These HTTP requests go to the independent S3-only container (no app or DB network).
-    for (const path of ['/', `/${fixture.identity.slug}`, '/event-runtime/index.html']) { const response = await get(path); assert.equal(response.status, 200); assert.ok(response.headers.get('content-type')?.includes('text/html')); }
-    const manifest = await get(`/events/${fixture.identity.slug}/event.json`);
+    for (const path of ['/', `/${fixture.identity.slug}`, '/campaign-runtime/index.html']) { const response = await get(path); assert.equal(response.status, 200); assert.ok(response.headers.get('content-type')?.includes('text/html')); }
+    const manifest = await get(`/campaigns/${fixture.identity.slug}/campaign.json`);
     assert.equal(manifest.status, 200); assert.equal(manifest.headers.get('cache-control'), 'no-store'); assert.equal(manifest.headers.get('x-content-type-options'), 'nosniff'); assert.deepEqual(await manifest.json(), { version: 3 });
-    const full = await get(`/events/${fixture.identity.slug}/versions/v3.json`);
+    const full = await get(`/campaigns/${fixture.identity.slug}/versions/v3.json`);
     assert.equal(full.status, 200); assert.equal(full.headers.get('cache-control'), 'public, max-age=31536000, immutable');
     assert.deepEqual(await full.json(), deliveredV3.config);
-    for (const material of [...published.config.artworks, ...published.config.stickers]) { const response = await get(`/events/${fixture.identity.slug}/${material.file}`); assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png'); assert.ok(Buffer.from(await response.arrayBuffer()).equals(bytes)); }
-    for (const path of [`/events/${fixtures[1].identity.slug}/event.json`, `/events/${fixture.identity.slug}/${fixture.outside}.png`, `/events/${fixture.identity.slug}/artworks/${fixture.outside}.png`, `/events/${fixture.identity.slug}/versions/v0.json`, '/private/campaigns/anything', '/admin', '/api', '/event-runtime/%2e%2e/package.json']) assert.equal((await get(path)).status, 404);
+    for (const material of [...published.config.artworks, ...published.config.stickers]) { const response = await get(`/campaigns/${fixture.identity.slug}/${material.file}`); assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png'); assert.ok(Buffer.from(await response.arrayBuffer()).equals(bytes)); }
+    for (const path of [`/campaigns/${fixtures[1].identity.slug}/campaign.json`, `/campaigns/${fixture.identity.slug}/${fixture.outside}.png`, `/campaigns/${fixture.identity.slug}/artworks/${fixture.outside}.png`, `/campaigns/${fixture.identity.slug}/versions/v0.json`, '/private/campaigns/anything', '/admin', '/api', '/campaign-runtime/%2e%2e/package.json']) assert.equal((await get(path)).status, 404);
     assert.deepEqual(await financialState(), paidBefore);
     const { restorePublishedDraft } = await import('../apps/admin/src/lib/publication-restore');
     const restoreId = draftId;
@@ -361,7 +361,7 @@ async function main() {
     assert.ok(campaignAfterRollback.updatedAt > campaignBeforeRollback.updatedAt);
     assert.deepEqual(campaignAfterRollback, { ...campaignBeforeRollback, updatedAt: campaignAfterRollback.updatedAt });
     assert.deepEqual((await historicalRows()).map(row => row.version), [2]);
-    assert.deepEqual(await (await get(`/events/${fixtures[5].identity.slug}/event.json`)).json(), { version: 1 });
+    assert.deepEqual(await (await get(`/campaigns/${fixtures[5].identity.slug}/campaign.json`)).json(), { version: 1 });
     const publicBeforeHistoricalRestore = (await object(concurrentArtifacts.manifestKey)).bytes;
     const historyBeforeHistoricalRestore = await historicalRows();
     await assert.rejects(() => restorePublishedDraft(historicalId, 8, campaignAfterRollback.updatedAt.toISOString(), 2, 2), errorStatus(409));
@@ -377,7 +377,7 @@ async function main() {
     await assert.rejects(async () => publishCampaign(historicalId, 9, 'next-admin', (await historicalCampaign()).updatedAt.toISOString()));
     const pendingHistory = await historicalRows();
     assert.equal(pendingHistory.sort((a, b) => b.deliveredAt.getTime() - a.deliveredAt.getTime())[0].version, 1, 'Pending fallback selects last actually public version after rollback, not highest N');
-    assert.deepEqual(await (await get(`/events/${fixtures[5].identity.slug}/event.json`)).json(), { version: 1 });
+    assert.deepEqual(await (await get(`/campaigns/${fixtures[5].identity.slug}/campaign.json`)).json(), { version: 1 });
     rejectManifest = false;
     const afterRollbackPublication = await publishCampaign(historicalId, 9, 'next-admin', (await historicalCampaign()).updatedAt.toISOString());
     assert.equal(afterRollbackPublication.version, 3, 'Allocation uses max(current, history), not current + 1');

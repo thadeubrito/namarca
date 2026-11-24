@@ -12,9 +12,9 @@ Acesso: http://localhost:3001 (bind somente loopback no host). Depende apenas de
 
 - `/`: página mínima `apps/site/index.html`, sem Next ou marketing adicional.
 - `/<slug>`: HTML compartilhado do editor, sem consultar bucket; manifesto ausente é tratado pelo runtime. Slug canônico de 2–80 caracteres, rotas internas reservadas.
-- `/event-runtime/*`: arquivos conhecidos por MIME, sem listagem, arquivos ocultos, traversal ou escapes por symlink.
-- `/events/<slug>/event.json`: GET S3 assinado da chave `public/events/<slug>/event.json`, `no-store`.
-- `/events/<slug>/releases/<sha256>/<uuid>.png`: GET assinado da chave equivalente sob `public/events/`, cache imutável.
+- `/campaign-runtime/*`: arquivos conhecidos por MIME, sem listagem, arquivos ocultos, traversal ou escapes por symlink.
+- `/campaigns/<slug>/campaign.json`: GET S3 assinado da chave `public/campaigns/<slug>/campaign.json`, `no-store`.
+- `/campaigns/<slug>/releases/<sha256>/<uuid>.png`: GET assinado da chave equivalente sob `public/campaigns/`, cache imutável.
 
 Somente GET; nenhuma listagem ou escrita S3 e nenhuma leitura `private/`. Bucket permanece privado. Este host não interpreta manifesto, publicação ou prazo: expõe somente o prefixo público canônico previamente produzido; encerramento no runtime e retenção/publicação cabem ao produtor. Entradas estáveis do runtime usam no-store; somente chunks com hash e PNGs de releases usam cache imutável. HTML e erros não são armazenados. CSP permite canvas com imagens locais/blob/data e exportação blob, sem scripts inline ou conexões externas. Sem logs de requisição, payload ou erros internos.
 

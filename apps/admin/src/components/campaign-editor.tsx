@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { themeDefaults, type Artwork, type EventConfig, type Material } from '@namarca/editor/events';
+import { themeDefaults, type Artwork, type CampaignConfig, type Material } from '@namarca/editor/campaigns';
 import { clampReference, ReferenceCanvas } from '@/editor/reference-canvas';
 import { CampaignSections } from '@/components/campaign-sections';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,13 @@ import { Input } from '@/components/ui/input';
 import { uploadFailureMessage } from '@/lib/upload-feedback';
 import './campaign-editor.css';
 
-type Snapshot = { event: EventConfig; revision: number };
+type Snapshot = { event: CampaignConfig; revision: number };
 type Kind = 'artwork' | 'sticker';
 const labels: Record<keyof typeof themeDefaults, string> = { background: 'Fundo', surface: 'Painéis', text: 'Texto', accent: 'Destaque' };
 
 export function CampaignEditor({ campaignId }: { campaignId: string }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [event, setEvent] = useState<EventConfig | null>(null);
+  const [event, setEvent] = useState<CampaignConfig | null>(null);
   const [selected, setSelected] = useState('');
   const [expanded, setExpanded] = useState(false);
   const [previewReady, setPreviewReady] = useState(false);
@@ -70,7 +70,7 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
     window.addEventListener('message', ready);
     return () => window.removeEventListener('message', ready);
   }, [sendPreview, campaignId]);
-  const change = (next: EventConfig) => { setEvent(next); setMessage(''); };
+  const change = (next: CampaignConfig) => { setEvent(next); setMessage(''); };
   const save = async () => {
     if (!event || !snapshot) return;
     setBusy(true); setMessage('');
@@ -129,6 +129,6 @@ export function CampaignEditor({ campaignId }: { campaignId: string }) {
       { id: 'stickers', label: 'Stickers', content: gallery('sticker', event.stickers) },
       { id: 'cores', label: 'Cores', content: <section className="ce-section"><h3>Cores</h3><div className="ce-colors">{(Object.keys(themeDefaults) as Array<keyof typeof themeDefaults>).map(key => <label key={key}><input type="color" value={event.theme?.[key] ?? themeDefaults[key]} onChange={e => change({ ...event, theme: { version: 1, ...themeDefaults, ...event.theme, [key]: e.target.value } })} />{labels[key]}</label>)}</div></section> },
     ]} />
-    </fieldset></div><aside className={`ce-preview${expanded ? ' ce-preview-expanded' : ''}`}><header><div><h3>Prévia</h3></div><Button type="button" className="secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? 'Recolher prévia' : 'Ampliar prévia'}</Button></header><p className="ce-muted" aria-live="polite">{previewReady ? 'Rascunho atual · foto local' : 'Carregando prévia…'}</p><div className="ce-preview-device"><iframe ref={frame} src={`/event-runtime/preview.html?campaignId=${campaignId}`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></div></aside></div>
+    </fieldset></div><aside className={`ce-preview${expanded ? ' ce-preview-expanded' : ''}`}><header><div><h3>Prévia</h3></div><Button type="button" className="secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? 'Recolher prévia' : 'Ampliar prévia'}</Button></header><p className="ce-muted" aria-live="polite">{previewReady ? 'Rascunho atual · foto local' : 'Carregando prévia…'}</p><div className="ce-preview-device"><iframe ref={frame} src={`/campaign-runtime/preview.html?campaignId=${campaignId}`} title="Prévia real do editor da campanha" onLoad={sendPreview} allow="web-share" /></div></aside></div>
   </section>;
 }

@@ -2,13 +2,13 @@
 
 import { useId, useState, type ReactNode } from 'react';
 import { ArrowRight, Check, ChevronDown, GitCompareArrows } from 'lucide-react';
-import type { Artwork, EventConfig, Material } from '@namarca/editor/events';
-import { comparePublicationEvents, type MaterialChanges, type MaterialFieldChange, type PublicationField } from '@/lib/publication-diff';
+import type { Artwork, CampaignConfig, Material } from '@namarca/editor/campaigns';
+import { comparePublicationCampaigns, type MaterialChanges, type MaterialFieldChange, type PublicationField } from '@/lib/publication-diff';
 import { Field } from './primitives';
 import { SelectField } from './form-controls';
 
-export type PublicationDiffVersion = { version: number; config: EventConfig; publishedBy: string; deliveredAt: string };
-export type PublicationDiffProps = { campaignId: string; versions: PublicationDiffVersion[]; draft: EventConfig; currentVersion?: number };
+export type PublicationDiffVersion = { version: number; config: CampaignConfig; publishedBy: string; deliveredAt: string };
+export type PublicationDiffProps = { campaignId: string; versions: PublicationDiffVersion[]; draft: CampaignConfig; currentVersion?: number };
 const labels: Record<PublicationField, string> = { slug: 'Endereço', name: 'Nome', endsAt: 'Encerramento', demo: 'Demonstração', color: 'Cor do manifesto', 'theme.background': 'Fundo', 'theme.surface': 'Painéis', 'theme.accent': 'Destaque', 'theme.text': 'Texto' };
 function date(value: string) {
   const parsed = new Date(value);
@@ -62,7 +62,7 @@ export function PublicationDiff({ campaignId, versions, draft, currentVersion }:
   const [destination, setDestination] = useState('draft');
   const before = ordered.find(item => String(item.version) === origin) ?? ordered[0];
   const after = destination === 'draft' ? undefined : ordered.find(item => String(item.version) === destination);
-  const diff = before ? comparePublicationEvents(before.config, after?.config ?? draft) : null;
+  const diff = before ? comparePublicationCampaigns(before.config, after?.config ?? draft) : null;
   const fields = diff?.fields ?? [];
   const materialCount = (changes: MaterialChanges<Material>) => new Set([...changes.added, ...changes.removed, ...changes.modified, ...changes.reordered].map(item => item.id)).size;
   const count = diff ? fields.length + materialCount(diff.artworks) + materialCount(diff.stickers) : 0;

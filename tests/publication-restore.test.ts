@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { resolvePublishedRestore } from '../apps/admin/src/lib/publication-restore';
-import { defaultCampaignEvent } from '../apps/admin/src/lib/campaign-editor';
+import { defaultCampaignConfig } from '../apps/admin/src/lib/campaign-editor';
 
 const id = '11111111-1111-4111-8111-111111111111';
 const campaign = { name: 'Private edit', slug: 'fixed', endsAt: new Date('2099-01-01'), updatedAt: new Date('2026-01-01'), preparationStatus: 'draft', publicationStatus: 'published' };
-const config = { ...defaultCampaignEvent({ ...campaign, name: 'Published', endsAt: new Date('2000-01-01') }), artworks: [{ id, name: 'Original', file: `artworks/${id}.png`, width: 2, height: 2, reference: { x: 0, y: 0, width: 2, height: 2 } }], stickers: [{ id: '22222222-2222-4222-8222-222222222222', name: 'Sticker', file: 'releases/old/sticker.png' }] };
+const config = { ...defaultCampaignConfig({ ...campaign, name: 'Published', endsAt: new Date('2000-01-01') }), artworks: [{ id, name: 'Original', file: `artworks/${id}.png`, width: 2, height: 2, reference: { x: 0, y: 0, width: 2, height: 2 } }], stickers: [{ id: '22222222-2222-4222-8222-222222222222', name: 'Sticker', file: 'releases/old/sticker.png' }] };
 const publication = { config, version: 3, deliveredAt: new Date('1999-01-01') };
 const assets = [{ id, kind: 'artwork' as const, width: 2, height: 2 }, { id: config.stickers[0].id, kind: 'sticker' as const, width: 2, height: 2 }];
 const run = (p = publication, revision = 8, timestamp = campaign.updatedAt.toISOString(), version = 3) => resolvePublishedRestore(campaign, { revision: 8 }, p, assets, revision, timestamp, version);

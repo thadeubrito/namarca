@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "exports": {
-    "./events": "./src/events/events.ts",
+    "./campaigns": "./src/campaigns/campaigns.ts",
     "./photo-editor": "./src/editor/PhotoEditor.tsx",
     "./styles.css": "./src/styles.css"
   },

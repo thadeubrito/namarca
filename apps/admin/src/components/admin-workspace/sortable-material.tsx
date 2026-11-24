@@ -6,7 +6,7 @@ import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useS
 import { CSS } from '@dnd-kit/utilities';
 import { useReducedMotion } from 'motion/react';
 import { GripVertical } from 'lucide-react';
-import type { Material } from '@namarca/editor/events';
+import type { Material } from '@namarca/editor/campaigns';
 
 export function SortableMaterialLibrary({ items, disabled, onMove, renderMaterial, children }: {
   items: Material[]; disabled: boolean; onMove: (from: number, to: number) => void;

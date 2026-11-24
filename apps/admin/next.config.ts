@@ -15,7 +15,7 @@ const config: NextConfig = {
       { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
       { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
       { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-    ] }, { source: '/event-runtime/:path*', headers: [
+    ] }, { source: '/campaign-runtime/:path*', headers: [
       { key: 'Cache-Control', value: 'no-cache' },
       { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
     ] }, { source: '/checkout/:path*', headers: [
