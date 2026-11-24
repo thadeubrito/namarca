@@ -54,6 +54,19 @@ for(const width of [1440,768,390,320])for(const reducedMotion of ['no-preference
    const sizes=await photo.evaluate(e=>({img:e.getBoundingClientRect().height,mask:e.parentElement.getBoundingClientRect().height}));assert.ok(Math.abs(sizes.img-sizes.mask)<.1);
    if(width===1440||width===390)await page.locator('.photo').screenshot({path:`${out}/${width}-${reducedMotion}-final-mask.png`});
   }
+  // The printed edge is outward: it must never inset the approved artwork
+  // relative to the independent photo canvas, at any slot or viewport.
+  const card=await page.locator(`.frame[data-slot="${i}"]`).evaluate(e=>{
+   const box=n=>{const b=n.getBoundingClientRect();return [b.x,b.y,b.width,b.height];};
+   const css=getComputedStyle(e);
+   return {frame:box(e),art:box(e.querySelector('img')),canvas:box(e.closest('.scene').querySelector('.photo-canvas')),border:css.borderWidth,padding:css.padding,shadow:css.boxShadow};
+  });
+  assert.equal(card.border,'0px');assert.equal(card.padding,'0px');
+  assert.match(card.shadow,/rgb\(255, 255, 255\)/);
+  for(const [j,value] of card.frame.entries()){
+   assert.ok(Math.abs(value-card.art[j])<.1,'white edge must not inset artwork');
+   assert.ok(Math.abs(value-card.canvas[j])<.1,'art and independent photo must share the same canvas');
+  }
   assert.equal(await photo.evaluate(e=>getComputedStyle(e).objectFit),'cover');assert.equal(await page.locator('.sticker').count(),0);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${width}/${reducedMotion}/${i}`);
   await page.screenshot({path:`${out}/${width}-${reducedMotion}-variant-${i}.png`});await page.keyboard.press('ArrowRight');
