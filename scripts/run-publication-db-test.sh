@@ -22,7 +22,7 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 docker volume inspect "$DEPS" >/dev/null
 # Read-only probe only, no installs and no source .env access.
-docker run --rm --network none -v "$DEPS:/deps:ro" node:24.11.1-bookworm-slim node -e 'for(const p of ["tsx","@aws-sdk/s3-request-presigner"])require("node:fs").accessSync("/deps/"+p+"/package.json")' >/dev/null
+docker run --rm --network none -v "$DEPS:/deps:ro" node:26.13.1-bookworm-slim node -e 'for(const p of ["tsx","@aws-sdk/s3-request-presigner"])require("node:fs").accessSync("/deps/"+p+"/package.json")' >/dev/null
 for resource in "$DB" "$S3" "$TEST"; do
   if docker container inspect "$resource" >/dev/null 2>&1; then printf '%s\n' 'Exclusive container name collision; aborting.' >&2; exit 1; fi
 done
@@ -61,7 +61,7 @@ docker run --rm --name "$TEST" --network "$NETWORK" \
   -e S3_REGION=us-east-1 -e S3_BUCKET=publication-test \
   -e S3_ACCESS_KEY_ID=synthetic-test-key -e S3_SECRET_ACCESS_KEY=synthetic-test-secret \
   -e PIXGO_MODE=mock -e PIXGO_API_KEY=synthetic -e PIXGO_WEBHOOK_SECRET=synthetic-publication-webhook-secret \
-  node:24.11.1-bookworm-slim sh -ec '
+  node:26.13.1-bookworm-slim sh -ec '
     node -e '\''const fs=require("node:fs");fs.cpSync("/source","/app",{recursive:true,filter:p=>!p.slice(8).split("/").some(n=>["node_modules",".git",".next","dist","campaign-runtime"].includes(n)||n.startsWith(".env"))})'\''
     npm run db:migrate
     node_modules/.bin/tsx scripts/test-publication.ts

@@ -47,7 +47,7 @@ Requisitos: Docker com Compose. Não instalar dependências Node no host. Em amb
 
 ```sh
 # Secrets locais aleatórios; não sobrescreve arquivo existente.
-docker run --rm -v "$PWD:/app" -w /app node:24.11.1-bookworm-slim node scripts/dev-env.mjs
+docker run --rm -v "$PWD:/app" -w /app node:26.13.1-bookworm-slim node scripts/dev-env.mjs
 docker compose up -d postgres s3 pixgo-mock
 docker compose run --rm app npm run db:migrate
 docker compose up --build -d

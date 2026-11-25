@@ -1,4 +1,4 @@
-FROM node:24.11.1-bookworm-slim
+FROM node:26.13.1-bookworm-slim
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./

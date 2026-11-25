@@ -78,7 +78,7 @@ docker run --rm --network none \
   -e ADMIN_EMAIL=build@namarca.test \
   -e BETTER_AUTH_SECRET=synthetic-build-only-not-a-production-secret \
   -e DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
-  node:24.11.1-bookworm-slim sh -c \
+  node:26.13.1-bookworm-slim sh -c \
   'node -e '\''const fs=require("node:fs");fs.cpSync("/source","/app",{recursive:true,filter:p=>!p.slice(8).split("/").some(n=>["node_modules",".git",".next","dist","campaign-runtime"].includes(n)||n.startsWith(".env"))})'\''; npm run build'
 ```
 

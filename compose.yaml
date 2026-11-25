@@ -58,7 +58,7 @@ services:
       start_period: 15s
       retries: 30
   pixgo-mock:
-    image: node:24.11.1-bookworm-slim
+    image: node:26.13.1-bookworm-slim
     init: true
     working_dir: /app
     env_file: .env.local

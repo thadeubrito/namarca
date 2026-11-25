@@ -1,5 +1,5 @@
 // Run only against an already-migrated disposable PostgreSQL database named *_auth_test.
-// npx tsx scripts/test-auth.ts (Node 24; server-only marker stubbed only in this test process)
+// npx tsx scripts/test-auth.ts (Node 26; server-only marker stubbed only in this test process)
 import { registerHooks } from "node:module";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";

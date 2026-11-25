@@ -9,5 +9,5 @@ project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 exec docker run --rm -i \
   --mount "type=bind,source=${project_root},target=/app" \
   --workdir /app \
-  node:24.11.1-bookworm-slim \
+  node:26.13.1-bookworm-slim \
   npx --yes shadcn@latest mcp
