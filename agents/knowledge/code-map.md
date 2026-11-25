@@ -15,7 +15,7 @@ No host administrativo, `/` reescreve para `/admin`; `/login`, `/seguranca`, `/c
 | Domínio | Onde consultar |
 |---|---|
 | Rotas administrativas | `src/app/admin/(workspace)/`: lista em `page.tsx`, `campanhas/{nova,[id]}`, `clientes/*`, `financeiro`. Route groups não entram na URL externa. |
-| Auth | `src/app/admin/(auth)/{login,seguranca}`, `src/app/api/auth`, `src/lib/{auth,auth-client,admin}.ts`, `src/db/auth-schema.ts`, `src/components/auth-panel.tsx`, `scripts/{create-admin,reset-admin,test-auth}.ts`. |
+| Auth | `src/app/admin/(auth)/{login,seguranca}`, `src/app/api/auth`, `src/lib/{auth,auth-client,admin,admin-bootstrap}.ts`, `src/db/auth-schema.ts`, `src/components/auth-panel.tsx`, `scripts/{create-admin,reset-admin,test-auth}.ts`. |
 | Campanhas/clientes | `src/lib/{campaign-input,campaign-client,client-input,campaign-slug}.ts`; actions em `src/app/admin/(workspace)/campanhas/` e `clientes/`. |
 | UI ativa | `src/components/admin-workspace/`, primitives em `src/components/ui/`, tokens `src/app/ui.css`. Conferir imports: componentes antigos podem não participar das rotas ativas. |
 | Rascunhos/painéis | `src/components/admin-workspace/{campaign-sections,workspace-tabs,campaign-recovery,form-draft,studio-workspace}.tsx`, `src/lib/{studio-draft,studio-discard}.ts`. |
@@ -36,7 +36,7 @@ Landing e assets possuem procedência em `public/landing/{NOTICE.txt,OFL.txt}`; 
 
 ## Contratos técnicos para investigar com segurança
 
-- Auth: `ADMIN_EMAIL` normalizado + TOTP habilitado + `session.twoFactorVerified`, lidos no DB. `getEnrollmentSession` só permite setup; tratar `AdminAuthorizationError` no handler. `BETTER_AUTH_SECRET` cifra fatores/códigos: não trocar para corrigir login. `admin:create` recusa conta existente; `admin:reset` revoga sessões/fatores, requer pedido explícito e aplicação parada. Senha somente interativa, nunca argumento/pipe/env/arquivo. Dev origins Next e trusted origins Better Auth são controles distintos.
+- Auth: `ADMIN_EMAIL` normalizado + TOTP habilitado + `session.twoFactorVerified`, lidos no DB. `getEnrollmentSession` só permite setup; tratar `AdminAuthorizationError` no handler. `BETTER_AUTH_SECRET` cifra fatores/códigos: não trocar para corrigir login. Bootstrap navegador em `/login/primeiro-acesso` + `POST /api/auth/bootstrap`: `ADMIN_BOOTSTRAP_KEY` servidor base64url ≥43 caracteres, criação atômica sem sessão, consumo singleton e limite global persistente 5/15min (`auth_bootstrap*`, migration0017); login normal e enrollment continuam obrigatórios. `admin:create` legado recusa conta existente; `admin:reset` revoga sessões/fatores, requer pedido explícito e aplicação parada. Senha somente interativa, nunca argumento/pipe/env/arquivo. Dev origins Next e trusted origins Better Auth são controles distintos.
 - Upload direto: JSON autenticado autoriza staging privado por hash/tamanho/vínculo; PUT assinado5min, finalização até1h valida PNG e grava definitivos. `S3_UPLOAD_ENDPOINT` é origem acessível pelo navegador antes de assinar, distinta da interna; não reescrever hostname assinado. CORS local: `scripts/configure-local-upload-cors.ts`. Setup/limites em `docs/uploads.md`; pendências de homologação/retenção em memory.
 - Assets legado: POST PNG raw `image/png`, `X-Asset-Name` codificado, `X-Upload-Id` UUID idempotente com mesmos bytes/tipo/vínculo. CRC/alpha0 e255/dimensões, 25MiB/40milhões pixels. Rota raw compatível, não transporte do estúdio nem solução de25MiB na Vercel. `PUT /editor` aceita scope `artworks|stickers|theme`, sem scope mantém compatibilidade full save; revisão global/409. Definitivos únicos em `private/campaigns/<UUID>/assets/<UUID>.png` (prefixo histórico); API administrativa autenticada/no-store e entrega pública por vínculo slug/ID/tipo, inclusive antes de publicar para quem conhece a URL.
 - Cleanup: confirmação manual por até100 IDs canônicos, protegendo referências atuais/históricas/packages legados e objetos <24h ou data desconhecida. Pós-commit revalida sob lock; falha não desfaz save. Nunca excluir prefixo amplo.
@@ -82,13 +82,15 @@ docker run --rm --network none \
 
 Não usar symlink de deps fora da raiz. Configuração adicional deve ser sintética; não carregar secrets nem liberar rede como atalho. Eventual configuração Vercel usa raiz do repositório; não é autorização de deploy.
 
+Primeiro acesso pelo navegador: [docs/admin-provisioning.md](../../docs/admin-provisioning.md). Configurar chave aleatória de bootstrap somente no servidor, aplicar migration0017 e abrir `/login/primeiro-acesso` na origem administrativa. Remover chave após concluir; consumo persistido impede reutilização. Sem sessão automática/reset de conta existente. CLI local legado permanece inalterado, não é procedimento de build ou provisionamento de produção.
+
 ## Integrações e isolamento
 
 Provisionar recursos exclusivos sem portas públicas, migrations completas, ambiente sintético e DB/conta vazios; preferir PostgreSQL/S3 tmpfs e redes internas próprias. App teste precisa cópia/`.next` próprios, sem `npm ci` concorrente. Conferir nomes livres e gates antes de importar domínio. Cleanup somente fixtures/chaves exatas e recursos criados na execução, também após falha; não imprimir conexão, setup/TOTP ou documentos.
 
 | Comando no container preparado | Pré-condições e alcance |
 |---|---|
-| `npm run test:auth` | Obrigatório em auth. Handler real + DB migrado `*_auth_test`, sem conta para ADMIN_EMAIL, credenciais efêmeras. Não é browser/reset CLI/rate limit distribuído. |
+| `npm run test:auth` | Obrigatório em auth. Handler real de bootstrap/login/TOTP + DB migrado `*_auth_test` vazio, bootstrap não consumido e bucket sem tentativas, sem conta para ADMIN_EMAIL, credenciais efêmeras. Não é browser/reset CLI/rate limit distribuído. |
 | `sh scripts/run-direct-upload-test.sh` | Isolamento descartável com handlers/auth/TOTP/S3/DB reais; sem HTTP Next/browser. |
 | `sh scripts/run-publication-db-test.sh` | PostgreSQL/S3 descartáveis, migrations completas, domínio real; sem HTTP/auth/browser. Conferir gates no runner. |
 | `npm run test:checkout` | DB exato `namarca_checkout_test`, host postgres, NODE_ENV development, PIXGO_MODE mock, `CHECKOUT_TEST_ISOLATED=1`; app/mock exclusivos, DB sem campanhas/usuários; Chromium. Conferir callback/hosts do runner contra separação atual. |

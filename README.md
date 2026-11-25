@@ -35,6 +35,8 @@ O [mapa do código](agents/knowledge/code-map.md) concentra caminhos, roteamento
 
 Documentação do fluxo de materiais, configuração e limites: [uploads](docs/uploads.md).
 
+Primeiro acesso pelo navegador: [provisionamento seguro do administrador](docs/admin-provisioning.md). Configurar `ADMIN_BOOTSTRAP_KEY` no servidor (base64url aleatória, recomendados 256 bits, mínimo 43 caracteres), aplicar migrations e abrir `/login/primeiro-acesso`. A criação não inicia sessão: login normal e TOTP continuam obrigatórios. Nunca enviar chave pela URL nem executar provisionamento no build.
+
 ## Começar localmente
 
 Requisitos: Docker com Compose. Não instalar dependências Node no host. Em ambiente **novo**, sem sobrescrever configuração/contas existentes:
@@ -46,7 +48,8 @@ docker compose up -d postgres s3 pixgo-mock
 docker compose run --rm app npm run db:migrate
 docker compose up --build -d
 # Provisionar somente sua conta nova; solicita senha sem exibi-la.
-docker compose exec app npm run admin:create
+# Com ADMIN_BOOTSTRAP_KEY configurada no servidor, abrir:
+# http://admin.localhost:3000/login/primeiro-acesso
 ```
 
 Admin em http://admin.localhost:3000, público local em http://localhost:3000. Identificador inicial `admin@namarca.test`, configurável antes do provisionamento; sem senha padrão, TOTP obrigatório. PostgreSQL5432, S3/SeaweedFS9000 e mock4010 ligados a localhost. Não apagar volumes para resolver problemas de ambiente.

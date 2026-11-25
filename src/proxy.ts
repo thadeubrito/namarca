@@ -28,7 +28,13 @@ export function proxy(request: NextRequest) {
   if (decision.action === 'rewrite') {
     const destination = request.nextUrl.clone();
     destination.pathname = decision.pathname;
-    return NextResponse.rewrite(destination, { request: { headers } });
+    const response = NextResponse.rewrite(destination, { request: { headers } });
+    if (request.nextUrl.pathname === '/login/primeiro-acesso') {
+      response.headers.set('Cache-Control', 'no-store');
+      response.headers.set('Referrer-Policy', 'no-referrer');
+      response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    }
+    return response;
   }
   return NextResponse.next({ request: { headers } });
 }

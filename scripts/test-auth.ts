@@ -7,8 +7,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
-import { hashPassword } from "better-auth/crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 // Next normally supplies this boundary marker. Do not weaken production imports.
 const markerDirectory = mkdtempSync(join(tmpdir(), "namarca-auth-marker-"));
 const marker = join(markerDirectory, "server-only.mjs");
@@ -18,7 +17,7 @@ registerHooks({ resolve(specifier, context, nextResolve) {
   return nextResolve(specifier, context);
 } });
 import { db, pool } from "../src/db";
-import { account, session, user } from "../src/db/auth-schema";
+import { authBootstrap, authBootstrapAttempt, session, user } from "../src/db/auth-schema";
 
 function totp(uri: string) {
   const encoded = new URL(uri).searchParams.get("secret")!;
@@ -47,7 +46,7 @@ async function main() {
   const email = adminEmail();
   const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email));
   assert.equal(existing.length, 0, "Refusing to modify an existing account");
-  const id = randomUUID();
+  let id: string = randomUUID();
   const password = randomBytes(24).toString("base64url");
   let cookies = new Map<string, string>();
   const headers = () => new Headers({ cookie: [...cookies].map(([k, v]) => `${k}=${v}`).join("; ") });
@@ -76,11 +75,57 @@ async function main() {
     assert.equal(await getAdminSession(headers()), null);
   }
   try {
-    stage = "provision fixture";
-    await db.transaction(async (tx) => {
-      await tx.insert(user).values({ id, email, name: "Auth test", emailVerified: true });
-      await tx.insert(account).values({ id: randomUUID(), accountId: id, providerId: "credential", userId: id, password: await hashPassword(password) });
-    });
+    stage = "bootstrap isolated-state gate";
+    const [bootstrapState] = await db.select().from(authBootstrap);
+    assert.ok(bootstrapState && !bootstrapState.consumedAt, "Bootstrap test requires fresh migrated state");
+    assert.equal((await db.select().from(authBootstrapAttempt)).length, 0);
+    const { POST } = await import('../src/app/api/auth/bootstrap/route');
+    const key = randomBytes(32).toString('base64url');
+    process.env.ADMIN_BOOTSTRAP_KEY = key;
+    const origin = new URL(process.env.BETTER_AUTH_URL!).origin;
+    const payload = { key, password, passwordConfirmation: password };
+    async function bootstrap(body: unknown = payload, requestOrigin: string | null = origin, query = '') {
+      const h = new Headers({ 'content-type': 'application/json' });
+      if (requestOrigin !== null) h.set('origin', requestOrigin);
+      return POST(new Request(`${origin}/api/auth/bootstrap${query}`, { method: 'POST', headers: h, body: JSON.stringify(body) }));
+    }
+    stage = 'bootstrap origin query and streaming limit';
+    assert.equal((await bootstrap(payload, null)).status, 400);
+    assert.equal((await bootstrap(payload, `${origin}.invalid`)).status, 400);
+    assert.equal((await bootstrap(payload, origin, '?key=not-accepted')).status, 400);
+    const stream = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array(2048).fill(32)); controller.enqueue(new Uint8Array(2049).fill(32)); controller.close(); } });
+    assert.equal((await POST(new Request(`${origin}/api/auth/bootstrap`, { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: stream, duplex: 'half' } as RequestInit))).status, 400);
+    stage = 'bootstrap invalid config and global limit';
+    process.env.ADMIN_BOOTSTRAP_KEY = 'short';
+    assert.equal((await bootstrap()).status, 400);
+    process.env.ADMIN_BOOTSTRAP_KEY = key;
+    for (let i = 0; i < 5; i++) assert.equal((await bootstrap({ ...payload, key: 'incorrect' })).status, 400);
+    assert.equal((await bootstrap()).status, 400);
+    assert.equal((await db.select().from(authBootstrapAttempt))[0].attempts, 5);
+    // Only this disposable test fixture's clock state is advanced; production limits stay enabled.
+    await db.update(authBootstrapAttempt).set({ windowStartedAt: sql`clock_timestamp() - interval '16 minutes'` });
+    stage = 'bootstrap existing account is never changed';
+    const existingId = randomUUID();
+    await db.insert(user).values({ id: existingId, email: email.toUpperCase(), name: 'Existing bootstrap fixture' });
+    assert.equal((await bootstrap()).status, 400);
+    assert.equal((await db.select().from(user).where(eq(user.id, existingId)))[0].name, 'Existing bootstrap fixture');
+    assert.equal((await db.select().from(authBootstrap))[0].consumedAt, null);
+    await db.delete(user).where(eq(user.id, existingId));
+    stage = 'bootstrap concurrent consumption and no session';
+    const results = await Promise.all([bootstrap(), bootstrap()]);
+    assert.deepEqual(results.map(r => r.status).sort(), [200, 400]);
+    for (const r of results) {
+      assert.equal(r.headers.get('set-cookie'), null);
+      assert.equal(r.headers.get('cache-control'), 'no-store');
+      assert.equal(r.headers.get('referrer-policy'), 'no-referrer');
+    }
+    const [created] = await db.select().from(user).where(eq(user.email, email));
+    assert.ok(created);
+    id = created.id;
+    assert.equal((await db.select().from(session).where(eq(session.userId, id))).length, 0);
+    assert.ok((await db.select().from(authBootstrap))[0].consumedAt);
+    assert.equal((await bootstrap()).status, 400);
+    assert.equal(await getAdminSession(headers()), null);
     stage = "unauthenticated guard and signup disabled";
     assert.equal(await getAdminSession(headers()), null);
     assert.ok((await request("/sign-up/email", { email: "other@example.invalid", password, name: "No signup" })).status >= 400);
@@ -123,7 +168,7 @@ async function main() {
     await db.delete(session).where(eq(session.userId, id));
     cookies = enrolledCookies;
     assert.equal(await getAdminSession(headers()), null);
-    console.info("PASS: signup disabled; password-only restricted; TOTP enrollment; recovery single-use; forbidden flags; revoked sessions.");
+    console.info("PASS: bootstrap origin/body/keys/global limit/existing/concurrency/consumption/no-session; signup disabled; password-only restricted; TOTP enrollment; recovery single-use; forbidden flags; revoked sessions.");
   } finally {
     await db.delete(user).where(eq(user.id, id));
   }

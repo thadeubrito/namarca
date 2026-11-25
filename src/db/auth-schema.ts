@@ -1,4 +1,5 @@
-import { boolean, index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { boolean, check, index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 // Better Auth 1.7.25 core + two-factor schema. Re-export these from db/schema.ts.
 export const user = pgTable("auth_user", {
@@ -55,4 +56,14 @@ export const twoFactor = pgTable("auth_two_factor", {
   failedVerificationCount: integer("failed_verification_count").default(0),
   lockedUntil: timestamp("locked_until"),
 }, (t) => [uniqueIndex("auth_two_factor_user_idx").on(t.userId), index("auth_two_factor_secret_idx").on(t.secret)]);
+// One global bootstrap state, deliberately unrelated to sessions or normal login limits.
+export const authBootstrap = pgTable("auth_bootstrap", {
+  id: integer("id").primaryKey().default(1),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+}, (t) => [check("auth_bootstrap_singleton", sql`${t.id} = 1`)]);
+export const authBootstrapAttempt = pgTable("auth_bootstrap_attempt", {
+  id: integer("id").primaryKey().default(1),
+  windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull(),
+  attempts: integer("attempts").notNull(),
+}, (t) => [check("auth_bootstrap_attempt_singleton", sql`${t.id} = 1`), check("auth_bootstrap_attempt_range", sql`${t.attempts} between 1 and 5`)]);
 export const authSchema = { user, session, account, verification, twoFactor };
