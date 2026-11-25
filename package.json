@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev --webpack --hostname 0.0.0.0",
     "build": "next build",
+    "vercel-build": "node scripts/migrate-production.mjs && npm run build",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts tests/*.test.mjs services/pixgo-mock/server.test.mjs",

@@ -80,7 +80,7 @@ docker run --rm --network none \
   'node -e '\''const fs=require("node:fs");fs.cpSync("/source","/app",{recursive:true,filter:p=>!p.slice(8).split("/").some(n=>["node_modules",".git",".next","dist","campaign-runtime"].includes(n)||n.startsWith(".env"))})'\''; npm run build'
 ```
 
-Não usar symlink de deps fora da raiz. Configuração adicional deve ser sintética; não carregar secrets nem liberar rede como atalho. Eventual configuração Vercel usa raiz do repositório; não é autorização de deploy.
+Não usar symlink de deps fora da raiz. Configuração adicional deve ser sintética; não carregar secrets nem liberar rede como atalho. Vercel usa raiz do repositório e `vercel.json` define `npm run vercel-build`: migrations apenas quando `VERCEL=1`/`VERCEL_ENV=production`, depois build. Runner `scripts/migrate-production.mjs` usa `MIGRATION_DATABASE_URL` ou `DATABASE_URL` explícita, recusa pooler Neon e mantém advisory lock na mesma conexão direta durante migrations; concorrência falha fechada. `npm run build` continua sem migrations. Configuração e limites em [docs/deploy-migrations.md](../../docs/deploy-migrations.md); existência do código não comprova configuração live nem autoriza deploy.
 
 Primeiro acesso pelo navegador: [docs/admin-provisioning.md](../../docs/admin-provisioning.md). Configurar chave aleatória de bootstrap somente no servidor, aplicar migration0017 e abrir `/login/primeiro-acesso` na origem administrativa. Remover chave após concluir; consumo persistido impede reutilização. Sem sessão automática/reset de conta existente. CLI local legado permanece inalterado, não é procedimento de build ou provisionamento de produção.
 

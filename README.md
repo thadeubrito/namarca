@@ -35,6 +35,8 @@ O [mapa do código](agents/knowledge/code-map.md) concentra caminhos, roteamento
 
 Documentação do fluxo de materiais, configuração e limites: [uploads](docs/uploads.md).
 
+Deploy na Vercel aplica migrations pendentes automaticamente **somente em produção**, antes do build. Configuração da conexão direta Neon, proteção de concorrência e limites de rollback: [migrations no deploy](docs/deploy-migrations.md).
+
 Primeiro acesso pelo navegador: [provisionamento seguro do administrador](docs/admin-provisioning.md). Configurar `ADMIN_BOOTSTRAP_KEY` no servidor (base64url aleatória, recomendados 256 bits, mínimo 43 caracteres), aplicar migrations e abrir `/login/primeiro-acesso`. A criação não inicia sessão: login normal e TOTP continuam obrigatórios. Nunca enviar chave pela URL nem executar provisionamento no build.
 
 ## Começar localmente
