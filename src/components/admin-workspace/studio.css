@@ -130,8 +130,10 @@
 .ws-studio-preview-bar .ws-action { font-size:12px;padding-inline:8px; }
 .ws-studio-preview [hidden] { display:none!important; }
 .ws-studio-preview-content { padding-top:20px; }
-.ws-studio-device { width:min(320px,100%);margin:auto;border:1px solid var(--line);border-radius:28px;overflow:hidden;background:var(--surface); }
-.ws-studio-device > .editor-preview { display:block;width:100%;height:clamp(360px,calc(100dvh - 280px),624px);border:0;background:var(--surface); }
+/* The device owns a definite height; shared preview height:100% must resolve
+   against it regardless of CSS chunk order in production. */
+.ws-studio-device { width:min(320px,100%);height:clamp(360px,calc(100dvh - 280px),624px);margin:auto;border:1px solid var(--line);border-radius:28px;overflow:hidden;background:var(--surface); }
+.ws-studio-device > .editor-preview { display:block;width:100%;height:100%;border:0;background:var(--surface); }
 .ws-studio-root :focus-visible { outline:2px solid var(--ring);outline-offset:3px; }
 .ui-scope.ws-studio-reference-dialog { min-height:0;position:fixed;z-index:90;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 48px));height:fit-content;max-height:calc(100dvh - 128px);overflow:hidden;display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--line);border-radius:var(--radius-panel);background:var(--popover);box-shadow:none; }
 .ws-studio-dialog-heading,.ws-studio-dialog-footer { display:flex;align-items:center;justify-content:space-between;gap:16px; }
