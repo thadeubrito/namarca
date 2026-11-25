@@ -33,6 +33,8 @@ Uma aplicação Next.js na raiz, sem npm workspaces, serve institucional, campan
 
 O [mapa do código](agents/knowledge/code-map.md) concentra caminhos, roteamento por host, geração dos arquivos públicos e comandos de validação. Instalar dependências somente na raiz, em containers, com o `package-lock.json`.
 
+Ferramentas operacionais têm pacotes independentes, sem workspaces, e não são instaladas no deploy: `tools/lint/` preserva o lint completo; `tools/database/` contém o gerador Drizzle Kit. Compose instala o lint em volume próprio. Antes de gerar schema, executar `docker compose exec app npm run db:tools:install`; depois `npm run db:generate` no mesmo container. `db:migrate` usa o migrator do Drizzle ORM, sem instalar o gerador. Instalações das ferramentas ainda podem emitir avisos de upstream conhecidos; eles não são ocultados.
+
 Documentação do fluxo de materiais, configuração e limites: [uploads](docs/uploads.md).
 
 Deploy na Vercel aplica migrations pendentes automaticamente **somente em produção**, antes do build. Configuração da conexão direta Neon, proteção de concorrência e limites de rollback: [migrations no deploy](docs/deploy-migrations.md).

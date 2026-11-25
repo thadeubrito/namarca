@@ -1,4 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run vercel-build"
+  "installCommand": "sh scripts/vercel-install.sh",
+  "buildCommand": "env -u npm_config_cache_dir -u NPM_CONFIG_CACHE_DIR NEXT_TELEMETRY_DISABLED=1 npm run vercel-build"
 }

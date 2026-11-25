@@ -58,6 +58,8 @@ docker compose exec app npm run lint
 docker compose exec app npm test
 ```
 
+Ferramentas separadas sem workspaces: `tools/lint/` mantém ESLint/presets completos (Compose instala em volume próprio); `tools/database/` mantém Drizzle Kit, instalado com `npm run db:tools:install` antes de gerar schema. `drizzle.config.ts` reexporta a configuração operacional; `db:migrate` usa `scripts/migrate-local.mjs`/Drizzle ORM e recusa produção/Vercel. Pacotes de ferramentas têm locks próprios e não são instalados pela Vercel; avisos de upstream nesses pacotes não foram eliminados. Instalação Vercel por `scripts/vercel-install.sh` traduz a chave inválida `cache-dir` para `cache`; build remove apenas essas variáveis inválidas e desliga telemetria Next, sem reduzir nível de logs.
+
 `dev`/`build` executam somente Next na raiz, incluindo o editor compartilhado; sem etapa esbuild ou cópia de runtime. Alterou schema: `npm run db:generate` em container, revisar SQL/metadados e aplicar `npm run db:migrate` primeiro em DB descartável, validando cadeia completa. `db:push` não substitui migration. Não usar banco principal como teste inofensivo.
 
 Parar preservando dados: `docker compose down`, nunca `down -v`. Não trocar senha PostgreSQL em volume inicializado, limpar bucket ou recriar conta/sessões para tornar teste verde. Mock Node não tem hot reload: reiniciar somente o serviço alterado, preservando dados.

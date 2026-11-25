@@ -1,10 +1,11 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
+import { strictDatabaseConnectionString } from "./connection-string.mjs";
 
 const globalDb = globalThis as unknown as { namarcaPool?: Pool };
 export const pool = globalDb.namarcaPool ?? new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: strictDatabaseConnectionString(process.env.DATABASE_URL),
   max: 10,
   connectionTimeoutMillis: 3000,
   idleTimeoutMillis: 30000,

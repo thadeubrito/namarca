@@ -9,6 +9,8 @@ Na Vercel, em **Settings → Environment Variables → Production**:
 - `DATABASE_URL`: conexão usada pela aplicação.
 - `MIGRATION_DATABASE_URL`: recomendado para migrations; conexão **direta** do mesmo banco/branch Neon usado pela aplicação (hostname sem `-pooler`). Pode ter credencial própria com permissões DDL. Não adicionar ao Git, ao navegador ou a logs.
 
+A aplicação e o runner preservam a verificação estrita de TLS: parâmetros `sslmode=prefer`, `require` e `verify-ca` são normalizados para `verify-full` antes de chegar ao driver. Recomenda-se também configurar `sslmode=verify-full` explicitamente nas variáveis Neon; os demais parâmetros são preservados. Compatibilidade libpq explícita com esses modos é recusada, não silenciosamente enfraquecida.
+
 Se `MIGRATION_DATABASE_URL` não existir, o runner usa `DATABASE_URL`, desde que não seja conexão pooled do Neon. Sem conexão explícita ou com pooler, o deploy falha fechado. Nunca usar o fallback local de `drizzle.config.ts` em produção.
 
 Não basta copiar uma conexão qualquer do Neon: conferir projeto, branch e database iguais aos da aplicação. Variáveis de Production não devem ser atribuídas a Preview. O runner ignora migrations fora de `VERCEL=1` e `VERCEL_ENV=production`; isso não isola por si só o acesso da aplicação de preview ao banco. Se previews precisarem de banco, usar branch/banco exclusivo.

@@ -1,5 +1,6 @@
 import { pathToFileURL, fileURLToPath } from "node:url";
 import pg from "pg";
+import { strictDatabaseConnectionString } from "../src/db/connection-string.mjs";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 
@@ -19,7 +20,7 @@ export async function migrateProduction({
   }
 
   // Deliberately no local/default connection fallback in production.
-  const connectionString = env.MIGRATION_DATABASE_URL || env.DATABASE_URL;
+  const connectionString = strictDatabaseConnectionString(env.MIGRATION_DATABASE_URL || env.DATABASE_URL);
   if (!connectionString) throw new Error("Conexão de migration não configurada.");
   // Neon transaction pooling cannot preserve the session advisory lock.
   if (new URL(connectionString).hostname.includes("-pooler.")) {

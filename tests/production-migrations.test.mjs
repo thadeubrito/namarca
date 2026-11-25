@@ -76,7 +76,8 @@ test("asynchronous socket errors fail closed without echoing their payload", asy
 test("Vercel runs migrations before build, ordinary builds remain isolated", () => {
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url)));
   const vercel = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url)));
-  assert.equal(vercel.buildCommand, "npm run vercel-build");
+  assert.equal(vercel.buildCommand, "env -u npm_config_cache_dir -u NPM_CONFIG_CACHE_DIR NEXT_TELEMETRY_DISABLED=1 npm run vercel-build");
+  assert.equal(vercel.installCommand, "sh scripts/vercel-install.sh");
   assert.equal(pkg.scripts["vercel-build"], "node scripts/migrate-production.mjs && npm run build");
   assert.equal(pkg.scripts.build, "next build");
 });

@@ -1,6 +1,6 @@
-import { defineConfig, globalIgnores } from 'eslint/config';
-import nextVitals from 'eslint-config-next/core-web-vitals';
-import nextTypescript from 'eslint-config-next/typescript';
+import { defineConfig, globalIgnores } from './tools/lint/node_modules/eslint/lib/config-api.js';
+import nextVitals from './tools/lint/node_modules/eslint-config-next/dist/core-web-vitals.js';
+import nextTypescript from './tools/lint/node_modules/eslint-config-next/dist/typescript.js';
 export default defineConfig([
   ...nextVitals, ...nextTypescript,
   globalIgnores(['**/.next/**', '**/node_modules/**', '**/drizzle/**', 'test-results/**', '**/dist/**', 'public/campaigns/**']),
