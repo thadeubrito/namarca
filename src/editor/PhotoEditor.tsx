@@ -5,7 +5,7 @@ import { initialFrame } from './framing'
 import { decodeImage, readArtwork, readPhoto } from './editor-images'
 import { LoadingIndicator } from './LoadingIndicator'
 import { ExportPanel, type ExportAction } from './ExportPanel'
-import { trackEditingStarted } from './analytics'
+import type { CampaignTelemetry } from '@/lib/public-analytics'
 import { EditorIcon, EditorWorkspace, type EditorTool } from './EditorWorkspace'
 import { StickerDragPreview, type StickerDragVisual } from './StickerDragPreview'
 import { transformGesture, type Point } from './gestures'
@@ -124,7 +124,9 @@ function EditorCanvas({ c, selected, select, selectionColor, blocked, start, pre
   </>
 }
 
-export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, onInitialLoading }: { event: CampaignConfig; assetBase?: string; assetUrls?: Record<string, string>; preferredArtworkId?: string; onInitialLoading?: (label: string | null) => void }) {
+export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, onInitialLoading, telemetry }: { event: CampaignConfig; assetBase?: string; assetUrls?: Record<string, string>; preferredArtworkId?: string; onInitialLoading?: (label: string | null) => void; telemetry?: CampaignTelemetry }) {
+  const telemetryRef = useRef(telemetry)
+  useEffect(() => { telemetryRef.current = telemetry }, [telemetry])
   const previousPreference = useRef<string | undefined>(undefined);
   const [panel, setPanel] = useState<EditorTool>('')
   const photoInput = useRef<HTMLInputElement>(null)
@@ -170,8 +172,12 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
     if (current.current) publish(commit(current.current, sameComposition(current.current.present, next) ? current.current.present : next))
     else publish({ past: [], present: next, future: [] })
   }
+  const trackStarted = () => {
+    if (!editingTracked.current) { editingTracked.current = true; telemetryRef.current?.('editor_started') }
+  }
   const start = () => {
     if (!baseline.current && current.current) {
+      trackStarted()
       baseline.current = current.current.present; draftRef.current = current.current.present; setDraft(current.current.present)
     }
   }
@@ -198,7 +204,7 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
       setPanel('')
 
     } catch {
-      if (request.current === id) { setArtError(art); setMessage('') }
+      if (request.current === id) { setArtError(art); setMessage(''); telemetryRef.current?.('artwork_load_failed') }
     } finally { if (request.current === id) { loading.current = false; setBusy(false); setOperation(''); setLoadingArt(false) } }
   }
   useEffect(() => {
@@ -267,7 +273,7 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
       if (!active || current.current || request.current !== token) return
       const h = { past: [], present: { art, ...loaded, photo: null, frame: { x: 0, y: 0, scale: 1 }, stickers: [] }, future: [] }
       current.current = h; setHistory(h)
-    }, () => { if (active && request.current === token) setArtError(art) })
+    }, () => { if (active && request.current === token) { setArtError(art); telemetryRef.current?.('artwork_load_failed') } })
     const counter = request
     return () => { active = false; counter.current++ }
   }, [event, asset, preferredArtworkId])
@@ -280,7 +286,8 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
       if (request.current !== id) return
       const c = current.current!.present
       apply({ ...c, photo, frame: initialFrame(photoSize(photo), c.art.reference) })
-      if (!editingTracked.current) { editingTracked.current = true; trackEditingStarted(event.slug) }
+      telemetryRef.current?.('photo_selected')
+      trackStarted()
       setSelected(null); setPanel('')
     } catch (error) { if (request.current === id) setMessage(error instanceof Error ? error.message : 'Não foi possível ler a foto.') }
     finally { if (request.current === id) { loading.current = false; setBusy(false); setOperation('') } }
@@ -295,8 +302,9 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
       stickerImages.current.set(material.id, image)
       const c = current.current!.present; const instance = ++sequence.current
       apply({ ...c, stickers: [...c.stickers, { id: instance, materialId: material.id, name: material.name, image, x: c.art.width / 2, y: c.art.height / 2, scale: Math.min(c.art.width, c.art.height) * .25 / Math.max(image.naturalWidth, image.naturalHeight), angle: 0 }] })
+      trackStarted()
       setSelected(instance); setPanel('')
-    } catch { if (request.current === id) setMessage(`Não foi possível carregar o sticker ${material.name}. Tente adicioná-lo novamente.`) }
+    } catch { if (request.current === id) { setMessage(`Não foi possível carregar o sticker ${material.name}. Tente adicioná-lo novamente.`); telemetryRef.current?.('sticker_load_failed') } }
     finally { if (request.current === id) { loading.current = false; setBusy(false); setOperation('') } }
   }
   const hasArtwork = event.artworks.length > 0
@@ -336,7 +344,7 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
   const feedback = <>
     {artError && <div role="alert"><p>Não foi possível preparar a arte {artError.name}. Escolha outra arte ou tente novamente. Sua composição foi preservada.</p><button disabled={!!draft || (busy && !loadingArt)} onClick={() => { void loadArt(artError) }}>Tentar carregar arte novamente</button></div>}
     <p className="editor-message" role="status" aria-live="polite">{message}</p>
-    {hasArtwork && history && <ExportPanel key={exportRevision} actionRef={exportAction} onWorking={setExportWorking} composition={history.present} slug={event.slug} blocked={blocked} />}
+    {hasArtwork && history && <ExportPanel key={exportRevision} actionRef={exportAction} onWorking={setExportWorking} composition={history.present} slug={event.slug} blocked={blocked} telemetry={telemetry} />}
   </>
   const historyControls = <div className="direction-controls history-controls" aria-label="Histórico">
         <button aria-label="Desfazer" title="Desfazer" disabled={!c || blocked || !history?.past.length} onClick={() => { publish(undo(current.current!)); setSelected(null) }}><EditorIcon name="Desfazer" /></button>
@@ -362,6 +370,6 @@ export function PhotoEditor({ event, assetBase, assetUrls, preferredArtworkId, o
       <p>Esta versão usa somente gestos para editar. Não oferece controles de transformação por teclado ou zoom/rotação por mouse; stickers sobrepostos são selecionados pelo toque no elemento visível.</p>
       <p>Use JPEG, PNG ou WebP estáticos. Para HEIC/HEIF, converta para JPEG antes de selecionar. A foto fica neste dispositivo; sair ou recarregar perde a edição.</p>
       <h3>Artes e histórico</h3><p>Trocar de arte preserva seus elementos. Confira o enquadramento, especialmente ao mudar de proporção. Stickers podem cobrir logos. Desfazer e refazer recuperam ajustes desta sessão.</p>
-      <h3>Salvar e privacidade</h3><p>Toque em Salvar no menu para compartilhar ou baixar diretamente, conforme o suporte do navegador. O compartilhamento entrega o arquivo ao aplicativo escolhido, sem publicação automática. Se o navegador abrir a imagem, use a opção de salvar imagem.</p><p>A foto e a composição ficam neste navegador, sem envio ao servidor. Ao sair ou recarregar, você perde a edição e o histórico; não há recuperação.</p>
+      <h3>Salvar e privacidade</h3><p>Toque em Salvar no menu para compartilhar ou baixar diretamente, conforme o suporte do navegador. O compartilhamento entrega o arquivo ao aplicativo escolhido, sem publicação automática. Se o navegador abrir a imagem, use a opção de salvar imagem.</p><p>A foto e a composição ficam neste navegador, sem envio ao servidor. Ao sair ou recarregar, você perde a edição e o histórico; não há recuperação.</p>{telemetry && <p><a href="/legal/privacidade" target="_blank" rel="noopener noreferrer">Privacidade da Namarca (abre em outra aba)</a></p>}
     </div></>} /></>
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { checkCampaignSuspended, campaignThemeStyle, loadCampaign, MissingCampaignError, SuspendedCampaignError, type CampaignConfig } from '@/lib/campaigns/campaigns'
 import { CampaignEditorClient } from './CampaignEditorClient'
+import { trackPublicEvent, type CampaignTelemetry } from '@/lib/public-analytics'
 import './isolated.css'
 
 type State = { status: 'loading' | 'missing' | 'error' | 'suspended' } | { status: 'ready'; event: CampaignConfig }
@@ -13,6 +14,7 @@ export function PublicCampaignEditor({ slug }: { slug: string }) {
 }
 
 function CampaignSession({ slug }: { slug: string }) {
+  const telemetry: CampaignTelemetry = event => trackPublicEvent(event, slug)
   const [state, setState] = useState<State>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
   const [now, setNow] = useState<number | null>(null)
@@ -20,9 +22,12 @@ function CampaignSession({ slug }: { slug: string }) {
   useEffect(() => {
     const controller = new AbortController()
     loadCampaign(slug, controller.signal).then(event => {
-      if (!controller.signal.aborted) { setNow(Date.now()); setState({ status: 'ready', event }) }
+      if (!controller.signal.aborted) { setNow(Date.now()); setState({ status: 'ready', event }); if (Date.parse(event.endsAt) > Date.now()) trackPublicEvent('campaign_opened', slug) }
     }).catch(error => {
-      if (!controller.signal.aborted) setState({ status: error instanceof SuspendedCampaignError ? 'suspended' : error instanceof MissingCampaignError ? 'missing' : 'error' })
+      if (!controller.signal.aborted) {
+        if (!(error instanceof SuspendedCampaignError) && !(error instanceof MissingCampaignError)) trackPublicEvent('campaign_load_failed', slug)
+        setState({ status: error instanceof SuspendedCampaignError ? 'suspended' : error instanceof MissingCampaignError ? 'missing' : 'error' })
+      }
     })
     return () => controller.abort()
   }, [slug, attempt])
@@ -77,7 +82,7 @@ function CampaignSession({ slug }: { slug: string }) {
   }, [slug, state])
 
   if (state.status === 'ready' && now !== null && Date.parse(state.event.endsAt) > now) {
-    return <div className="editor-page" style={campaignThemeStyle(state.event) as CSSProperties}>{state.event.demo && <p style={{ position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', zIndex: 2, margin: 0, padding: '4px 10px', borderRadius: '0 0 8px 8px', background: 'var(--theme-background)', color: 'var(--theme-text)', fontSize: 12, whiteSpace: 'nowrap', pointerEvents: 'none' }}>Exemplo fictício · {state.event.name.split(' — ')[0]}</p>}<CampaignEditorClient event={state.event} /></div>
+    return <div className="editor-page" style={campaignThemeStyle(state.event) as CSSProperties}>{state.event.demo && <p style={{ position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', zIndex: 2, margin: 0, padding: '4px 10px', borderRadius: '0 0 8px 8px', background: 'var(--theme-background)', color: 'var(--theme-text)', fontSize: 12, whiteSpace: 'nowrap', pointerEvents: 'none' }}>Exemplo fictício · {state.event.name.split(' — ')[0]}</p>}<CampaignEditorClient event={state.event} telemetry={telemetry} /></div>
   }
   // Initial SSR and hydration are deterministic and visually quiet.
   if (state.status === 'loading' || (state.status === 'ready' && now === null)) return <span className="sr-only" role="status">Preparando editor…</span>
